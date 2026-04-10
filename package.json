@@ -1,0 +1,19 @@
+{
+  "name": "telaflow",
+  "private": true,
+  "version": "0.0.0",
+  "description": "TelaFlow monorepo — Cloud, Player, shared contracts",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:contracts": "npm run build -w @telaflow/shared-contracts",
+    "postinstall": "npm run build:contracts",
+    "test:contracts": "npm run test -w @telaflow/shared-contracts",
+    "typecheck": "npm run typecheck -w @telaflow/shared-contracts && npm run typecheck -w cloud-web && npm run typecheck -w player"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
