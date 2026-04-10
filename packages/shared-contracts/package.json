@@ -1,0 +1,31 @@
+{
+  "name": "@telaflow/shared-contracts",
+  "version": "0.1.0",
+  "description": "Zod-first shared contracts for TelaFlow Pack and domain",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && tsx scripts/generate-json-schema.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.4",
+    "zod-to-json-schema": "^3.25.2"
+  }
+}
