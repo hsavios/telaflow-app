@@ -14,13 +14,17 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-COPY . .
+COPY package.json package-lock.json ./
+COPY apps/cloud-web/package.json ./apps/cloud-web/package.json
+COPY packages/shared-contracts/package.json ./packages/shared-contracts/package.json
 
-RUN npm install
-RUN npm prune --omit=dev
+RUN npm install --omit=dev --ignore-scripts
 
 COPY --from=builder /app/apps/cloud-web/.next ./apps/cloud-web/.next
-COPY --from=builder /app/packages/shared-contracts/dist ./packages/shared-contracts/dist
+COPY --from=builder /app/apps/cloud-web/public ./apps/cloud-web/public
+COPY --from=builder /app/apps/cloud-web/package.json ./apps/cloud-web/package.json
+COPY --from=builder /app/apps/cloud-web/next.config.ts ./apps/cloud-web/next.config.ts
+COPY --from=builder /app/packages/shared-contracts ./packages/shared-contracts
 
 EXPOSE 3000
 
