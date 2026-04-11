@@ -1,0 +1,20 @@
+services:
+  cloud-api:
+    image: ghcr.io/${GHCR_OWNER}/telaflow-cloud-api:${IMAGE_TAG}
+    container_name: telaflow-cloud-api
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "${API_PORT}:8000"
+
+  cloud-web:
+    image: ghcr.io/${GHCR_OWNER}/telaflow-cloud-web:${IMAGE_TAG}
+    container_name: telaflow-cloud-web
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "${WEB_PORT}:3000"
+    depends_on:
+      - cloud-api

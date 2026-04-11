@@ -1,0 +1,16 @@
+.git
+.gitignore
+node_modules
+**/node_modules
+.next
+**/.next
+dist
+**/dist
+.env
+**/.env
+.pytest_cache
+**/.pytest_cache
+__pycache__
+**/__pycache__
+coverage
+**/coverage
