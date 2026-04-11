@@ -88,7 +88,7 @@ push main
 ### Fluxo VPS
 
 - SSH no servidor de produção.
-- Diretório de operação: `/opt/telaflow` (ver secção seguinte).
+- Diretório de operação: `/opt/telaflow` (ver a seção seguinte).
 - Após o Actions publicar imagens: `docker compose pull` e `docker compose up -d` no diretório do compose.
 
 ### Fluxo Cloudflare

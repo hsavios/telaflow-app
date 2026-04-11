@@ -23,6 +23,14 @@ export type EventId = z.infer<typeof EventIdSchema>;
 export const SceneIdSchema = idSchema("SceneId");
 export type SceneId = z.infer<typeof SceneIdSchema>;
 
+/** Stable slot id for media manifest / binding (Cloud + Pack). */
+export const MediaIdSchema = idSchema("MediaId");
+export type MediaId = z.infer<typeof MediaIdSchema>;
+
+/** Draw configuration id (event-scoped). */
+export const DrawConfigIdSchema = idSchema("DrawConfigId");
+export type DrawConfigId = z.infer<typeof DrawConfigIdSchema>;
+
 export const ExportIdSchema = idSchema("ExportId");
 export type ExportId = z.infer<typeof ExportIdSchema>;
 

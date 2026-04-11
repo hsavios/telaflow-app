@@ -1,8 +1,11 @@
 ﻿import { z } from "zod";
-import { EventIdSchema, SceneIdSchema } from "./ids.js";
+import { DrawConfigIdSchema, EventIdSchema, MediaIdSchema, SceneIdSchema } from "./ids.js";
 import { SceneTypeSchema } from "./scene-type.js";
 
-/** Minimal Scene — PHASE_1_EXECUTION_SPEC §8 */
+/**
+ * Scene contract — PHASE_1_EXECUTION_SPEC §8 + optional links (EVENT_EDITOR_FEATURE_SPEC).
+ * `media_id` / `draw_config_id` nullish: omitted, null, or set when valid in the same event at persistence.
+ */
 export const SceneContractSchema = z.object({
   scene_id: SceneIdSchema,
   event_id: EventIdSchema,
@@ -12,6 +15,8 @@ export const SceneContractSchema = z.object({
   name: z.string().min(1).max(512),
   /** When false, the scene is skipped at runtime without removing it from the event definition. */
   enabled: z.boolean().default(true),
+  media_id: MediaIdSchema.nullish(),
+  draw_config_id: DrawConfigIdSchema.nullish(),
 });
 
 export type SceneContract = z.infer<typeof SceneContractSchema>;

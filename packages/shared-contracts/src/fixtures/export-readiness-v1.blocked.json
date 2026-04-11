@@ -1,0 +1,76 @@
+{
+  "schema_version": "export_readiness.v1",
+  "ready": false,
+  "sort_order_ok": false,
+  "blocking": [
+    {
+      "severity": "blocking",
+      "code": "sort_order_invalid",
+      "message": "sort_order deve ser 0..n-1 sem duplicados (uma sequência por evento)."
+    },
+    {
+      "severity": "blocking",
+      "code": "draw_scene_missing_trigger",
+      "scene_id": "scn_test000002"
+    },
+    {
+      "severity": "blocking",
+      "code": "scene_name_empty",
+      "scene_id": "scn_test000003"
+    }
+  ],
+  "warnings": [
+    {
+      "severity": "warning",
+      "code": "required_media_not_linked",
+      "media_id": "med_sample0001",
+      "label": "Vinheta",
+      "message": "Slot obrigatório sem nenhuma scene referenciando este media_id (§16.1 — aviso)."
+    },
+    {
+      "severity": "warning",
+      "code": "sponsor_scene_no_primary_media",
+      "scene_id": "scn_test000004",
+      "message": "Scene patrocinador sem mídia principal (aviso §16.1)."
+    }
+  ],
+  "lifecycle_counts": {
+    "draft": 1,
+    "blocked": 1,
+    "warning": 1,
+    "ready": 1
+  },
+  "scene_evaluations": [
+    {
+      "scene_id": "scn_test000001",
+      "sort_order": 0,
+      "lifecycle": "ready",
+      "blocking_codes": [],
+      "warning_codes": []
+    },
+    {
+      "scene_id": "scn_test000002",
+      "sort_order": 2,
+      "lifecycle": "blocked",
+      "blocking_codes": ["draw_scene_missing_trigger"],
+      "warning_codes": []
+    },
+    {
+      "scene_id": "scn_test000003",
+      "sort_order": 1,
+      "lifecycle": "draft",
+      "blocking_codes": ["scene_name_empty"],
+      "warning_codes": []
+    },
+    {
+      "scene_id": "scn_test000004",
+      "sort_order": 3,
+      "lifecycle": "warning",
+      "blocking_codes": [],
+      "warning_codes": ["sponsor_scene_no_primary_media"]
+    }
+  ],
+  "scene_count": 4,
+  "draw_config_count": 1,
+  "media_requirement_count": 2
+}

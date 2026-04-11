@@ -6,8 +6,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import {
+  DrawConfigContractSchema,
   EventContractSchema,
   EventSnapshotSchema,
+  ExportReadinessV1Schema,
+  MediaKindSchema,
+  MediaRequirementContractSchema,
   OrganizationIdSchema,
   PackMetadataSchema,
   SceneContractSchema,
@@ -27,6 +31,14 @@ function writeSchema(filename: string, schema: Parameters<typeof zodToJsonSchema
 
 writeSchema("event-contract", EventContractSchema, "EventContract");
 writeSchema("scene-contract", SceneContractSchema, "SceneContract");
+writeSchema("draw-config-contract", DrawConfigContractSchema, "DrawConfigContract");
+writeSchema(
+  "media-requirement-contract",
+  MediaRequirementContractSchema,
+  "MediaRequirementContract",
+);
+writeSchema("media-kind", MediaKindSchema, "MediaKind");
+writeSchema("export-readiness-v1", ExportReadinessV1Schema, "ExportReadinessV1");
 writeSchema("pack-metadata", PackMetadataSchema, "PackMetadata");
 writeSchema("event-snapshot", EventSnapshotSchema, "EventSnapshot");
 writeSchema("opaque-id", OrganizationIdSchema, "OrganizationId");

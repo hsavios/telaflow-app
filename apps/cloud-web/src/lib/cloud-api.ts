@@ -15,6 +15,10 @@ export type CloudScene = {
   type: string;
   name: string;
   enabled: boolean;
+  /** Reservado — mídia principal (futuro). */
+  media_id?: string | null;
+  /** Reservado — vínculo com DrawConfig (futuro; não editar sorteio nesta tela). */
+  draw_config_id?: string | null;
 };
 
 export type GetEventResponse = { event: CloudEvent };
@@ -22,6 +26,12 @@ export type GetEventResponse = { event: CloudEvent };
 export type ListScenesResponse = { scenes: CloudScene[] };
 
 export type CreateSceneResponse = { ok: boolean; scene: CloudScene };
+
+export type UpdateSceneResponse = { ok: boolean; scene: CloudScene };
+
+export type DeleteSceneResponse = { ok: boolean; deleted_scene_id: string };
+
+export type ReorderScenesResponse = { ok: boolean; scenes: CloudScene[] };
 
 export function getCloudApiBase(): string | null {
   const raw = process.env.NEXT_PUBLIC_CLOUD_API_URL?.trim();
@@ -138,6 +148,67 @@ export async function fetchScenes(eventId: string): Promise<CloudScene[]> {
   throw new Error(`scenes_list_failed:${res.status}`, { cause: body });
 }
 
+export type CloudDrawConfig = {
+  draw_config_id: string;
+  event_id: string;
+  name: string;
+  max_winners: number;
+  notes: string | null;
+  enabled: boolean;
+};
+
+export type CloudMediaRequirement = {
+  media_id: string;
+  event_id: string;
+  label: string;
+  media_type: "video" | "image" | "audio" | "other";
+  required: boolean;
+  scene_id: string | null;
+  allowed_extensions_hint: string | null;
+};
+
+export type ExportReadinessBlocking = {
+  severity?: "blocking" | "warning";
+  code: string;
+  message?: string;
+  scene_id?: string;
+  media_id?: string;
+  draw_config_id?: string;
+  label?: string;
+  name?: string;
+};
+
+export type SceneReadinessEvaluation = {
+  scene_id: string;
+  sort_order: number;
+  lifecycle: "draft" | "blocked" | "warning" | "ready";
+  blocking_codes: string[];
+  warning_codes: string[];
+};
+
+export type ExportReadinessBody = {
+  schema_version?: string;
+  ready: boolean;
+  sort_order_ok?: boolean;
+  blocking: ExportReadinessBlocking[];
+  warnings: ExportReadinessBlocking[];
+  lifecycle_counts?: {
+    draft: number;
+    blocked: number;
+    warning: number;
+    ready: number;
+  };
+  scene_evaluations?: SceneReadinessEvaluation[];
+  scene_count: number;
+  draw_config_count: number;
+  media_requirement_count: number;
+};
+
+export type ExportReadinessResponse = {
+  ok: boolean;
+  export_readiness: ExportReadinessBody;
+};
+
 export async function createScene(
   eventId: string,
   payload: {
@@ -145,6 +216,8 @@ export async function createScene(
     type: string;
     name: string;
     enabled: boolean;
+    media_id?: string | null;
+    draw_config_id?: string | null;
   },
 ): Promise<CreateSceneResponse> {
   const base = getCloudApiBase();
@@ -161,8 +234,377 @@ export async function createScene(
     throw new Error("event_not_found");
   }
   const body = await parseJsonOrText(res);
+  if (res.status === 409) {
+    const err =
+      typeof body === "object" &&
+      body !== null &&
+      (body as { detail?: { error?: string } }).detail?.error ===
+        "sort_order_conflict"
+        ? "sort_order_conflict"
+        : "scene_create_conflict";
+    throw new Error(err, { cause: body });
+  }
+  if (res.status === 400) {
+    const code = (body as { detail?: { error?: string } })?.detail?.error;
+    if (code === "media_id_not_found") {
+      throw new Error("media_id_not_found", { cause: body });
+    }
+    if (code === "draw_config_not_found") {
+      throw new Error("draw_config_not_found", { cause: body });
+    }
+    throw new Error(`scene_create_failed:400`, { cause: body });
+  }
+  if (res.status === 422) {
+    const code = (body as { detail?: { error?: string } })?.detail?.error;
+    if (code === "draw_scene_requires_draw_config") {
+      throw new Error("draw_scene_requires_draw_config", { cause: body });
+    }
+    throw new Error(`scene_create_failed:422`, { cause: body });
+  }
   if (!res.ok) {
     throw new Error(`scene_create_failed:${res.status}`, { cause: body });
   }
   return body as CreateSceneResponse;
+}
+
+export async function reorderScenes(
+  eventId: string,
+  sceneIds: string[],
+): Promise<CloudScene[]> {
+  const base = getCloudApiBase();
+  if (!base) throw new Error("missing_api_url");
+  const res = await fetch(`${base}/events/${enc(eventId)}/scenes/reorder`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ scene_ids: sceneIds }),
+  });
+  if (res.status === 404) {
+    throw new Error("event_not_found");
+  }
+  const body = await parseJsonOrText(res);
+  if (!res.ok) {
+    throw new Error(`scene_reorder_failed:${res.status}`, { cause: body });
+  }
+  const data = body as ReorderScenesResponse;
+  return Array.isArray(data.scenes) ? data.scenes : [];
+}
+
+export async function updateScene(
+  eventId: string,
+  sceneId: string,
+  payload: Partial<{
+    sort_order: number;
+    type: string;
+    name: string;
+    enabled: boolean;
+    media_id: string | null;
+    draw_config_id: string | null;
+  }>,
+): Promise<UpdateSceneResponse> {
+  const base = getCloudApiBase();
+  if (!base) throw new Error("missing_api_url");
+  const res = await fetch(
+    `${base}/events/${enc(eventId)}/scenes/${enc(sceneId)}`,
+    {
+      method: "PATCH",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    },
+  );
+  if (res.status === 404) {
+    throw new Error("scene_not_found");
+  }
+  const body = await parseJsonOrText(res);
+  if (res.status === 409) {
+    throw new Error("sort_order_conflict", { cause: body });
+  }
+  if (res.status === 400) {
+    const code = (body as { detail?: { error?: string } })?.detail?.error;
+    if (code === "media_id_not_found") {
+      throw new Error("media_id_not_found", { cause: body });
+    }
+    if (code === "draw_config_not_found") {
+      throw new Error("draw_config_not_found", { cause: body });
+    }
+    throw new Error(`scene_update_failed:400`, { cause: body });
+  }
+  if (res.status === 422) {
+    const code = (body as { detail?: { error?: string } })?.detail?.error;
+    if (code === "draw_scene_requires_draw_config") {
+      throw new Error("draw_scene_requires_draw_config", { cause: body });
+    }
+    throw new Error(`scene_update_failed:422`, { cause: body });
+  }
+  if (!res.ok) {
+    throw new Error(`scene_update_failed:${res.status}`, { cause: body });
+  }
+  return body as UpdateSceneResponse;
+}
+
+export async function deleteScene(
+  eventId: string,
+  sceneId: string,
+): Promise<void> {
+  const base = getCloudApiBase();
+  if (!base) throw new Error("missing_api_url");
+  const res = await fetch(
+    `${base}/events/${enc(eventId)}/scenes/${enc(sceneId)}`,
+    {
+      method: "DELETE",
+      headers: { Accept: "application/json" },
+    },
+  );
+  if (res.status === 404) {
+    throw new Error("scene_not_found");
+  }
+  if (!res.ok) {
+    const body = await parseJsonOrText(res);
+    throw new Error(`scene_delete_failed:${res.status}`, { cause: body });
+  }
+}
+
+export async function fetchDrawConfigs(
+  eventId: string,
+): Promise<CloudDrawConfig[]> {
+  const base = getCloudApiBase();
+  if (!base) throw new Error("missing_api_url");
+  const res = await fetch(`${base}/events/${enc(eventId)}/draw-configs`, {
+    method: "GET",
+    cache: "no-store",
+    headers: { Accept: "application/json" },
+  });
+  if (res.status === 404) return [];
+  if (!res.ok) {
+    const body = await parseJsonOrText(res);
+    throw new Error(`draw_configs_failed:${res.status}`, { cause: body });
+  }
+  const data = (await res.json()) as { draw_configs?: CloudDrawConfig[] };
+  return Array.isArray(data.draw_configs) ? data.draw_configs : [];
+}
+
+export async function createDrawConfig(
+  eventId: string,
+  payload: {
+    name: string;
+    max_winners?: number;
+    notes?: string | null;
+    enabled?: boolean;
+  },
+): Promise<{ ok: boolean; draw_config: CloudDrawConfig }> {
+  const base = getCloudApiBase();
+  if (!base) throw new Error("missing_api_url");
+  const res = await fetch(`${base}/events/${enc(eventId)}/draw-configs`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (res.status === 404) throw new Error("event_not_found");
+  const body = await parseJsonOrText(res);
+  if (!res.ok) {
+    throw new Error(`draw_config_create_failed:${res.status}`, { cause: body });
+  }
+  return body as { ok: boolean; draw_config: CloudDrawConfig };
+}
+
+export async function updateDrawConfig(
+  eventId: string,
+  drawConfigId: string,
+  payload: Partial<{
+    name: string;
+    max_winners: number;
+    notes: string | null;
+    enabled: boolean;
+  }>,
+): Promise<{ ok: boolean; draw_config: CloudDrawConfig }> {
+  const base = getCloudApiBase();
+  if (!base) throw new Error("missing_api_url");
+  const res = await fetch(
+    `${base}/events/${enc(eventId)}/draw-configs/${enc(drawConfigId)}`,
+    {
+      method: "PATCH",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    },
+  );
+  if (res.status === 404) throw new Error("draw_config_not_found");
+  const body = await parseJsonOrText(res);
+  if (!res.ok) {
+    throw new Error(`draw_config_update_failed:${res.status}`, { cause: body });
+  }
+  return body as { ok: boolean; draw_config: CloudDrawConfig };
+}
+
+export async function deleteDrawConfig(
+  eventId: string,
+  drawConfigId: string,
+): Promise<void> {
+  const base = getCloudApiBase();
+  if (!base) throw new Error("missing_api_url");
+  const res = await fetch(
+    `${base}/events/${enc(eventId)}/draw-configs/${enc(drawConfigId)}`,
+    {
+      method: "DELETE",
+      headers: { Accept: "application/json" },
+    },
+  );
+  if (res.status === 404) throw new Error("draw_config_not_found");
+  if (res.status === 409) {
+    throw new Error("draw_config_in_use", { cause: await parseJsonOrText(res) });
+  }
+  if (!res.ok) {
+    const body = await parseJsonOrText(res);
+    throw new Error(`draw_config_delete_failed:${res.status}`, { cause: body });
+  }
+}
+
+export async function fetchMediaRequirements(
+  eventId: string,
+): Promise<CloudMediaRequirement[]> {
+  const base = getCloudApiBase();
+  if (!base) throw new Error("missing_api_url");
+  const res = await fetch(
+    `${base}/events/${enc(eventId)}/media-requirements`,
+    {
+      method: "GET",
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+    },
+  );
+  if (res.status === 404) return [];
+  if (!res.ok) {
+    const body = await parseJsonOrText(res);
+    throw new Error(`media_requirements_failed:${res.status}`, { cause: body });
+  }
+  const data = (await res.json()) as {
+    media_requirements?: CloudMediaRequirement[];
+  };
+  return Array.isArray(data.media_requirements) ? data.media_requirements : [];
+}
+
+export async function createMediaRequirement(
+  eventId: string,
+  payload: {
+    label: string;
+    media_type: CloudMediaRequirement["media_type"];
+    required?: boolean;
+    scene_id?: string | null;
+    allowed_extensions_hint?: string | null;
+  },
+): Promise<{ ok: boolean; media_requirement: CloudMediaRequirement }> {
+  const base = getCloudApiBase();
+  if (!base) throw new Error("missing_api_url");
+  const res = await fetch(
+    `${base}/events/${enc(eventId)}/media-requirements`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    },
+  );
+  if (res.status === 404) throw new Error("event_not_found");
+  const body = await parseJsonOrText(res);
+  if (!res.ok) {
+    throw new Error(`media_requirement_create_failed:${res.status}`, {
+      cause: body,
+    });
+  }
+  return body as { ok: boolean; media_requirement: CloudMediaRequirement };
+}
+
+export async function updateMediaRequirement(
+  eventId: string,
+  mediaId: string,
+  payload: Partial<{
+    label: string;
+    media_type: CloudMediaRequirement["media_type"];
+    required: boolean;
+    scene_id: string | null;
+    allowed_extensions_hint: string | null;
+  }>,
+): Promise<{ ok: boolean; media_requirement: CloudMediaRequirement }> {
+  const base = getCloudApiBase();
+  if (!base) throw new Error("missing_api_url");
+  const res = await fetch(
+    `${base}/events/${enc(eventId)}/media-requirements/${enc(mediaId)}`,
+    {
+      method: "PATCH",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    },
+  );
+  if (res.status === 404) throw new Error("media_requirement_not_found");
+  const body = await parseJsonOrText(res);
+  if (!res.ok) {
+    throw new Error(`media_requirement_update_failed:${res.status}`, {
+      cause: body,
+    });
+  }
+  return body as { ok: boolean; media_requirement: CloudMediaRequirement };
+}
+
+export async function deleteMediaRequirement(
+  eventId: string,
+  mediaId: string,
+): Promise<void> {
+  const base = getCloudApiBase();
+  if (!base) throw new Error("missing_api_url");
+  const res = await fetch(
+    `${base}/events/${enc(eventId)}/media-requirements/${enc(mediaId)}`,
+    {
+      method: "DELETE",
+      headers: { Accept: "application/json" },
+    },
+  );
+  if (res.status === 404) throw new Error("media_requirement_not_found");
+  if (res.status === 409) {
+    throw new Error("media_requirement_in_use", {
+      cause: await parseJsonOrText(res),
+    });
+  }
+  if (!res.ok) {
+    const body = await parseJsonOrText(res);
+    throw new Error(`media_requirement_delete_failed:${res.status}`, {
+      cause: body,
+    });
+  }
+}
+
+export async function fetchExportReadiness(
+  eventId: string,
+): Promise<ExportReadinessBody> {
+  const base = getCloudApiBase();
+  if (!base) throw new Error("missing_api_url");
+  const res = await fetch(
+    `${base}/events/${enc(eventId)}/export-readiness`,
+    {
+      method: "GET",
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+    },
+  );
+  if (res.status === 404) throw new Error("event_not_found");
+  if (!res.ok) {
+    const body = await parseJsonOrText(res);
+    throw new Error(`export_readiness_failed:${res.status}`, { cause: body });
+  }
+  const data = (await res.json()) as ExportReadinessResponse;
+  return data.export_readiness;
 }

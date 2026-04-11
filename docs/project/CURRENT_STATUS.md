@@ -19,7 +19,11 @@ Funciona em produção.
 - `POST /events`
 - `GET /events/{event_id}`
 - `GET /events/{event_id}/scenes`
+- `POST /events/{event_id}/scenes/reorder`
 - `POST /events/{event_id}/scenes`
+- `GET /events/{event_id}/scenes/{scene_id}`
+- `PATCH /events/{event_id}/scenes/{scene_id}`
+- `DELETE /events/{event_id}/scenes/{scene_id}`
 
 ### Persistência atual
 
@@ -49,7 +53,10 @@ Funciona em produção.
 ### Scenes
 
 - listar scenes por evento
-- criar scene mínima
+- criar scene (ordem única por evento)
+- reordenar (drag + API)
+- editar e excluir no painel lateral
+- campos reservados `media_id` / `draw_config_id` (API; UI só leitura)
 
 ---
 

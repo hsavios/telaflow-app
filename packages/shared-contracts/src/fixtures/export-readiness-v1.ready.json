@@ -1,0 +1,25 @@
+{
+  "schema_version": "export_readiness.v1",
+  "ready": true,
+  "sort_order_ok": true,
+  "blocking": [],
+  "warnings": [],
+  "lifecycle_counts": {
+    "draft": 0,
+    "blocked": 0,
+    "warning": 0,
+    "ready": 1
+  },
+  "scene_evaluations": [
+    {
+      "scene_id": "scn_test000001",
+      "sort_order": 0,
+      "lifecycle": "ready",
+      "blocking_codes": [],
+      "warning_codes": []
+    }
+  ],
+  "scene_count": 1,
+  "draw_config_count": 0,
+  "media_requirement_count": 0
+}
