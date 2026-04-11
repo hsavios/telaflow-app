@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { AppFooter } from "@/components/AppFooter";
 import { AppHeader } from "@/components/AppHeader";
@@ -228,11 +229,14 @@ export default function EventsPage() {
                   <th className="px-4 py-3 font-medium">Nome</th>
                   <th className="px-4 py-3 font-medium">event_id</th>
                   <th className="px-4 py-3 font-medium">organization_id</th>
+                  <th className="px-4 py-3 font-medium text-right">
+                    <span className="sr-only">Ação</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-tf-border bg-tf-mid/25">
                 {events.map((ev) => (
-                  <tr key={ev.event_id}>
+                  <tr key={ev.event_id} className="hover:bg-tf-mid/40">
                     <td className="px-4 py-3.5 font-medium text-tf-fg">
                       {ev.name}
                     </td>
@@ -241,6 +245,14 @@ export default function EventsPage() {
                     </td>
                     <td className="px-4 py-3.5 font-mono text-xs text-tf-muted">
                       {ev.organization_id}
+                    </td>
+                    <td className="px-4 py-3.5 text-right">
+                      <Link
+                        href={`/events/${encodeURIComponent(ev.event_id)}`}
+                        className="text-sm font-medium text-tf-accent transition-colors hover:text-blue-300"
+                      >
+                        Abrir
+                      </Link>
                     </td>
                   </tr>
                 ))}

@@ -11,7 +11,8 @@ const navActive =
 
 export function AppHeader() {
   const pathname = usePathname();
-  const onEvents = pathname === "/events";
+  const onEvents =
+    pathname === "/events" || pathname?.startsWith("/events/");
 
   return (
     <>

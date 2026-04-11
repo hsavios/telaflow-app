@@ -1,6 +1,6 @@
 ﻿"""Camada de domínio — modelos mínimos alinhados a shared-contracts."""
 
 from telaflow_cloud_api.domain.event import Event
-from telaflow_cloud_api.domain.scene import Scene
+from telaflow_cloud_api.domain.scene import Scene, SceneCreate, SceneType
 
-__all__ = ["Event", "Scene"]
+__all__ = ["Event", "Scene", "SceneCreate", "SceneType"]
