@@ -1,0 +1,70 @@
+name: Deploy TelaFlow
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Login no GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: hsavios
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build e push da API
+        run: |
+          docker build \
+            -f apps/cloud-api/Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/telaflow-cloud-api:${{ github.sha }} \
+            .
+          docker push ghcr.io/${{ github.repository_owner }}/telaflow-cloud-api:${{ github.sha }}
+
+      - name: Build e push do Web
+        run: |
+          docker build \
+            -f apps/cloud-web/Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/telaflow-cloud-web:${{ github.sha }} \
+            .
+          docker push ghcr.io/${{ github.repository_owner }}/telaflow-cloud-web:${{ github.sha }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: production
+
+    steps:
+      - name: Configurar chave SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy na VPS
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            export GHCR_USERNAME='hsavios' && \
+            export GHCR_TOKEN='${{ secrets.GHCR_TOKEN }}' && \
+            cd /opt/telaflow && \
+            echo \"\$GHCR_TOKEN\" | docker login ghcr.io -u \"\$GHCR_USERNAME\" --password-stdin && \
+            sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=${{ github.sha }}/' .env && \
+            docker compose pull && \
+            docker compose up -d
+          "
