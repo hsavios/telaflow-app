@@ -1,21 +1,48 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --tf-bg: #0b1120;
+  --tf-bg-mid: #0f172a;
+  --tf-surface: rgba(15, 23, 42, 0.72);
+  --tf-surface-border: rgba(248, 250, 252, 0.08);
+  --tf-fg: #f8fafc;
+  --tf-fg-muted: rgba(248, 250, 252, 0.78);
+  --tf-fg-subtle: rgba(248, 250, 252, 0.52);
+  --tf-fg-faint: rgba(248, 250, 252, 0.36);
+  --tf-accent: #2563eb;
+  --tf-accent-soft: rgba(37, 99, 235, 0.18);
+  --tf-teal: #06b6d4;
+  --tf-teal-soft: rgba(6, 182, 212, 0.12);
+  --tf-violet: #7c3aed;
+  --tf-violet-soft: rgba(124, 58, 237, 0.14);
+  --tf-radius: 1rem;
+  --tf-radius-lg: 1.25rem;
+  --tf-max: 72rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--tf-fg-muted);
+  background: var(--tf-bg);
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(37, 99, 235, 0.12), transparent),
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(6, 182, 212, 0.06), transparent);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-sora), system-ui, sans-serif;
 }

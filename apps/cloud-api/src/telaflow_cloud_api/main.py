@@ -9,7 +9,7 @@ from telaflow_cloud_api.domain import Event
 app = FastAPI(
     title="TelaFlow Cloud API",
     version="0.1.0",
-    description="Skeleton — memória in-memory, sem auth, sem persistência real.",
+    description="API da TelaFlow Cloud — fase inicial: governança e integração, sem persistência completa.",
 )
 
 # Armazenamento fake (Fase 1): event_id -> payload serializável
@@ -18,8 +18,8 @@ _events_store: dict[str, dict] = {}
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    """Healthcheck para deploy / probes."""
-    return {"status": "ok", "service": "telaflow-cloud-api"}
+    """Healthcheck para runtime, load balancers e probes."""
+    return {"status": "ok"}
 
 
 @app.post("/events", status_code=201)

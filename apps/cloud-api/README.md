@@ -1,8 +1,8 @@
-# TelaFlow Cloud API
+﻿# TelaFlow Cloud API
 
 FastAPI service — Fase 1 skeleton (`PHASE_1_EXECUTION_SPEC.md`). Requer Python **3.10+** (ver `pyproject.toml`).
 
-- `GET /health` — liveness
+- `GET /health` — liveness; resposta JSON: `{"status":"ok"}`
 - `POST /events` — cria evento em **memória** (stub; `409` se `event_id` repetido)
 - `domain/event.py`, `domain/scene.py` — modelos Pydantic alinhados aos contratos TS
 
