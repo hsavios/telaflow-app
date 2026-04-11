@@ -2,6 +2,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+ARG NEXT_PUBLIC_CLOUD_API_URL
+ENV NEXT_PUBLIC_CLOUD_API_URL=$NEXT_PUBLIC_CLOUD_API_URL
+
 COPY . .
 
 RUN npm install
@@ -13,6 +16,9 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+
+ARG NEXT_PUBLIC_CLOUD_API_URL
+ENV NEXT_PUBLIC_CLOUD_API_URL=$NEXT_PUBLIC_CLOUD_API_URL
 
 COPY package.json package-lock.json ./
 COPY apps/cloud-web/package.json ./apps/cloud-web/package.json
