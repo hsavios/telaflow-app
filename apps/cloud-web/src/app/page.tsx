@@ -1,4 +1,6 @@
 ﻿import Link from "next/link";
+import { AppFooter } from "@/components/AppFooter";
+import { AppHeader } from "@/components/AppHeader";
 
 function StatusPill({
   label,
@@ -21,50 +23,10 @@ function StatusPill({
   );
 }
 
-const navClass =
-  "text-sm text-tf-muted transition-colors hover:text-tf-fg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tf-accent/60";
-
 export default function Home() {
   return (
     <div className="min-h-screen text-tf-muted">
-      <a
-        href="#conteudo-principal"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-tf focus:bg-tf-surface focus:px-4 focus:py-2 focus:text-tf-fg"
-      >
-        Ir para o conteúdo principal
-      </a>
-
-      <header className="sticky top-0 z-40 border-b border-tf-border bg-tf-mid/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-content flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-3.5 lg:px-10">
-          <Link
-            href="#visao-geral"
-            className="font-display text-lg font-semibold tracking-tight text-tf-fg"
-          >
-            TelaFlow Cloud
-          </Link>
-          <nav
-            className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm"
-            aria-label="Principal"
-          >
-            <Link href="#visao-geral" className={navClass}>
-              Visão geral
-            </Link>
-            <Link href="#eventos" className={navClass}>
-              Eventos
-            </Link>
-            <Link href="#arquitetura" className={navClass}>
-              Arquitetura
-            </Link>
-            <span className="hidden h-4 w-px bg-tf-border sm:inline" aria-hidden />
-            <Link
-              href="https://telaflow.ia.br/"
-              className={`${navClass} text-tf-subtle sm:pl-0`}
-            >
-              Site público
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <AppHeader />
 
       <main id="conteudo-principal">
         {/* Bloco 1 — headline + status */}
@@ -293,30 +255,25 @@ export default function Home() {
               </div>
             </div>
             <p className="mt-6 border-t border-tf-border pt-5 text-sm leading-relaxed text-tf-muted">
-              Nesta fase, a criação de evento acontece via endpoint{" "}
+              A criação na interface está em{" "}
+              <Link
+                href="/events"
+                className="font-medium text-tf-fg underline-offset-2 hover:underline"
+              >
+                Eventos
+              </Link>
+              ; a API continua disponível em{" "}
               <code className="rounded bg-black/35 px-1.5 py-0.5 font-mono text-xs text-tf-fg">
                 POST /events
               </code>
-              . A interface visual completa será a próxima camada da Cloud.
+              .
             </p>
           </div>
 
         </section>
       </main>
 
-      <footer className="border-t border-tf-border bg-tf-mid/30 py-8 text-center text-xs leading-relaxed text-tf-subtle md:py-9">
-        <p className="font-medium text-tf-muted">
-          TelaFlow Cloud · Camada operacional do ecossistema TelaFlow
-        </p>
-        <p className="mt-2">
-          <Link
-            href="https://telaflow.ia.br/"
-            className="text-tf-faint underline-offset-2 transition-colors hover:text-tf-muted hover:underline"
-          >
-            telaflow.ia.br
-          </Link>
-        </p>
-      </footer>
+      <AppFooter />
     </div>
   );
 }

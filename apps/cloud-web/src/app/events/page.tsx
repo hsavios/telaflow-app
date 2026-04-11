@@ -1,0 +1,331 @@
+﻿"use client";
+
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { AppFooter } from "@/components/AppFooter";
+import { AppHeader } from "@/components/AppHeader";
+import {
+  createEvent,
+  fetchEvents,
+  getCloudApiBase,
+  type CloudEvent,
+} from "@/lib/cloud-api";
+import { PROVISIONAL_ORGANIZATION_ID } from "@/lib/default-organization";
+import { generateEventId } from "@/lib/event-id";
+
+type LoadState = "idle" | "loading" | "ok" | "error";
+
+function formatErrorMessage(err: unknown): string {
+  if (err instanceof Error) {
+    if (err.message === "missing_api_url") {
+      return "A URL da Cloud API não está configurada (NEXT_PUBLIC_CLOUD_API_URL).";
+    }
+    if (err.message.startsWith("list_failed:")) {
+      return "Falha ao carregar eventos. Verifique se a API está no ar.";
+    }
+    if (err.message.startsWith("create_failed:")) {
+      return "Não foi possível criar o evento. Tente de novo.";
+    }
+    if (err.message === "event_id_conflict") {
+      return "Conflito de ID — tente criar de novo.";
+    }
+  }
+  return "Algo deu errado. Tente de novo.";
+}
+
+export default function EventsPage() {
+  const dialogTitleId = useId();
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const apiConfigured = getCloudApiBase() !== null;
+  const [loadState, setLoadState] = useState<LoadState>(() =>
+    apiConfigured ? "loading" : "error",
+  );
+  const [events, setEvents] = useState<CloudEvent[]>([]);
+  const [listError, setListError] = useState<string | null>(() =>
+    apiConfigured
+      ? null
+      : "Configure NEXT_PUBLIC_CLOUD_API_URL apontando para a Cloud API.",
+  );
+  const [modalOpen, setModalOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const hasApiUrl = apiConfigured;
+
+  const loadList = useCallback(async () => {
+    if (!getCloudApiBase()) {
+      setLoadState("error");
+      setListError(
+        "Configure NEXT_PUBLIC_CLOUD_API_URL apontando para a Cloud API.",
+      );
+      return;
+    }
+    setLoadState("loading");
+    setListError(null);
+    try {
+      const rows = await fetchEvents();
+      setEvents(rows);
+      setLoadState("ok");
+    } catch (e) {
+      setLoadState("error");
+      setListError(formatErrorMessage(e));
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadList();
+  }, [loadList]);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    const t = window.setTimeout(() => nameInputRef.current?.focus(), 50);
+    return () => window.clearTimeout(t);
+  }, [modalOpen]);
+
+  useEffect(() => {
+    if (!successMsg) return;
+    const t = window.setTimeout(() => setSuccessMsg(null), 4000);
+    return () => window.clearTimeout(t);
+  }, [successMsg]);
+
+  const openModal = () => {
+    setFormError(null);
+    setName("");
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    if (submitting) return;
+    setModalOpen(false);
+    setFormError(null);
+  };
+
+  const submitCreate = async () => {
+    const trimmed = name.trim();
+    if (trimmed.length < 1) {
+      setFormError("Informe o nome do evento.");
+      return;
+    }
+    if (!hasApiUrl) return;
+
+    setSubmitting(true);
+    setFormError(null);
+
+    let lastErr: unknown;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const event_id = generateEventId();
+      try {
+        await createEvent({
+          event_id,
+          organization_id: PROVISIONAL_ORGANIZATION_ID,
+          name: trimmed,
+        });
+        setModalOpen(false);
+        setName("");
+        setSuccessMsg("Evento criado.");
+        await loadList();
+        setSubmitting(false);
+        return;
+      } catch (e) {
+        lastErr = e;
+        if (e instanceof Error && e.message === "event_id_conflict") {
+          continue;
+        }
+        break;
+      }
+    }
+    setFormError(formatErrorMessage(lastErr));
+    setSubmitting(false);
+  };
+
+  const empty = loadState === "ok" && events.length === 0;
+
+  return (
+    <div className="min-h-screen text-tf-muted">
+      <AppHeader />
+
+      <main id="conteudo-principal" className="mx-auto max-w-content px-6 pb-20 pt-10 lg:px-10">
+        {successMsg ? (
+          <p
+            className="mb-6 rounded-tf border border-tf-teal/30 bg-tf-teal-soft/30 px-4 py-3 text-sm text-tf-fg"
+            role="status"
+          >
+            {successMsg}
+          </p>
+        ) : null}
+
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-semibold tracking-tight text-tf-fg md:text-4xl">
+              Eventos
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-tf-muted md:text-base">
+              Unidade inicial de trabalho na Cloud: cada evento agrupa cenas e
+              exportações até o pack no Player.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={openModal}
+            className="shrink-0 rounded-tf bg-tf-accent px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            disabled={!hasApiUrl || loadState === "loading"}
+          >
+            Criar evento
+          </button>
+        </div>
+
+        {loadState === "loading" ? (
+          <p className="mt-12 text-sm text-tf-subtle" aria-live="polite">
+            Carregando…
+          </p>
+        ) : null}
+
+        {loadState === "error" && listError ? (
+          <div
+            className="mt-10 rounded-tf-lg border border-red-500/25 bg-red-950/20 px-5 py-4 text-sm text-red-100/90"
+            role="alert"
+          >
+            <p className="font-medium text-red-100">Falha ao carregar</p>
+            <p className="mt-1 text-red-100/80">{listError}</p>
+            {hasApiUrl ? (
+              <button
+                type="button"
+                onClick={() => void loadList()}
+                className="mt-4 text-sm font-medium text-tf-fg underline-offset-2 hover:underline"
+              >
+                Tentar de novo
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        {loadState === "ok" && empty ? (
+          <div className="mt-14 rounded-tf-lg border border-tf-border bg-tf-mid/35 px-8 py-12 text-center md:px-12">
+            <h2 className="font-display text-lg font-semibold text-tf-fg">
+              Nenhum evento ainda
+            </h2>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-tf-muted">
+              Quando você criar o primeiro evento, ele aparece aqui e pode ser
+              usado pela API e pelos próximos fluxos de export.
+            </p>
+            <button
+              type="button"
+              onClick={openModal}
+              className="mt-8 rounded-tf border border-tf-border bg-tf-mid/60 px-5 py-2.5 text-sm font-semibold text-tf-fg transition-colors hover:border-tf-accent/35 hover:bg-tf-mid disabled:opacity-50"
+              disabled={!hasApiUrl}
+            >
+              Criar primeiro evento
+            </button>
+          </div>
+        ) : null}
+
+        {loadState === "ok" && events.length > 0 ? (
+          <div className="mt-10 overflow-hidden rounded-tf-lg border border-tf-border">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-tf-border bg-tf-mid/80 text-tf-subtle">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Nome</th>
+                  <th className="px-4 py-3 font-medium">event_id</th>
+                  <th className="px-4 py-3 font-medium">organization_id</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-tf-border bg-tf-mid/25">
+                {events.map((ev) => (
+                  <tr key={ev.event_id}>
+                    <td className="px-4 py-3.5 font-medium text-tf-fg">
+                      {ev.name}
+                    </td>
+                    <td className="px-4 py-3.5 font-mono text-xs text-tf-muted">
+                      {ev.event_id}
+                    </td>
+                    <td className="px-4 py-3.5 font-mono text-xs text-tf-muted">
+                      {ev.organization_id}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </main>
+
+      <AppFooter />
+
+      {modalOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-4 backdrop-blur-sm sm:items-center"
+          role="presentation"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeModal();
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-tf-lg border border-tf-border bg-tf-mid p-6 shadow-xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={dialogTitleId}
+          >
+            <h2
+              id={dialogTitleId}
+              className="font-display text-lg font-semibold text-tf-fg"
+            >
+              Novo evento
+            </h2>
+            <p className="mt-2 text-xs leading-relaxed text-tf-subtle">
+              Sem login nesta fase: todos os eventos usam o mesmo{" "}
+              <span className="font-mono text-tf-muted">organization_id</span>{" "}
+              provisório até existir tenant real.
+            </p>
+
+            <label className="mt-6 block text-sm font-medium text-tf-muted">
+              Nome do evento
+              <input
+                ref={nameInputRef}
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={512}
+                autoComplete="off"
+                className="mt-2 w-full rounded-tf border border-tf-border bg-tf-bg px-3 py-2 text-tf-fg outline-none ring-tf-accent/40 placeholder:text-tf-faint focus:border-tf-accent/50 focus:ring-2"
+                placeholder="Ex.: Show Arena Sul 2026"
+              />
+            </label>
+
+            <div className="mt-4 rounded-tf border border-tf-border bg-tf-bg/80 px-3 py-2 text-xs text-tf-subtle">
+              <span className="text-tf-faint">organization_id · </span>
+              <span className="font-mono text-tf-muted">
+                {PROVISIONAL_ORGANIZATION_ID}
+              </span>
+            </div>
+
+            {formError ? (
+              <p className="mt-4 text-sm text-red-300/90" role="alert">
+                {formError}
+              </p>
+            ) : null}
+
+            <div className="mt-8 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="rounded-tf border border-tf-border px-4 py-2 text-sm font-medium text-tf-muted transition-colors hover:border-tf-border hover:text-tf-fg"
+                disabled={submitting}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void submitCreate()}
+                disabled={submitting}
+                className="rounded-tf bg-tf-accent px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {submitting ? "Salvando…" : "Salvar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
