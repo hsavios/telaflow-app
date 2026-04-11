@@ -35,7 +35,7 @@ export default function Home() {
       </a>
 
       <header className="sticky top-0 z-40 border-b border-tf-border bg-tf-mid/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-content flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-3.5">
+        <div className="mx-auto flex max-w-content flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-3.5 lg:px-10">
           <Link
             href="#visao-geral"
             className="font-display text-lg font-semibold tracking-tight text-tf-fg"
@@ -70,37 +70,43 @@ export default function Home() {
         {/* Bloco 1 — headline + status */}
         <section
           id="visao-geral"
-          className="mx-auto max-w-content scroll-mt-28 px-6 pb-14 pt-12 md:pb-16 md:pt-14"
+          className="mx-auto max-w-content scroll-mt-28 px-6 pb-16 pt-12 md:pb-20 md:pt-16 lg:px-10"
           aria-labelledby="headline"
         >
-          <h1
-            id="headline"
-            className="font-display text-4xl font-semibold leading-tight tracking-tight text-tf-fg md:text-5xl"
-          >
-            TelaFlow Cloud
-          </h1>
-          <p className="mt-4 max-w-2xl text-lg font-medium leading-snug text-tf-fg md:text-xl">
-            Organize eventos, cenas e exports com clareza operacional.
-          </p>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-tf-muted md:text-lg">
-            A camada de nuvem do ecossistema TelaFlow, pensada para governar o
-            que sai da autoria e chega ao Player.
-          </p>
-          <div
-            className="mt-8 flex flex-wrap items-center gap-2 border border-tf-border bg-tf-mid/40 px-4 py-3 text-sm text-tf-subtle"
-            role="status"
-            aria-label="Resumo do estágio atual"
-          >
-            <span className="font-medium text-tf-muted">Status:</span>
-            <span>MVP em evolução</span>
-            <span className="text-tf-faint" aria-hidden>
-              ·
-            </span>
-            <span>contratos estáveis</span>
-            <span className="text-tf-faint" aria-hidden>
-              ·
-            </span>
-            <span>export em construção</span>
+          <div className="rounded-tf-lg border border-tf-border bg-tf-mid/35 p-8 md:p-10 lg:p-12 lg:pr-14">
+            <h1
+              id="headline"
+              className="font-display max-w-4xl text-4xl font-semibold leading-[1.05] tracking-tight text-tf-fg sm:text-5xl lg:text-6xl"
+            >
+              TelaFlow Cloud
+            </h1>
+            <p className="mt-5 max-w-3xl text-lg font-medium leading-snug text-tf-fg sm:text-xl lg:text-2xl lg:leading-snug">
+              Organize eventos, cenas e exports com clareza operacional.
+            </p>
+            <p className="mt-5 max-w-3xl text-base leading-relaxed text-tf-muted sm:text-lg">
+              A camada de nuvem do ecossistema TelaFlow, pensada para governar o
+              que sai da autoria e chega ao Player.
+            </p>
+            <div
+              className="mt-8 inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-full border border-tf-accent/25 bg-gradient-to-r from-tf-accent-soft/50 via-tf-mid/80 to-tf-mid/60 px-5 py-2.5 text-sm shadow-[0_0_0_1px_rgba(248,250,252,0.04)_inset] md:gap-x-2.5 md:px-6 md:py-3"
+              role="status"
+              aria-label="Estágio da plataforma"
+            >
+              <span className="font-semibold tracking-tight text-tf-fg">
+                MVP em evolução
+              </span>
+              <span
+                className="select-none text-tf-faint md:px-0.5"
+                aria-hidden
+              >
+                ·
+              </span>
+              <span className="text-tf-muted">contratos estáveis</span>
+              <span className="select-none text-tf-faint" aria-hidden>
+                ·
+              </span>
+              <span className="text-tf-muted">export em construção</span>
+            </div>
           </div>
         </section>
 
@@ -110,7 +116,7 @@ export default function Home() {
           className="border-y border-tf-border bg-tf-surface/35 py-12 md:py-14"
           aria-labelledby="titulo-arquitetura"
         >
-          <div className="mx-auto max-w-content px-6">
+          <div className="mx-auto max-w-content px-6 lg:px-10">
             <h2
               id="titulo-arquitetura"
               className="font-display text-xl font-semibold text-tf-fg md:text-2xl"
@@ -120,9 +126,12 @@ export default function Home() {
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-tf-muted">
               Fluxo operacional: Cloud → Pack → Player.
             </p>
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
-              <article className="rounded-tf-lg border border-tf-border bg-tf-mid/40 p-5">
-                <h3 className="font-display text-base font-semibold text-tf-fg">
+            <div className="mt-8 grid gap-4 md:grid-cols-3 md:items-stretch">
+              <article className="relative rounded-tf-lg border border-tf-accent/35 bg-gradient-to-b from-tf-accent-soft/35 to-tf-mid/55 p-6 shadow-[0_0_0_1px_rgba(37,99,235,0.12)_inset]">
+                <p className="mb-3 inline-block rounded-full border border-tf-accent/30 bg-tf-accent-soft/40 px-2.5 py-0.5 text-[11px] font-semibold tracking-tight text-blue-100">
+                  Camada atual
+                </p>
+                <h3 className="font-display text-lg font-semibold text-tf-fg">
                   Cloud
                 </h3>
                 <p className="mt-3 text-sm leading-relaxed text-tf-muted">
@@ -130,8 +139,8 @@ export default function Home() {
                   dessa camada.
                 </p>
               </article>
-              <article className="rounded-tf-lg border border-tf-border bg-tf-mid/40 p-5">
-                <h3 className="font-display text-base font-semibold text-tf-fg">
+              <article className="rounded-tf-lg border border-tf-border bg-tf-mid/40 p-5 md:p-6">
+                <h3 className="font-display text-base font-semibold text-tf-fg md:text-lg">
                   Pack
                 </h3>
                 <p className="mt-3 text-sm leading-relaxed text-tf-muted">
@@ -139,8 +148,8 @@ export default function Home() {
                   evento.
                 </p>
               </article>
-              <article className="rounded-tf-lg border border-tf-border bg-tf-mid/40 p-5">
-                <h3 className="font-display text-base font-semibold text-tf-fg">
+              <article className="rounded-tf-lg border border-tf-border bg-tf-mid/40 p-5 md:p-6">
+                <h3 className="font-display text-base font-semibold text-tf-fg md:text-lg">
                   Player
                 </h3>
                 <p className="mt-3 text-sm leading-relaxed text-tf-muted">
@@ -157,7 +166,7 @@ export default function Home() {
 
         {/* Bloco 3 — capacidades */}
         <section
-          className="mx-auto max-w-content px-6 py-12 md:py-14"
+          className="mx-auto max-w-content px-6 py-12 md:py-14 lg:px-10"
           aria-labelledby="capacidades"
         >
           <h2
@@ -173,7 +182,7 @@ export default function Home() {
             {[
               "Event e scene no domínio Cloud (contratos)",
               "Export de pack versionado para o Player",
-              "Player: produto à parte; execução local",
+              "Player: execução local dedicada",
               "Offline-first como requisito de campo",
               "Cloud API mínima (evolução documentada)",
             ].map((text) => (
@@ -194,7 +203,7 @@ export default function Home() {
           className="border-t border-tf-border bg-tf-surface/25 py-12 md:py-14"
           aria-labelledby="mvp-titulo"
         >
-          <div className="mx-auto max-w-content px-6">
+          <div className="mx-auto max-w-content px-6 lg:px-10">
             <h2
               id="mvp-titulo"
               className="font-display text-xl font-semibold text-tf-fg md:text-2xl"
@@ -246,7 +255,7 @@ export default function Home() {
         {/* Bloco 5 — próximos passos + API / eventos */}
         <section
           id="proximos-passos"
-          className="mx-auto max-w-content scroll-mt-28 px-6 pb-20 pt-12 md:pb-24 md:pt-14"
+          className="mx-auto max-w-content scroll-mt-28 px-6 pb-20 pt-12 md:pb-24 md:pt-14 lg:px-10"
           aria-labelledby="proximos-titulo"
         >
           <h2
@@ -295,12 +304,14 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-tf-border py-7 text-center text-xs text-tf-faint">
-        <p>
-          TelaFlow Cloud ·{" "}
+      <footer className="border-t border-tf-border bg-tf-mid/30 py-8 text-center text-xs leading-relaxed text-tf-subtle md:py-9">
+        <p className="font-medium text-tf-muted">
+          TelaFlow Cloud · Camada operacional do ecossistema TelaFlow
+        </p>
+        <p className="mt-2">
           <Link
             href="https://telaflow.ia.br/"
-            className="text-tf-subtle underline-offset-2 hover:text-tf-muted hover:underline"
+            className="text-tf-faint underline-offset-2 transition-colors hover:text-tf-muted hover:underline"
           >
             telaflow.ia.br
           </Link>
