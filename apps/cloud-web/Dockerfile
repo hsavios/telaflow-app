@@ -2,15 +2,11 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-COPY apps/cloud-web/package.json ./apps/cloud-web/package.json
-COPY packages/shared-contracts/package.json ./packages/shared-contracts/package.json
-
-RUN npm install
-
 COPY . .
 
-RUN npm run build:contracts && npm run build -w cloud-web
+RUN npm install
+RUN npm run build:contracts
+RUN npm run build -w cloud-web
 
 FROM node:20-alpine AS runner
 
@@ -18,17 +14,13 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-COPY package.json package-lock.json ./
-COPY apps/cloud-web/package.json ./apps/cloud-web/package.json
-COPY packages/shared-contracts/package.json ./packages/shared-contracts/package.json
+COPY . .
 
-RUN npm install --omit=dev
+RUN npm install
+RUN npm prune --omit=dev
 
 COPY --from=builder /app/apps/cloud-web/.next ./apps/cloud-web/.next
-COPY --from=builder /app/apps/cloud-web/public ./apps/cloud-web/public
-COPY --from=builder /app/apps/cloud-web/package.json ./apps/cloud-web/package.json
-COPY --from=builder /app/apps/cloud-web/next.config.ts ./apps/cloud-web/next.config.ts
-COPY --from=builder /app/packages/shared-contracts ./packages/shared-contracts
+COPY --from=builder /app/packages/shared-contracts/dist ./packages/shared-contracts/dist
 
 EXPOSE 3000
 

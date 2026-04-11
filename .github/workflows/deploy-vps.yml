@@ -1,0 +1,49 @@
+﻿name: Deploy TelaFlow App VPS
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-telaflow-app-vps
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      TELAFLOW_APP_DIR: ${{ vars.VPS_APP_PATH || secrets.VPS_APP_PATH }}
+    steps:
+      - name: Conferir secrets e caminho na VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+        run: |
+          set -e
+          err() { echo "::error::$1"; }
+          missing=0
+          if [ -z "$VPS_HOST" ]; then err "Secret ausente: VPS_HOST"; missing=1; fi
+          if [ -z "$VPS_USER" ]; then err "Secret ausente: VPS_USER"; missing=1; fi
+          if [ -z "$VPS_SSH_PRIVATE_KEY" ]; then err "Secret ausente: VPS_SSH_PRIVATE_KEY"; missing=1; fi
+          if [ -z "$TELAFLOW_APP_DIR" ]; then
+            err "Defina VPS_APP_PATH (variable ou secret) com o caminho absoluto do clone telaflow_app (ou telaflow-app) na VPS."
+            missing=1
+          fi
+          exit "$missing"
+
+      - name: Sincronizar monorepo e rodar build na VPS
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          script: |
+            set -euo pipefail
+            cd "${{ env.TELAFLOW_APP_DIR }}"
+            chmod +x deploy/scripts/app-sync.sh
+            ./deploy/scripts/app-sync.sh --force
