@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: "%s · TelaFlow Cloud",
   },
   description:
-    "Autoria, revisão e exportação de experiências visuais para eventos ao vivo. Camada Cloud da plataforma TelaFlow.",
+    "Organize eventos, cenas e exports na Cloud. Camada de nuvem do TelaFlow até o Player.",
   applicationName: "TelaFlow Cloud",
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
@@ -35,13 +35,13 @@ export const metadata: Metadata = {
     siteName: "TelaFlow Cloud",
     title: "TelaFlow Cloud",
     description:
-      "Plataforma visual inteligente para eventos ao vivo — governança e exportação na nuvem.",
+      "Governança na Cloud: event, scene e pack até o Player.",
   },
   twitter: {
     card: "summary_large_image",
     title: "TelaFlow Cloud",
     description:
-      "Autoria e exportação de packs para execução no Player — Cloud → Pack → Player.",
+      "TelaFlow Cloud — eventos, cenas e exports com clareza operacional.",
   },
 };
 
