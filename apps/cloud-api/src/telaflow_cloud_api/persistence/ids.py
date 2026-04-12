@@ -5,6 +5,14 @@ from __future__ import annotations
 import secrets
 
 
+def new_user_id() -> str:
+    return f"usr_{secrets.token_hex(6)}_{secrets.token_hex(4)}"
+
+
+def new_organization_id() -> str:
+    return f"org_{secrets.token_hex(6)}_{secrets.token_hex(4)}"
+
+
 def new_scene_id() -> str:
     return f"scn_{secrets.token_hex(6)}_{secrets.token_hex(4)}"
 

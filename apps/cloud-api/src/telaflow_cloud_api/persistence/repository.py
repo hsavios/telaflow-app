@@ -34,6 +34,81 @@ class Repository:
             self.session.add(OrganizationRow(organization_id=organization_id, name=name))
             self.session.flush()
 
+    def create_organization(self, organization_id: str, name: str) -> dict:
+        row = OrganizationRow(organization_id=organization_id, name=name)
+        self.session.add(row)
+        self.session.flush()
+        return {"organization_id": row.organization_id, "name": row.name}
+
+    def list_organizations(self) -> list[dict]:
+        q = select(OrganizationRow).order_by(OrganizationRow.name)
+        rows = self.session.scalars(q).all()
+        return [
+            {"organization_id": row.organization_id, "name": row.name}
+            for row in rows
+        ]
+
+    def get_organization(self, organization_id: str) -> dict | None:
+        row = self.session.get(OrganizationRow, organization_id)
+        if row is None:
+            return None
+        return {"organization_id": row.organization_id, "name": row.name}
+
+    def update_organization(self, organization_id: str, name: str) -> dict:
+        row = self.session.get(OrganizationRow, organization_id)
+        if row is None:
+            raise ValueError("Organization not found")
+        row.name = name
+        self.session.flush()
+        return {"organization_id": row.organization_id, "name": row.name}
+
+    def list_organization_members(self, organization_id: str) -> list[dict]:
+        q = (
+            select(UserRow, MembershipRow)
+            .join(MembershipRow, UserRow.user_id == MembershipRow.user_id)
+            .where(MembershipRow.organization_id == organization_id)
+            .order_by(UserRow.email)
+        )
+        rows = self.session.execute(q).all()
+        return [
+            {
+                "user_id": user_row.user_id,
+                "email": user_row.email,
+                "display_name": user_row.display_name,
+                "role": membership_row.role,
+            }
+            for user_row, membership_row in rows
+        ]
+
+    def update_membership_role(self, user_id: str, organization_id: str, role: str) -> dict:
+        row = self.session.scalar(
+            select(MembershipRow).where(
+                MembershipRow.user_id == user_id,
+                MembershipRow.organization_id == organization_id,
+            ),
+        )
+        if row is None:
+            raise ValueError("Membership not found")
+        row.role = role
+        self.session.flush()
+        return {
+            "id": row.id,
+            "user_id": row.user_id,
+            "organization_id": row.organization_id,
+            "role": row.role,
+        }
+
+    def delete_membership(self, user_id: str, organization_id: str) -> None:
+        row = self.session.scalar(
+            select(MembershipRow).where(
+                MembershipRow.user_id == user_id,
+                MembershipRow.organization_id == organization_id,
+            ),
+        )
+        if row is not None:
+            self.session.delete(row)
+            self.session.flush()
+
     # --- users / memberships ---
 
     def count_users(self) -> int:
@@ -91,6 +166,37 @@ class Repository:
                 ),
             )
             self.session.flush()
+
+    def create_membership(self, user_id: str, organization_id: str, role: str) -> dict:
+        row = MembershipRow(
+            user_id=user_id,
+            organization_id=organization_id,
+            role=role,
+        )
+        self.session.add(row)
+        self.session.flush()
+        return {
+            "id": row.id,
+            "user_id": row.user_id,
+            "organization_id": row.organization_id,
+            "role": row.role,
+        }
+
+    def get_membership(self, user_id: str, organization_id: str) -> dict | None:
+        row = self.session.scalar(
+            select(MembershipRow).where(
+                MembershipRow.user_id == user_id,
+                MembershipRow.organization_id == organization_id,
+            ),
+        )
+        if row is None:
+            return None
+        return {
+            "id": row.id,
+            "user_id": row.user_id,
+            "organization_id": row.organization_id,
+            "role": row.role,
+        }
 
     def list_organization_ids_for_user(self, user_id: str) -> list[str]:
         q = (

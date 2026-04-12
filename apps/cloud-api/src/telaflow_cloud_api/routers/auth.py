@@ -1,15 +1,17 @@
-﻿"""Login JWT e perfil mínimo do operador."""
+﻿"""Login JWT, OAuth e perfil do operador com RBAC."""
 
 from __future__ import annotations
 
 import os
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from telaflow_cloud_api.auth.jwt_utils import decode_access_token, mint_access_token
+from telaflow_cloud_api.auth.oauth import oauth_login_or_register
 from telaflow_cloud_api.auth.passwords import verify_password
+from telaflow_cloud_api.auth.rbac import get_current_user_context
 from telaflow_cloud_api.persistence.database import get_session
 from telaflow_cloud_api.persistence.repository import Repository
 
@@ -96,4 +98,47 @@ def me(authorization: str | None = Header(None)) -> dict:
         "user_id": str(payload["sub"]),
         "email": str(payload.get("email", "")),
         "organization_id": str(payload["organization_id"]),
+    }
+
+
+@router.get("/auth/oauth/{provider}/login")
+async def oauth_login(provider: str, request: Request):
+    """Initiate OAuth login flow."""
+    from telaflow_cloud_api.auth.oauth import get_oauth
+    
+    oauth = get_oauth()
+    client = oauth.create_client(provider)
+    if not client:
+        raise HTTPException(
+            status_code=400,
+            detail=f"OAuth provider '{provider}' not supported",
+        )
+    
+    redirect_uri = f"{request.url.scheme}://{request.url.netloc}/auth/oauth/{provider}/callback"
+    return await client.authorize_redirect(request, redirect_uri)
+
+
+@router.get("/auth/oauth/{provider}/callback")
+async def oauth_callback(provider: str, request: Request, db: Session = Depends(get_session)):
+    """Handle OAuth callback and complete login."""
+    try:
+        result = await oauth_login_or_register(provider, request, db)
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"OAuth login failed: {str(e)}",
+        ) from e
+
+
+@router.get("/auth/me/rbac")
+def me_with_rbac(user_context: dict = Depends(get_current_user_context)) -> dict:
+    """Get current user with role and permissions."""
+    return {
+        "authenticated": True,
+        "user_id": user_context["user_id"],
+        "email": user_context["email"],
+        "organization_id": user_context["organization_id"],
+        "role": user_context["role"],
+        "permissions": [p.value for p in user_context["permissions"]],
     }

@@ -15,6 +15,7 @@ from telaflow_cloud_api.routers import (
     export_router,
     join_router,
     media_requirements_router,
+    organizations_router,
     scenes_router,
 )
 from telaflow_cloud_api.seed import seed_bootstrap_operator_if_absent, seed_showcase_event_if_absent
@@ -59,6 +60,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(organizations_router)
 app.include_router(events_router)
 app.include_router(scenes_router)
 app.include_router(draw_configs_router)
