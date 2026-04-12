@@ -43,12 +43,22 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
   const cmdConfirmar = seletores.comandos.confirmarSorteio;
   const cmdProximo = seletores.comandos.prepararProximoSorteio;
   const drawSnap = useDrawRuntime();
-  const { resetKey, panelState, winnerValue } = drawSnap;
+  const { resetKey, panelState, winnerValue, drawAttemptId } = drawSnap;
 
   const historicoSorteios = useMemo(
     () => readDrawHistory(),
     [panelState, winnerValue, resetKey],
   );
+
+  const resumoSorteioOperador = useMemo(() => {
+    if (!drawConfig) return null;
+    const y = drawConfig.max_winners;
+    const x = panelState === "ready" ? drawAttemptId + 1 : Math.max(1, drawAttemptId);
+    const ultimo =
+      historicoSorteios.find((h) => h.resetKey === resetKey)?.value ??
+      (historicoSorteios[0]?.value != null ? historicoSorteios[0]!.value : null);
+    return { x, y, ultimo };
+  }, [drawConfig, drawAttemptId, historicoSorteios, panelState, resetKey]);
 
   const drawBranding = useMemo(() => {
     const b = seletores.loadedPack?.branding;
@@ -150,6 +160,39 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
       <p className="draw-scene-panel__operator-badge" aria-hidden="true">
         Painel do operador — não é o telão do público
       </p>
+      {resumoSorteioOperador ? (
+        <div className="draw-scene-panel__pulse" aria-live="polite">
+          <div className="draw-scene-panel__pulse-grid">
+            <div className="draw-scene-panel__pulse-cell">
+              <span className="draw-scene-panel__pulse-k">Sorteio</span>
+              <span className="draw-scene-panel__pulse-v">
+                {resumoSorteioOperador.x} de {resumoSorteioOperador.y}
+              </span>
+              <span className="draw-scene-panel__pulse-h">Referência do pack (máx. prémios)</span>
+            </div>
+            <div className="draw-scene-panel__pulse-cell">
+              <span className="draw-scene-panel__pulse-k">Último número</span>
+              <span className="draw-scene-panel__pulse-v">
+                {resumoSorteioOperador.ultimo != null ? resumoSorteioOperador.ultimo : "—"}
+              </span>
+              <span className="draw-scene-panel__pulse-h">Nesta cena ou último no equipamento</span>
+            </div>
+            <div className="draw-scene-panel__pulse-cell">
+              <span className="draw-scene-panel__pulse-k">Próximo</span>
+              <span
+                className={
+                  panelState === "ready"
+                    ? "draw-scene-panel__pulse-chip draw-scene-panel__pulse-chip--ok"
+                    : "draw-scene-panel__pulse-chip"
+                }
+              >
+                {panelState === "ready" ? "Pronto" : "Aguarde"}
+              </span>
+              <span className="draw-scene-panel__pulse-h">Para novo sorteio nesta cena</span>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <p className="draw-scene-panel__muted">
         Sorteio MVP: um número por execução, sem exclusão persistente de números nem múltiplos vencedores.
         Sem Cloud em runtime.
@@ -221,22 +264,21 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
       {historicoSorteios.length > 0 && (
         <div className="draw-scene-panel__history">
           <h3 className="draw-scene-panel__history-title">Últimos sorteios (neste equipamento)</h3>
-          <ul className="draw-scene-panel__history-list">
+          <div className="draw-scene-panel__chips" role="list">
             {historicoSorteios.map((row, i) => (
-              <li key={`h-${i}-${row.at}-${row.resetKey}-${row.value}`} className="draw-scene-panel__history-item">
-                <span className="draw-scene-panel__history-value">{row.value}</span>
-                <span className="draw-scene-panel__history-name">{row.drawName || "—"}</span>
-                <time className="draw-scene-panel__history-time" dateTime={row.at}>
-                  {new Date(row.at).toLocaleString("pt-BR", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </time>
-              </li>
+              <div
+                key={`h-${i}-${row.at}-${row.resetKey}-${row.value}`}
+                className="draw-scene-panel__chip"
+                role="listitem"
+                title={`${row.drawName || "Sorteio"} · ${new Date(row.at).toLocaleString("pt-BR")}`}
+              >
+                <span className="draw-scene-panel__chip-value">{row.value}</span>
+                <span className="draw-scene-panel__chip-meta">
+                  {new Date(row.at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
 

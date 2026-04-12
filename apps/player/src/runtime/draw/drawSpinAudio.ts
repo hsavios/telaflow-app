@@ -1,10 +1,10 @@
 ﻿/**
  * Tambor sintético (Web Audio API) — envelope progressivo (ataque + decay);
- * silêncio nos últimos passos antes do número final; toque curto de resolução no último tick.
+ * silêncio prolongado nos últimos passos (pausa cinematográfica antes do reveal no palco).
  */
 
-/** Sem áudio nestes últimos passos (pausa dramática antes do resultado). */
-const SILENT_LAST_STEPS = 3;
+/** Sem áudio nestes últimos passos — o toque final sai em `DrawExperienceV1` ao revelar resultado. */
+const SILENT_LAST_STEPS = 4;
 
 export class DrawSpinAudio {
   private ctx: AudioContext | null = null;

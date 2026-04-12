@@ -41,7 +41,13 @@ function estiloBranding(b: PublicWindowDrawBranding | null | undefined): CSSProp
   };
 }
 
-function useSpinDisplay(
+type SpinPalcoUi = {
+  display: number | null;
+  /** Penúltimo valor visível (durante o freeze antes do alvo): glow reduzido no palco. */
+  isSpinPreFinal: boolean;
+};
+
+function useSpinPalcoUi(
   panelState: DrawPanelState,
   pendingWinner: number | null,
   winnerValue: number | null,
@@ -50,8 +56,9 @@ function useSpinDisplay(
   min: number,
   max: number,
   soundEnabled: boolean,
-): number | null {
+): SpinPalcoUi {
   const [display, setDisplay] = useState<number | null>(null);
+  const [isSpinPreFinal, setIsSpinPreFinal] = useState(false);
   const audioRef = useRef<DrawSpinAudio | null>(null);
 
   useEffect(() => {
@@ -62,6 +69,7 @@ function useSpinDisplay(
 
   useEffect(() => {
     if (panelState !== "drawing" || pendingWinner == null) {
+      setIsSpinPreFinal(false);
       if (panelState !== "drawing") {
         audioRef.current?.dispose();
         audioRef.current = null;
@@ -84,13 +92,17 @@ function useSpinDisplay(
     let cancelled = false;
     const timers: number[] = [];
     let acc = 0;
+    const n = ticks.length;
     ticks.forEach((tick, idx) => {
       const id = window.setTimeout(() => {
         if (cancelled) return;
         setDisplay(tick.value);
         audio?.playTick(idx, ticks.length);
-        if (idx === ticks.length - 1) {
-          audio?.playResultChime();
+        if (n >= 2 && idx === n - 2) {
+          setIsSpinPreFinal(true);
+        }
+        if (idx === n - 1) {
+          setIsSpinPreFinal(false);
         }
       }, acc);
       timers.push(id);
@@ -99,13 +111,14 @@ function useSpinDisplay(
 
     return () => {
       cancelled = true;
+      setIsSpinPreFinal(false);
       timers.forEach((tid) => window.clearTimeout(tid));
       audio?.dispose();
       if (audioRef.current === audio) audioRef.current = null;
     };
   }, [panelState, pendingWinner, resetKey, drawAttemptId, min, max, soundEnabled]);
 
-  return display;
+  return { display, isSpinPreFinal };
 }
 
 export function DrawExperienceV1({
@@ -127,7 +140,7 @@ export function DrawExperienceV1({
   const soundEnabled =
     soundEnabledProp ?? (variant === "telao" ? true : false);
   const brandStyle = estiloBranding(branding);
-  const display = useSpinDisplay(
+  const { display, isSpinPreFinal } = useSpinPalcoUi(
     panelState,
     pendingWinner,
     winnerValue,
@@ -138,10 +151,32 @@ export function DrawExperienceV1({
     soundEnabled,
   );
 
+  const chimePlayedRef = useRef<string | null>(null);
+  useEffect(() => {
+    chimePlayedRef.current = null;
+  }, [resetKey]);
+
+  useEffect(() => {
+    if (!soundEnabled || variant !== "telao") return;
+    if (panelState !== "result_generated" || winnerValue == null) return;
+    const key = `${resetKey}:${drawAttemptId}:${winnerValue}`;
+    if (chimePlayedRef.current === key) return;
+    chimePlayedRef.current = key;
+    const a = new DrawSpinAudio();
+    void a.prime().then(() => {
+      a.playResultChime();
+      window.setTimeout(() => a.dispose(), 400);
+    });
+  }, [soundEnabled, variant, panelState, winnerValue, resetKey, drawAttemptId]);
+
   const brandClass = branding ? "draw-exp--has-branding" : "";
+  const revealBrandMutedClass =
+    variant === "telao" && branding && (panelState === "result_generated" || panelState === "result_confirmed")
+      ? "draw-exp--reveal-brand-muted"
+      : "";
   const rootClass =
     variant === "telao"
-      ? `draw-exp draw-exp--telao ${brandClass}`.trim()
+      ? `draw-exp draw-exp--telao ${brandClass} ${revealBrandMutedClass}`.trim()
       : `draw-exp draw-exp--operator ${brandClass}`.trim();
   const hint = audienceHint?.trim();
 
@@ -187,14 +222,18 @@ export function DrawExperienceV1({
   }
 
   if (panelState === "drawing") {
+    const numSpinClass = [
+      "draw-exp__number",
+      "draw-exp__number--spinning",
+      variant === "telao" ? "draw-exp__number--telao-hero" : "",
+      isSpinPreFinal ? "draw-exp__number--pre-final-freeze" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
     if (variant === "telao") {
       return (
         <div className={`${rootClass} draw-exp--drawing draw-exp--telao-stage`} style={brandStyle} role="status">
-          <p
-            className="draw-exp__number draw-exp__number--spinning draw-exp__number--telao-hero"
-            aria-live="polite"
-            aria-atomic="true"
-          >
+          <p className={numSpinClass} aria-live="polite" aria-atomic="true">
             {display != null ? display : "—"}
           </p>
           {drawName.trim() ? (
@@ -213,11 +252,7 @@ export function DrawExperienceV1({
           <p className="draw-exp__prize draw-exp__prize--dim">{drawName.trim()}</p>
         ) : null}
         <p className="draw-exp__status">Sorteando</p>
-        <p
-          className="draw-exp__number draw-exp__number--spinning"
-          aria-live="polite"
-          aria-atomic="true"
-        >
+        <p className={numSpinClass} aria-live="polite" aria-atomic="true">
           {display != null ? display : "—"}
         </p>
         {hint ? <p className="draw-exp__hint">{hint}</p> : null}
@@ -229,11 +264,16 @@ export function DrawExperienceV1({
     if (variant === "telao") {
       return (
         <div className={`${rootClass} draw-exp--result draw-exp--telao-stage`} style={brandStyle} role="status">
-          <p className="draw-exp__number draw-exp__number--reveal draw-exp__number--telao-hero" aria-live="polite">
+          <p
+            className="draw-exp__number draw-exp__number--reveal draw-exp__number--telao-hero draw-exp__number--reveal-premium"
+            aria-live="polite"
+          >
             {winnerValue}
           </p>
           {drawName.trim() ? (
-            <p className="draw-exp__prize draw-exp__prize--telao-under-number">{drawName.trim()}</p>
+            <p className="draw-exp__prize draw-exp__prize--telao-under-number draw-exp__prize--telao-after-reveal">
+              {drawName.trim()}
+            </p>
           ) : null}
           <p className="draw-exp__label draw-exp__label--telao-subtle">{resultLabel}</p>
           <p className="draw-exp__sub draw-exp__sub--telao-subtle">Aguardando confirmação do operador</p>
@@ -259,11 +299,16 @@ export function DrawExperienceV1({
     if (variant === "telao") {
       return (
         <div className={`${rootClass} draw-exp--confirmed draw-exp--telao-stage`} style={brandStyle} role="status">
-          <p className="draw-exp__number draw-exp__number--confirmed draw-exp__number--telao-hero" aria-live="polite">
+          <p
+            className="draw-exp__number draw-exp__number--confirmed draw-exp__number--telao-hero draw-exp__number--reveal-premium"
+            aria-live="polite"
+          >
             {winnerValue}
           </p>
           {drawName.trim() ? (
-            <p className="draw-exp__prize draw-exp__prize--telao-under-number">{drawName.trim()}</p>
+            <p className="draw-exp__prize draw-exp__prize--telao-under-number draw-exp__prize--telao-after-reveal">
+              {drawName.trim()}
+            </p>
           ) : null}
           <p className="draw-exp__label draw-exp__label--telao-subtle">{resultLabel}</p>
         </div>
