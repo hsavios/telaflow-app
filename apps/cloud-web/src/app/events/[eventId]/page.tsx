@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppFooter } from "@/components/AppFooter";
 import { AppHeader } from "@/components/AppHeader";
 import { DrawConfigsWorkspace } from "@/components/events/DrawConfigsWorkspace";
@@ -21,6 +21,8 @@ import {
   type CloudScene,
 } from "@/lib/cloud-api";
 import { rememberLastOpenedEvent } from "@/lib/cloud-prefs";
+import { EventRuntimePreviewModal } from "@/components/preview/EventRuntimePreviewModal";
+import { orderedPreviewScenes } from "@/components/preview/runtimePreviewModel";
 
 type PageState = "loading" | "ready" | "not_found" | "error";
 
@@ -70,8 +72,14 @@ export default function EventDetailPage() {
   >([]);
   const [scenesError, setScenesError] = useState<string | null>(null);
   const [aba, setAba] = useState<EditorAba>("scenes");
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const apiConfigured = getCloudApiBase() !== null;
+
+  const podeSimularEvento = useMemo(
+    () => orderedPreviewScenes(scenes).length > 0,
+    [scenes],
+  );
 
   const reloadScenes = useCallback(async () => {
     if (!eventId || !getCloudApiBase()) return;
@@ -217,27 +225,53 @@ export default function EventDetailPage() {
         {pageState === "ready" && event ? (
           <>
             <header className="border-b border-tf-border pb-8">
-              <p className="text-xs font-semibold uppercase tracking-wide text-tf-subtle">
-                Editor do evento
-              </p>
-              <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-tf-fg md:text-4xl">
-                {event.name}
-              </h1>
-              <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
-                <div className="min-w-0">
-                  <dt className="text-tf-faint">event_id</dt>
-                  <dd className="mt-1 break-all font-mono text-xs text-tf-muted">
-                    {event.event_id}
-                  </dd>
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-tf-subtle">
+                    Editor do evento
+                  </p>
+                  <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-tf-fg md:text-4xl">
+                    {event.name}
+                  </h1>
+                  <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
+                    <div className="min-w-0">
+                      <dt className="text-tf-faint">event_id</dt>
+                      <dd className="mt-1 break-all font-mono text-xs text-tf-muted">
+                        {event.event_id}
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-tf-faint">organization_id</dt>
+                      <dd className="mt-1 break-all font-mono text-xs text-tf-muted">
+                        {event.organization_id}
+                      </dd>
+                    </div>
+                  </dl>
                 </div>
-                <div className="min-w-0">
-                  <dt className="text-tf-faint">organization_id</dt>
-                  <dd className="mt-1 break-all font-mono text-xs text-tf-muted">
-                    {event.organization_id}
-                  </dd>
-                </div>
-              </dl>
+                <button
+                  type="button"
+                  onClick={() => setPreviewOpen(true)}
+                  disabled={!apiConfigured || !podeSimularEvento}
+                  title={
+                    !podeSimularEvento
+                      ? "Ative pelo menos uma cena no roteiro para abrir a simulação."
+                      : "Abrir palco simulado no browser (sem export)"
+                  }
+                  className="shrink-0 rounded-tf border border-violet-500/35 bg-gradient-to-br from-violet-600/90 to-violet-800/95 px-5 py-3 text-center text-sm font-bold text-white shadow-lg shadow-violet-950/30 transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Simular evento
+                </button>
+              </div>
             </header>
+
+            <EventRuntimePreviewModal
+              open={previewOpen}
+              onClose={() => setPreviewOpen(false)}
+              eventName={event.name}
+              scenes={scenes}
+              drawConfigs={drawConfigs}
+              mediaRequirements={mediaRequirements}
+            />
 
             <nav
               className="tf-scroll-touch mt-6 flex gap-2 overflow-x-auto border-b border-tf-border pb-3 sm:mt-8 sm:flex-wrap sm:overflow-visible sm:pb-4"
