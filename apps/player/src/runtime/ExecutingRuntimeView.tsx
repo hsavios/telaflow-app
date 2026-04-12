@@ -1,8 +1,9 @@
 ﻿import type { DrawConfigContract, SceneContract } from "@telaflow/shared-contracts";
 import { useMemo } from "react";
 import type { PackLoaderSuccess } from "../pack/validateLoadedPack.js";
-import { describeOperationalKindPt } from "./operationalState.js";
-import { ScenePresenter } from "./ScenePresenter.js";
+import { DrawRuntimeProvider } from "./drawRuntimeContext.js";
+import { OperatorExecutingLayout } from "./OperatorExecutingLayout.js";
+import { PublicSceneView } from "./PublicSceneView.js";
 import { enabledScenesSorted } from "./sceneOrder.js";
 import {
   resolveSceneMediaState,
@@ -57,9 +58,6 @@ export function ExecutingRuntimeView({
     ? resolveSceneMediaState(atual, workspaceRoot, bindings, fileExistsCache)
     : "no_media_required";
 
-  const prev = () => onSceneIndexChange(Math.max(0, idx - 1));
-  const next = () => onSceneIndexChange(Math.min(n - 1, idx + 1));
-
   if (n === 0 || !atual) {
     return (
       <div className="player-exec-layout player-exec-layout--empty">
@@ -73,63 +71,40 @@ export function ExecutingRuntimeView({
     );
   }
 
-  return (
-    <div className="player-exec-layout">
-      <aside className="player-exec-sidebar" aria-label="Roteiro">
-        <h3 className="player-exec-sidebar__title">Roteiro</h3>
-        <ol className="player-exec-script">
-          {ordenadas.map((sc, i) => (
-            <li key={sc.scene_id}>
-              <button
-                type="button"
-                className={
-                  i === idx ? "player-exec-script__btn is-current" : "player-exec-script__btn"
-                }
-                onClick={() => onSceneIndexChange(i)}
-              >
-                <span className="player-exec-script__name">{sc.name}</span>
-                <span className="player-exec-script__meta">
-                  <code>{sc.type}</code> · ordem {sc.sort_order}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ol>
-      </aside>
+  const drawRuntimeResetKey = `${atual.scene_id}:${atual.draw_config_id ?? ""}`;
 
-      <div className="player-exec-stage">
-        <ScenePresenter
+  return (
+    <DrawRuntimeProvider resetKey={drawRuntimeResetKey}>
+      <div className="player-exec-split-root">
+        <section className="player-exec-public-shell" aria-label="Saída pública MVP">
+          <p className="player-exec-public-shell__label">
+            Saída pública (MVP) — pré-visualização no mesmo tela; dual-screen real fica para uma fase
+            futura.
+          </p>
+          <PublicSceneView
+            scene={atual}
+            mediaState={mediaState}
+            drawConfig={drawConfigResolved}
+            workspaceRoot={workspaceRoot}
+            bindings={bindings}
+            mediaRequirement={mediaRequirement}
+          />
+        </section>
+
+        <OperatorExecutingLayout
+          ordenadas={ordenadas}
+          sceneIndex={idx}
           scene={atual}
-          sceneOrdinal={idx + 1}
-          sceneTotal={n}
           mediaState={mediaState}
           drawConfig={drawConfigResolved}
           workspaceRoot={workspaceRoot}
           bindings={bindings}
           mediaRequirement={mediaRequirement}
+          onSceneIndexChange={onSceneIndexChange}
+          onFinishExecution={onFinishExecution}
           onPlaybackLog={onPlaybackLog}
         />
       </div>
-
-      <aside className="player-exec-ops" aria-label="Controlo operacional">
-        <h3 className="player-exec-ops__title">Operação</h3>
-        <p className="player-exec-ops__state">
-          <span className="player-exec-ops__label">Estado</span>
-          <code className="player-exec-ops__code">executing</code>
-        </p>
-        <p className="player-exec-ops__hint">{describeOperationalKindPt("executing")}</p>
-        <div className="player-exec-ops__nav">
-          <button type="button" disabled={idx <= 0} onClick={prev}>
-            Anterior
-          </button>
-          <button type="button" disabled={idx >= n - 1} onClick={next}>
-            Seguinte
-          </button>
-        </div>
-        <button type="button" className="player-exec-ops__finish" onClick={onFinishExecution}>
-          Concluir execução
-        </button>
-      </aside>
-    </div>
+    </DrawRuntimeProvider>
   );
 }

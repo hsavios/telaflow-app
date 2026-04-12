@@ -1,25 +1,20 @@
 ﻿/**
  * Painel operacional de sorteio (MVP) para cenas `draw` em `executing`.
  * Estados: idle → ready | error; ready → drawing → result_generated → result_confirmed.
+ * Estado compartilhado via DrawRuntimeProvider (visão pública espelha o mesmo runtime).
  * Sem Cloud em runtime, sem múltiplos vencedores nem persistência de exclusão de números.
  */
 
 import type { DrawConfigContract, SceneContract } from "@telaflow/shared-contracts";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { EXECUTION_LOG_CODES } from "../execution/executionLog.js";
 import type { ExecutionLogLevel } from "../execution/executionLog.js";
+import { useDrawRuntime } from "./drawRuntimeContext.js";
 import { validateDrawSceneNumberRange } from "./drawValidation.js";
 import { effectiveNumberRange, randomIntInclusive } from "./drawNumberRange.js";
 
-/** Estados internos do painel de sorteio (não confundir com a FSM operacional do Player). */
-export type DrawPanelState =
-  | "idle"
-  | "ready"
-  | "drawing"
-  | "result_generated"
-  | "result_confirmed"
-  | "error";
+export type { DrawPanelState } from "./drawRuntimeContext.js";
 
 type LogPayload = {
   level: ExecutionLogLevel;
@@ -51,18 +46,20 @@ function sleep(ms: number): Promise<void> {
 }
 
 export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
-  const [panelState, setPanelState] = useState<DrawPanelState>("idle");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [winnerValue, setWinnerValue] = useState<number | null>(null);
+  const {
+    resetKey,
+    panelState,
+    setPanelState,
+    winnerValue,
+    setWinnerValue,
+    errorMessage,
+    setErrorMessage,
+  } = useDrawRuntime();
 
-  const resetKey = `${scene.scene_id}:${scene.draw_config_id ?? ""}`;
   const failLoggedRef = useRef<string | null>(null);
   const staticFailLoggedRef = useRef<string | null>(null);
 
   useEffect(() => {
-    setPanelState("idle");
-    setErrorMessage(null);
-    setWinnerValue(null);
     failLoggedRef.current = null;
     staticFailLoggedRef.current = null;
   }, [resetKey]);
@@ -94,11 +91,29 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
     [onPlaybackLog, resetKey],
   );
 
-  /* Validação após montar / mudar cena: idle → ready ou error (só number_range resolvido no pack). */
+  /* Validação e erros estáticos: sincroniza contexto para a visão pública espelhar o mesmo estado. */
   useEffect(() => {
     if (scene.type !== "draw") return;
-    if (!scene.draw_config_id || !drawConfig) return;
-    if (drawConfig.draw_type !== "number_range") return;
+
+    if (!scene.draw_config_id) {
+      setErrorMessage(
+        "Esta cena de sorteio não tem identificador (draw_config_id). Corrija o export na Cloud.",
+      );
+      setPanelState("error");
+      return;
+    }
+    if (!drawConfig) {
+      setErrorMessage(
+        "A configuração deste sorteio não está neste pacote. Verifique draw-configs.json no export.",
+      );
+      setPanelState("error");
+      return;
+    }
+    if (drawConfig.draw_type !== "number_range") {
+      setErrorMessage("Este tipo de sorteio não é suportado neste MVP (apenas number_range).");
+      setPanelState("error");
+      return;
+    }
 
     const v = validateDrawSceneNumberRange(scene, drawConfig);
     if (!v.ok) {
@@ -112,7 +127,7 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
     }
     setPanelState("ready");
     setErrorMessage(null);
-  }, [drawConfig, logFailOnce, resetKey, scene]);
+  }, [drawConfig, logFailOnce, resetKey, scene, setErrorMessage, setPanelState]);
 
   const startDraw = useCallback(async () => {
     if (!drawConfig || panelState !== "ready") return;
@@ -153,7 +168,16 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
         "error",
       );
     }
-  }, [drawConfig, logFailOnce, onPlaybackLog, panelState, scene]);
+  }, [
+    drawConfig,
+    logFailOnce,
+    onPlaybackLog,
+    panelState,
+    scene,
+    setErrorMessage,
+    setPanelState,
+    setWinnerValue,
+  ]);
 
   const confirmDraw = useCallback(() => {
     if (winnerValue == null || !drawConfig || panelState !== "result_generated") return;
@@ -164,7 +188,7 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
       "info",
     );
     setPanelState("result_confirmed");
-  }, [drawConfig, onPlaybackLog, panelState, scene.scene_id, winnerValue]);
+  }, [drawConfig, onPlaybackLog, panelState, scene.scene_id, setPanelState, winnerValue]);
 
   if (scene.type !== "draw") {
     return null;
