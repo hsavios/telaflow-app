@@ -52,7 +52,7 @@ export function planejarSincronizacaoEstaticaSorteio(
     return {
       resetKey,
       panelState: "error",
-      errorMessage: "Este tipo de sorteio não é suportado neste MVP (apenas number_range).",
+      errorMessage: "Este tipo de sorteio não é suportado nesta versão do Player (apenas number_range).",
       winnerValue: null,
       pendingWinner: null,
     };

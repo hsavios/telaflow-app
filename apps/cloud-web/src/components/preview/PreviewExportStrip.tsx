@@ -120,7 +120,7 @@ export function PreviewExportStrip({
 
       {exportBanner ? (
         <p
-          className={`mt-3 text-xs font-medium ${
+          className={`mt-3 break-words text-xs font-medium ${
             exportBanner.tone === "ok" ? "text-emerald-300/95" : "text-red-300/95"
           }`}
           role="status"

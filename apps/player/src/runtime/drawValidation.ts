@@ -23,7 +23,7 @@ export function validateDrawSceneNumberRange(
   if (drawConfig.draw_type !== "number_range") {
     return {
       ok: false,
-      reason: `Tipo "${drawConfig.draw_type}" não é suportado no MVP (apenas number_range).`,
+      reason: `Tipo "${drawConfig.draw_type}" não é suportado nesta versão (apenas number_range).`,
     };
   }
   const { min, max } = effectiveNumberRange(drawConfig);

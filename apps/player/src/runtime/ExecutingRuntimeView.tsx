@@ -104,10 +104,11 @@ export function ExecutingRuntimeView({ fileExistsCache }: Props) {
     <>
       <PublicWindowSyncEmitter fileExistsCache={fileExistsCache} />
       <div className="player-exec-split-root">
-        <section className="player-exec-public-shell" aria-label="Saída pública (pré-visualização)">
+        <section className="player-exec-public-shell" aria-label="Saída pública do evento">
           <div className="player-exec-public-shell__toolbar">
             <p className="player-exec-public-shell__label">
-              Prévia do telão nesta janela. Abra a janela <strong>Telão</strong> no monitor do público — ela só mostra o palco, sem controles.
+              Aqui o operador acompanha o mesmo conteúdo do telão. Para o público, abra a janela{" "}
+              <strong>Telão</strong> no projetor ou segundo monitor — só o palco, sem controles.
             </p>
             <button
               type="button"

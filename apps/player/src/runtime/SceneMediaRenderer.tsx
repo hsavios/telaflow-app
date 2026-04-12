@@ -33,7 +33,7 @@ type Props = {
    * `operator`: comportamento MVP completo para o painel do operador.
    */
   presentation?: "operator" | "public";
-  /** Pré-visualização compacta (ex.: próxima cena) — sem autoplay em vídeo. */
+  /** Prévia compacta (ex.: próxima cena) — sem autoplay em vídeo. */
   visualVariant?: "default" | "peek";
 };
 
@@ -204,7 +204,7 @@ export function SceneMediaRenderer({
     return (
       <section
         className={`scene-media scene-media--placeholder${pubClass}${peekClass}`}
-        aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
+        aria-label={isPeek ? "Prévia da próxima cena" : "Mídia da cena"}
       >
         <p className="scene-media__placeholder-text">
           {isPublic
@@ -219,7 +219,7 @@ export function SceneMediaRenderer({
     return (
       <section
         className={`scene-media scene-media--fallback scene-media--${mediaState}${pubClass}${peekClass}`}
-        aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
+        aria-label={isPeek ? "Prévia da próxima cena" : "Mídia da cena"}
       >
         <div className="scene-media__fallback-card">
           <strong>{isPublic ? "Não foi possível exibir esta mídia" : "Mídia indisponível"}</strong>
@@ -242,7 +242,7 @@ export function SceneMediaRenderer({
     return (
       <section
         className={`scene-media scene-media--fallback scene-media--resolve-error${pubClass}${peekClass}`}
-        aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
+        aria-label={isPeek ? "Prévia da próxima cena" : "Mídia da cena"}
       >
         <div className="scene-media__fallback-card">
           <strong>{isPublic ? "Conteúdo indisponível" : "Arquivo inacessível"}</strong>
@@ -266,16 +266,16 @@ export function SceneMediaRenderer({
     return (
       <section
         className={`scene-media scene-media--placeholder${pubClass}${peekClass}`}
-        aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
+        aria-label={isPeek ? "Prévia da próxima cena" : "Mídia da cena"}
       >
         <p className="scene-media__placeholder-text">
           {isPublic
             ? desconhecido
-              ? "Não foi possível reconhecer este ficheiro como imagem ou vídeo pelo nome. Prefira JPG, PNG ou MP4."
-              : "Este tipo de mídia não é reproduzido nesta versão do player (apenas imagem e vídeo)."
+              ? "Não foi possível reconhecer este arquivo como imagem ou vídeo pelo nome. Prefira JPG, PNG ou MP4."
+              : "Este tipo de mídia não é reproduzido nesta versão do Player (apenas imagem e vídeo)."
             : desconhecido
-              ? "Extensão do ficheiro não reconhecida; defina media_type no manifest ou use .jpg, .png, .mp4, …"
-              : `Tipo «${String(effectiveKind)}» — o player reproduz apenas imagem e vídeo.`}
+              ? "Extensão do arquivo não reconhecida; defina media_type no manifest ou use .jpg, .png, .mp4, …"
+              : `Tipo «${String(effectiveKind)}» — o Player reproduz apenas imagem e vídeo.`}
         </p>
       </section>
     );
@@ -283,11 +283,11 @@ export function SceneMediaRenderer({
 
   if (mediaState === "media_bound" && effectiveKind === "image" && assetSrc) {
     const pb = mediaPlaybackId;
-    const mediaKey = `${scene.scene_id}-${mediaId}-${assetSrc}`;
+    const mediaKey = `${scene.scene_id}-${mediaId}-${assetSrc}-${mediaPlaybackId}`;
     return (
       <section
         className={`scene-media scene-media--playback${pubClass}${peekClass}`}
-        aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
+        aria-label={isPeek ? "Prévia da próxima cena" : "Mídia da cena"}
       >
         <img
           key={mediaKey}
@@ -305,11 +305,11 @@ export function SceneMediaRenderer({
 
   if (mediaState === "media_bound" && effectiveKind === "video" && assetSrc) {
     const pb = mediaPlaybackId;
-    const mediaKey = `${scene.scene_id}-${mediaId}-${assetSrc}`;
+    const mediaKey = `${scene.scene_id}-${mediaId}-${assetSrc}-${mediaPlaybackId}`;
     return (
       <section
         className={`scene-media scene-media--playback${pubClass}${peekClass}`}
-        aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
+        aria-label={isPeek ? "Prévia da próxima cena" : "Mídia da cena"}
       >
         <video
           key={mediaKey}
@@ -336,7 +336,7 @@ export function SceneMediaRenderer({
     return (
       <section
         className={`scene-media scene-media--placeholder${pubClass}${peekClass}`}
-        aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
+        aria-label={isPeek ? "Prévia da próxima cena" : "Mídia da cena"}
       >
         <p className="scene-media__placeholder-text">
           {isPublic ? "Carregando conteúdo..." : "Preparando mídia…"}
@@ -348,7 +348,7 @@ export function SceneMediaRenderer({
   return (
     <section
       className={`scene-media scene-media--placeholder${pubClass}${peekClass}`}
-      aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
+      aria-label={isPeek ? "Prévia da próxima cena" : "Mídia da cena"}
     >
       <p className="scene-media__placeholder-text">
         {isPublic ? "Conteúdo indisponível." : describeSceneMediaDerivedStatePt(mediaState)}

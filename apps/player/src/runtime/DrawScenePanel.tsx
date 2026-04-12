@@ -1,5 +1,5 @@
 ﻿/**
- * Painel operacional de sorteio (MVP) para cenas `draw` em `executing`.
+ * Painel operacional de sorteio para cenas `draw` em `executing`.
  * Estado operacional no `RuntimeSessionStore`; aqui só leitura + ações explícitas e log estático.
  */
 
@@ -87,7 +87,7 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
     } else if (!drawConfig) {
       message = `scene_id=${scene.scene_id}; draw_config_id=${scene.draw_config_id} não encontrado em draw-configs.json do pack.`;
     } else if (drawConfig.draw_type !== "number_range") {
-      message = `scene_id=${scene.scene_id}; draw_config_id=${drawConfig.draw_config_id}; draw_type=${drawConfig.draw_type} não suportado no MVP (apenas number_range).`;
+      message = `scene_id=${scene.scene_id}; draw_config_id=${drawConfig.draw_config_id}; draw_type=${drawConfig.draw_type} não suportado (apenas number_range).`;
     }
     if (!message) return;
     if (staticFailLoggedRef.current === k) return;
@@ -139,7 +139,7 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
     return (
       <DrawPanelChrome variant="error">
         <p className="draw-scene-panel__hint">
-          Tipo <code>{drawConfig.draw_type}</code> não suportado neste MVP (apenas{" "}
+          Tipo <code>{drawConfig.draw_type}</code> não suportado nesta versão do Player (apenas{" "}
           <code>number_range</code>).
         </p>
       </DrawPanelChrome>
@@ -168,7 +168,7 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
               <span className="draw-scene-panel__pulse-v">
                 {resumoSorteioOperador.x} de {resumoSorteioOperador.y}
               </span>
-              <span className="draw-scene-panel__pulse-h">Referência do pack (máx. prémios)</span>
+              <span className="draw-scene-panel__pulse-h">Referência do pack (máx. de prêmios)</span>
             </div>
             <div className="draw-scene-panel__pulse-cell">
               <span className="draw-scene-panel__pulse-k">Último número</span>
@@ -226,7 +226,7 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
         </div>
         <div>
           <dt>Máx. vencedores (referência)</dt>
-          <dd>{drawConfig.max_winners} (MVP: só um número sorteado)</dd>
+          <dd>{drawConfig.max_winners} (nesta versão: um número por sorteio na cena)</dd>
         </div>
       </dl>
 
@@ -324,7 +324,7 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
             </button>
           </div>
           <p className="draw-scene-panel__confirmed-note">
-            O valor foi registrado no log de execução (JSONL). Você pode avançar no roteiro quando estiver pronto.
+            O valor foi registrado no log do evento. Pode avançar no roteiro ou iniciar outro sorteio nesta cena.
           </p>
         </>
       )}

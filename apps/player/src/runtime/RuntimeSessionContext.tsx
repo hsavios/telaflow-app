@@ -283,7 +283,7 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
       const row = appendExecutionLog(prev.appState.executionLog, {
         level: "info",
         code: EXECUTION_LOG_CODES.EXECUTION_FINISHED,
-        message: "Execução concluída pelo operador (MVP).",
+        message: "Evento concluído pelo operador.",
       });
       persistirLinhaLog(prev.appState, row[row.length - 1]!);
       const next = transicionarSessaoRuntime(prev, { type: "CONCLUIR_EXECUCAO" });

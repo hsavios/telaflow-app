@@ -16,7 +16,8 @@ export function PublicWindowSyncEmitter({ fileExistsCache }: Props) {
 
   const snapshot = useMemo(
     () => derivarSnapshotJanelaPublica(estado, fileExistsCache),
-    [estado.appState, estado.drawRuntime, estado.operationalContext, fileExistsCache],
+    /* Estado completo: evita telão defasado se só mudarem bindings, índice de cena ou IDs operacionais. */
+    [estado, fileExistsCache],
   );
 
   const serial = useRef(0);
@@ -28,10 +29,14 @@ export function PublicWindowSyncEmitter({ fileExistsCache }: Props) {
       if (n !== serial.current) return;
       void emitirSnapshotJanelaPublica(snapshot);
     };
-    /* Garante entrega após a webview pública registrar o listener (corrida na abertura). */
+    /* Reemissões curtas cobrem corrida ao abrir o telão e webview lenta. */
     enviar();
-    const t = window.setTimeout(enviar, 120);
-    return () => window.clearTimeout(t);
+    const t1 = window.setTimeout(enviar, 120);
+    const t2 = window.setTimeout(enviar, 400);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
   }, [snapshot]);
 
   return null;

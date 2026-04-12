@@ -36,8 +36,8 @@ function PublicWindowRoot() {
         <p className="public-window-root__title">TelaFlow — Telão</p>
         <p className="public-window-root__hint">
           {aguardandoExecucao
-            ? "O operador ainda não iniciou o evento neste equipamento. Esta janela só exibe o que o operador colocar no palco."
-            : "O roteiro está em curso. Em instantes aparece aqui a cena que o operador selecionar."}
+            ? "Aguarde o operador iniciar o evento. Esta janela mostra só o conteúdo do palco, em tempo real."
+            : "O roteiro está no ar. Em instantes aparece aqui a cena que o operador selecionar."}
         </p>
         <p className="public-window-root__meta">
           {aguardandoExecucao ? "Aguardando início do evento." : "Sincronizado com a mesa do operador."}

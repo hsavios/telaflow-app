@@ -16,7 +16,7 @@ import "./App.css";
 function legendaEstadoApp(appState: PlayerAppState): string {
   switch (appState.kind) {
     case "idle":
-      return "Aguardando pasta do pack";
+      return "Aguardando pasta do export";
     case "blocked":
       return "Não foi possível carregar ou continuar";
     case "pack_loaded":
@@ -89,8 +89,8 @@ function AppShell() {
       <header className="player-header">
         <h1>TelaFlow Player</h1>
         <p className="player-tagline">
-          Leve o export da TelaFlow Cloud ao evento: mídia local, checagens, palco do operador e telão
-          público — tudo offline durante a execução.
+          Abra o pack exportado na Cloud, vincule os arquivos de mídia e conduza o evento: painel do
+          operador e telão para o público — execução offline, pensada para o dia do show.
         </p>
       </header>
 
@@ -106,7 +106,7 @@ function AppShell() {
       </section>
 
       <section className="player-status" aria-live="polite">
-        <h2>Estado da sessão</h2>
+        <h2>Andamento</h2>
         <p>
           <strong>{legendaEstadoApp(appState)}</strong>
         </p>
@@ -114,8 +114,8 @@ function AppShell() {
         {isActiveSession(appState) && <PackLoadedWorkspace />}
         {appState.kind === "idle" && !carregando && (
           <p className="player-hint">
-            Na Cloud, exporte o pack do evento e escolha aqui a pasta desse export (a que contém os
-            ficheiros JSON do roteiro e do manifesto).
+            Na TelaFlow Cloud, exporte o evento e escolha aqui a pasta gerada pelo export (com os
+            arquivos JSON do roteiro e o manifesto).
           </p>
         )}
       </section>

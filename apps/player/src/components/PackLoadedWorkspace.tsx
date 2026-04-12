@@ -21,9 +21,9 @@ function legendaStatusMidia(st: StatusMidia): string {
     case "nao_vinculado":
       return "Sem vínculo";
     case "vinculado":
-      return "Ficheiro ok";
+      return "Arquivo ok";
     case "ausente":
-      return "Em falta";
+      return "Arquivo ausente";
   }
 }
 
@@ -151,7 +151,7 @@ export function PackLoadedWorkspace() {
       const sel = await open({
         directory: false,
         multiple: false,
-        title: "Escolher ficheiro para esta mídia",
+        title: "Escolher arquivo para esta mídia",
       });
       if (sel === null || Array.isArray(sel)) return;
       setBinderBusy(true);
@@ -215,7 +215,7 @@ export function PackLoadedWorkspace() {
 
   return (
     <div className={`pack-workspace${execPrimary ? " pack-workspace--executing" : ""}`}>
-      <h2>Preparar e ir ao vivo</h2>
+      <h2>Controle do evento</h2>
       {execPrimary && (
         <section className="player-section player-section--exec-focus" aria-label="Palco e telão">
           <ExecutingRuntimeView fileExistsCache={existeCache} />
@@ -223,7 +223,7 @@ export function PackLoadedWorkspace() {
       )}
       <dl className="player-summary">
         <div>
-          <dt>Pasta do pack</dt>
+          <dt>Pasta do export</dt>
           <dd>{resumo.rootPath}</dd>
         </div>
         <div>
@@ -232,7 +232,7 @@ export function PackLoadedWorkspace() {
         </div>
         <div>
           <dt>Licença</dt>
-          <dd className="player-license-ok">válida (janela temporal e escopo MVP)</dd>
+          <dd className="player-license-ok">válida para este evento e período da licença</dd>
         </div>
         <div>
           <dt>Cenas no roteiro</dt>
@@ -251,7 +251,7 @@ export function PackLoadedWorkspace() {
       <details className="player-section player-export-details">
         <summary>Identificação do export (avançado)</summary>
         <p className="player-hint">
-          Útil se precisar de confirmar com a equipa que o ficheiro aberto corresponde ao export certo.
+          Útil para confirmar com a equipe que a pasta aberta corresponde ao export certo.
         </p>
         <dl className="player-summary player-summary--compact">
           <div>
@@ -267,7 +267,7 @@ export function PackLoadedWorkspace() {
         <h3>1 · Início do evento</h3>
         <p className="player-hint">
           Depois das checagens sem bloqueantes, fica <strong>pronto para ir ao vivo</strong>. Use o botão
-          abaixo para colocar o roteiro no ar. Com o evento a decorrer, use o painel <strong>Operação</strong>{" "}
+          abaixo para colocar o roteiro no ar. Com o evento em andamento, use o painel <strong>Operação</strong>{" "}
           (à direita) para mudar de cena e concluir; o telão acompanha numa janela separada.
         </p>
         <p className="player-fsm-badge" aria-live="polite">
@@ -294,8 +294,8 @@ export function PackLoadedWorkspace() {
       <section className="player-section">
         <h3>2 · Pasta de mídia (workspace)</h3>
         <p className="player-hint">
-          Indique a pasta onde estão os ficheiros de vídeo e imagem. Os vínculos guardam-se automaticamente
-          nessa pasta (ficheiro oculto <code>.telaflow</code>) com caminhos relativos à raiz escolhida.
+          Indique a pasta onde estão os arquivos de vídeo e imagem. Os vínculos guardam-se automaticamente
+          nessa pasta (arquivo oculto <code>.telaflow</code>) com caminhos relativos à raiz escolhida.
         </p>
         <button type="button" disabled={binderBusy} onClick={escolherWorkspace}>
           {workspaceRoot ? "Alterar pasta…" : "Escolher pasta…"}
@@ -306,7 +306,7 @@ export function PackLoadedWorkspace() {
           </p>
         )}
         <button type="button" disabled={!workspaceRoot || binderBusy} onClick={refreshExistencia}>
-          Atualizar ficheiros no disco
+          Atualizar arquivos no disco
         </button>
       </section>
 
@@ -366,15 +366,15 @@ export function PackLoadedWorkspace() {
       <section className="player-section">
         <h3>4 · Checagens antes do vivo</h3>
         <p className="player-hint">
-          Valida o pack, o workspace e os ficheiros. Se existirem bloqueantes, corrija-os antes de iniciar.
-          Volte a correr as checagens sempre que alterar a pasta ou os vínculos.
+          Valida o pack, a pasta de mídia e os arquivos vinculados. Se existirem bloqueantes, corrija-os
+          antes de iniciar. Execute de novo sempre que alterar a pasta ou os vínculos.
         </p>
         <button
           type="button"
           disabled={preflightBusy || !podeCorrerPreflight}
           onClick={() => void executarPreflight()}
         >
-          {preflightBusy ? "A validar…" : "Correr checagens"}
+          {preflightBusy ? "Validando…" : "Executar checagens"}
         </button>
         {lastPreflight && (
           <div className="player-preflight-report">
@@ -402,16 +402,16 @@ export function PackLoadedWorkspace() {
       </section>
 
       <section className="player-section">
-        <h3>Registo do evento</h3>
+        <h3>Registro do evento</h3>
         {runtimeKind === "executing" ? (
           <details className="player-exec-details">
-            <summary>Ver registo detalhado (sessão atual)</summary>
+            <summary>Ver registro detalhado (sessão atual)</summary>
             <ExecutionLogPanel entries={executionLog} />
           </details>
         ) : (
           <p className="player-hint">
-            Com o roteiro no ar, as ações principais ficam registadas automaticamente na pasta do evento
-            (workspace, se existir; caso contrário na pasta do pack), para arquivo ou suporte técnico.
+            Com o roteiro no ar, as ações principais ficam registradas automaticamente na pasta do evento
+            (workspace, se existir; caso contrário na pasta do export), para arquivo ou suporte técnico.
           </p>
         )}
       </section>
