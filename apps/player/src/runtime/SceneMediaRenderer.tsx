@@ -22,6 +22,11 @@ type Props = {
   /** Linha do manifest para `scene.media_id`, se existir. */
   mediaRequirement: MediaRequirementContract | null;
   onPlaybackLog: (entry: PlaybackLogPayload) => void;
+  /**
+   * `public`: textos neutros para audiência (sem códigos técnicos) e sem eventos no callback de log.
+   * `operator`: comportamento MVP completo para o painel do operador.
+   */
+  presentation?: "operator" | "public";
 };
 
 function logMedia(
@@ -40,7 +45,9 @@ export function SceneMediaRenderer({
   bindings,
   mediaRequirement,
   onPlaybackLog,
+  presentation = "operator",
 }: Props) {
+  const isPublic = presentation === "public";
   const mediaId = scene.media_id ?? null;
   const mediaKind: MediaKind | null = mediaRequirement?.media_type ?? null;
 
@@ -58,6 +65,7 @@ export function SceneMediaRenderer({
   }, [assetSrc]);
 
   useEffect(() => {
+    if (isPublic) return;
     if (mediaState !== "media_missing_binding" && mediaState !== "media_file_missing") {
       return;
     }
@@ -69,7 +77,7 @@ export function SceneMediaRenderer({
       `media_id=${mediaId ?? "—"}; estado=${mediaState}; ${describeSceneMediaDerivedStatePt(mediaState)}`,
       "warn",
     );
-  }, [mediaState, mediaId, onPlaybackLog, stateFailKey]);
+  }, [isPublic, mediaState, mediaId, onPlaybackLog, stateFailKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,11 +93,13 @@ export function SceneMediaRenderer({
       const key = `${scene.scene_id}:unsupported:${mediaKind ?? "none"}`;
       if (loggedUnsupported.current !== key) {
         loggedUnsupported.current = key;
-        const msg =
-          mediaKind == null
-            ? `media_id=${mediaId}; sem entrada no media-manifest — não é possível playback tipado`
-            : `media_id=${mediaId}; tipo=${mediaKind} — playback MVP só suporta image e video`;
-        logMedia(onPlaybackLog, EXECUTION_LOG_CODES.MEDIA_FAILED, msg, "warn");
+        if (!isPublic) {
+          const msg =
+            mediaKind == null
+              ? `media_id=${mediaId}; sem entrada no media-manifest — não é possível playback tipado`
+              : `media_id=${mediaId}; tipo=${mediaKind} — playback MVP só suporta image e video`;
+          logMedia(onPlaybackLog, EXECUTION_LOG_CODES.MEDIA_FAILED, msg, "warn");
+        }
       }
       return () => {
         cancelled = true;
@@ -114,12 +124,14 @@ export function SceneMediaRenderer({
       } catch {
         if (!cancelled) {
           setResolveError(true);
-          logMedia(
-            onPlaybackLog,
-            EXECUTION_LOG_CODES.MEDIA_FAILED,
-            `media_id=${mediaId}; falha ao resolver caminho para playback`,
-            "error",
-          );
+          if (!isPublic) {
+            logMedia(
+              onPlaybackLog,
+              EXECUTION_LOG_CODES.MEDIA_FAILED,
+              `media_id=${mediaId}; falha ao resolver caminho para playback`,
+              "error",
+            );
+          }
         }
       }
     })();
@@ -127,10 +139,11 @@ export function SceneMediaRenderer({
     return () => {
       cancelled = true;
     };
-  }, [bindings, mediaId, mediaKind, mediaState, onPlaybackLog, scene.scene_id, workspaceRoot]);
+  }, [bindings, isPublic, mediaId, mediaKind, mediaState, onPlaybackLog, scene.scene_id, workspaceRoot]);
 
   const onMediaStarted = useCallback(
     (kind: "image" | "video", srcKey: string) => {
+      if (isPublic) return;
       if (loggedStartedForSrc.current === srcKey) return;
       loggedStartedForSrc.current = srcKey;
       logMedia(
@@ -140,11 +153,12 @@ export function SceneMediaRenderer({
         "info",
       );
     },
-    [mediaId, onPlaybackLog, scene.scene_id],
+    [isPublic, mediaId, onPlaybackLog, scene.scene_id],
   );
 
   const onMediaDecodeFailed = useCallback(
     (srcKey: string) => {
+      if (isPublic) return;
       if (loggedDecodeFailForSrc.current === srcKey) return;
       loggedDecodeFailForSrc.current = srcKey;
       logMedia(
@@ -154,13 +168,22 @@ export function SceneMediaRenderer({
         "error",
       );
     },
-    [mediaId, onPlaybackLog, scene.scene_id],
+    [isPublic, mediaId, onPlaybackLog, scene.scene_id],
   );
+
+  const pubClass = isPublic ? " scene-media--public" : "";
 
   if (mediaState === "no_media_required") {
     return (
-      <section className="scene-media scene-media--placeholder" aria-label="Mídia da cena">
-        <p className="scene-media__placeholder-text">{describeSceneMediaDerivedStatePt(mediaState)}</p>
+      <section
+        className={`scene-media scene-media--placeholder${pubClass}`}
+        aria-label="Mídia da cena"
+      >
+        <p className="scene-media__placeholder-text">
+          {isPublic
+            ? "Nesta fase não há vídeo ou imagem para exibir."
+            : describeSceneMediaDerivedStatePt(mediaState)}
+        </p>
       </section>
     );
   }
@@ -168,13 +191,17 @@ export function SceneMediaRenderer({
   if (mediaState === "media_missing_binding" || mediaState === "media_file_missing") {
     return (
       <section
-        className={`scene-media scene-media--fallback scene-media--${mediaState}`}
+        className={`scene-media scene-media--fallback scene-media--${mediaState}${pubClass}`}
         aria-label="Mídia da cena"
       >
         <div className="scene-media__fallback-card">
           <strong>Mídia indisponível</strong>
-          <p>{describeSceneMediaDerivedStatePt(mediaState)}</p>
-          {mediaId ? (
+          <p>
+            {isPublic
+              ? "O conteúdo de mídia não está disponível no momento."
+              : describeSceneMediaDerivedStatePt(mediaState)}
+          </p>
+          {!isPublic && mediaId ? (
             <p className="scene-media__mono">
               <code>{mediaId}</code>
             </p>
@@ -186,10 +213,17 @@ export function SceneMediaRenderer({
 
   if (mediaState === "media_bound" && resolveError) {
     return (
-      <section className="scene-media scene-media--fallback scene-media--resolve-error" aria-label="Mídia da cena">
+      <section
+        className={`scene-media scene-media--fallback scene-media--resolve-error${pubClass}`}
+        aria-label="Mídia da cena"
+      >
         <div className="scene-media__fallback-card">
-          <strong>Ficheiro inacessível</strong>
-          <p>Não foi possível preparar o caminho para reprodução.</p>
+          <strong>{isPublic ? "Conteúdo indisponível" : "Arquivo inacessível"}</strong>
+          <p>
+            {isPublic
+              ? "Não foi possível carregar o conteúdo desta fase."
+              : "Não foi possível preparar o caminho para reprodução."}
+          </p>
         </div>
       </section>
     );
@@ -197,9 +231,11 @@ export function SceneMediaRenderer({
 
   if (mediaState === "media_bound" && mediaId && mediaKind == null) {
     return (
-      <section className="scene-media scene-media--placeholder" aria-label="Mídia da cena">
+      <section className={`scene-media scene-media--placeholder${pubClass}`} aria-label="Mídia da cena">
         <p className="scene-media__placeholder-text">
-          O <code>media_id</code> desta cena não consta no <code>media-manifest</code> deste export.
+          {isPublic
+            ? "Conteúdo em preparação."
+            : "O media_id desta cena não consta no media-manifest deste export."}
         </p>
       </section>
     );
@@ -207,10 +243,11 @@ export function SceneMediaRenderer({
 
   if (mediaState === "media_bound" && mediaKind && mediaKind !== "image" && mediaKind !== "video") {
     return (
-      <section className="scene-media scene-media--placeholder" aria-label="Mídia da cena">
+      <section className={`scene-media scene-media--placeholder${pubClass}`} aria-label="Mídia da cena">
         <p className="scene-media__placeholder-text">
-          Tipo <code>{mediaKind}</code> — playback MVP limitado a <strong>image</strong> e{" "}
-          <strong>video</strong>.
+          {isPublic
+            ? "Este formato de mídia não é suportado nesta versão do player."
+            : `Tipo ${mediaKind} — playback MVP limitado a image e video.`}
         </p>
       </section>
     );
@@ -218,7 +255,7 @@ export function SceneMediaRenderer({
 
   if (mediaState === "media_bound" && mediaKind === "image" && assetSrc) {
     return (
-      <section className="scene-media scene-media--playback" aria-label="Mídia da cena">
+      <section className={`scene-media scene-media--playback${pubClass}`} aria-label="Mídia da cena">
         <img
           src={assetSrc}
           alt={mediaRequirement?.label ?? scene.name}
@@ -232,7 +269,7 @@ export function SceneMediaRenderer({
 
   if (mediaState === "media_bound" && mediaKind === "video" && assetSrc) {
     return (
-      <section className="scene-media scene-media--playback" aria-label="Mídia da cena">
+      <section className={`scene-media scene-media--playback${pubClass}`} aria-label="Mídia da cena">
         <video
           className="scene-media__video"
           src={assetSrc}
@@ -249,15 +286,19 @@ export function SceneMediaRenderer({
 
   if (mediaState === "media_bound" && (mediaKind === "image" || mediaKind === "video") && !assetSrc) {
     return (
-      <section className="scene-media scene-media--placeholder" aria-label="Mídia da cena">
-        <p className="scene-media__placeholder-text">A preparar mídia…</p>
+      <section className={`scene-media scene-media--placeholder${pubClass}`} aria-label="Mídia da cena">
+        <p className="scene-media__placeholder-text">
+          {isPublic ? "Carregando conteúdo..." : "Preparando mídia…"}
+        </p>
       </section>
     );
   }
 
   return (
-    <section className="scene-media scene-media--placeholder" aria-label="Mídia da cena">
-      <p className="scene-media__placeholder-text">{describeSceneMediaDerivedStatePt(mediaState)}</p>
+    <section className={`scene-media scene-media--placeholder${pubClass}`} aria-label="Mídia da cena">
+      <p className="scene-media__placeholder-text">
+        {isPublic ? "Conteúdo indisponível." : describeSceneMediaDerivedStatePt(mediaState)}
+      </p>
     </section>
   );
 }
