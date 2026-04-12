@@ -1,4 +1,4 @@
-﻿name: Deploy TelaFlow
+name: Deploy TelaFlow
 
 on:
   push:
@@ -73,7 +73,17 @@ jobs:
           umask 077
           printf '%s\n' "$SSH_PRIVATE_KEY" > "$SSH_DIR/id_ed25519"
           chmod 600 "$SSH_DIR/id_ed25519"
-          ssh-keyscan -H "$SSH_HOST" >> "$SSH_DIR/known_hosts"
+          KEYSCAN_ERR="$(mktemp)"
+          if ! ssh-keyscan -T 20 -H "$SSH_HOST" >> "$SSH_DIR/known_hosts" 2>"$KEYSCAN_ERR"; then
+            echo "::error::ssh-keyscan falhou para o anfitrião configurado em SSH_HOST (DNS, rede ou serviço SSH indisponível a partir do runner)."
+            cat "$KEYSCAN_ERR" >&2 || true
+            exit 1
+          fi
+          if [ ! -s "$SSH_DIR/known_hosts" ]; then
+            echo "::error::known_hosts ficou vazio após ssh-keyscan."
+            exit 1
+          fi
+          rm -f "$KEYSCAN_ERR"
 
       - name: Deploy na VPS
         run: |
