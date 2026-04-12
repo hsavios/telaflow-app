@@ -1,6 +1,9 @@
 ﻿import type { DrawConfigContract } from "@telaflow/shared-contracts";
 
-/** Intervalo efetivo quando `number_range` está ausente no pack (MVP operacional). */
+/**
+ * Intervalo efetivo quando `number_range` está ausente no pack (MVP operacional).
+ * No produto, start_number / end_number correspondem a `number_range.min` / `number_range.max` no pacote exportado.
+ */
 export const DEFAULT_NUMBER_RANGE = { min: 1, max: 1000 } as const;
 
 export function effectiveNumberRange(dc: DrawConfigContract): { min: number; max: number } {
