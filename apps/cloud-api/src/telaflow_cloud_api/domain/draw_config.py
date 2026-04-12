@@ -2,9 +2,20 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 _ID_PATTERN = r"^[a-zA-Z0-9_-]+$"
+
+
+class NumberRange(BaseModel):
+    """Intervalo inclusivo para `draw_type=number_range` (alinhado a shared-contracts)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    min: int
+    max: int
 
 
 class DrawConfig(BaseModel):
@@ -16,6 +27,14 @@ class DrawConfig(BaseModel):
     max_winners: int = Field(default=1, ge=1, le=999)
     notes: str | None = Field(default=None, max_length=2000)
     enabled: bool = True
+    draw_type: Literal["number_range"] = "number_range"
+    number_range: NumberRange | None = None
+
+    @model_validator(mode="after")
+    def _number_range_bounds(self) -> DrawConfig:
+        if self.number_range is not None and self.number_range.max < self.number_range.min:
+            raise ValueError("number_range.max must be >= number_range.min")
+        return self
 
 
 class DrawConfigCreate(BaseModel):
@@ -25,6 +44,8 @@ class DrawConfigCreate(BaseModel):
     max_winners: int = Field(default=1, ge=1, le=999)
     notes: str | None = Field(default=None, max_length=2000)
     enabled: bool = True
+    draw_type: Literal["number_range"] = "number_range"
+    number_range: NumberRange | None = None
 
 
 class DrawConfigUpdate(BaseModel):
@@ -36,3 +57,5 @@ class DrawConfigUpdate(BaseModel):
     max_winners: int | None = Field(default=None, ge=1, le=999)
     notes: str | None = None
     enabled: bool | None = None
+    draw_type: Literal["number_range"] | None = None
+    number_range: NumberRange | None = None

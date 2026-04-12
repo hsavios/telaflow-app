@@ -1,4 +1,4 @@
-﻿import type { SceneContract } from "@telaflow/shared-contracts";
+﻿import type { DrawConfigContract, SceneContract } from "@telaflow/shared-contracts";
 import { useMemo } from "react";
 import type { PackLoaderSuccess } from "../pack/validateLoadedPack.js";
 import { describeOperationalKindPt } from "./operationalState.js";
@@ -26,13 +26,6 @@ type Props = {
   onPlaybackLog: (entry: PlaybackLogPayload) => void;
 };
 
-function drawConfigLine(pack: PackLoaderSuccess, drawConfigId: string | null | undefined): string | null {
-  if (!drawConfigId) return null;
-  const row = pack.drawConfigs.draw_configs.find((d) => d.draw_config_id === drawConfigId);
-  if (!row) return `Configuração \`${drawConfigId}\` não encontrada no pack.`;
-  return `Configuração: «${row.name}» (até ${row.max_winners} vencedor(es)).`;
-}
-
 export function ExecutingRuntimeView({
   packData,
   sceneIndex,
@@ -54,11 +47,15 @@ export function ExecutingRuntimeView({
     return packData.mediaManifest.requirements.find((r) => r.media_id === mid) ?? null;
   }, [atual, packData.mediaManifest.requirements]);
 
+  const drawConfigResolved: DrawConfigContract | null = useMemo(() => {
+    const did = atual?.draw_config_id;
+    if (!did) return null;
+    return packData.drawConfigs.draw_configs.find((d) => d.draw_config_id === did) ?? null;
+  }, [atual, packData.drawConfigs.draw_configs]);
+
   const mediaState: SceneMediaDerivedState = atual
     ? resolveSceneMediaState(atual, workspaceRoot, bindings, fileExistsCache)
     : "no_media_required";
-
-  const drawLine = atual ? drawConfigLine(packData, atual.draw_config_id) : null;
 
   const prev = () => onSceneIndexChange(Math.max(0, idx - 1));
   const next = () => onSceneIndexChange(Math.min(n - 1, idx + 1));
@@ -106,7 +103,7 @@ export function ExecutingRuntimeView({
           sceneOrdinal={idx + 1}
           sceneTotal={n}
           mediaState={mediaState}
-          drawConfigSummary={drawLine}
+          drawConfig={drawConfigResolved}
           workspaceRoot={workspaceRoot}
           bindings={bindings}
           mediaRequirement={mediaRequirement}

@@ -48,6 +48,8 @@ def create_draw_config(event_id: str, body: DrawConfigCreate) -> dict:
         max_winners=body.max_winners,
         notes=body.notes,
         enabled=body.enabled,
+        draw_type=body.draw_type,
+        number_range=body.number_range,
     )
     payload = dc.model_dump()
     bucket.append(payload)

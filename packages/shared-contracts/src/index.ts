@@ -29,7 +29,11 @@ export { SceneContractSchema, type SceneContract } from "./scene.js";
 
 export {
   DrawConfigContractSchema,
+  DrawNumberRangeSchema,
+  DrawTypeSchema,
   type DrawConfigContract,
+  type DrawNumberRange,
+  type DrawType,
 } from "./draw-config.js";
 
 export {

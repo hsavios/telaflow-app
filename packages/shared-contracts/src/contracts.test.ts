@@ -129,6 +129,32 @@ describe("DrawConfigContractSchema", () => {
     });
     expect(r.success).toBe(true);
   });
+
+  it("parses draw config with number_range", () => {
+    const r = DrawConfigContractSchema.safeParse({
+      draw_config_id: validDcf,
+      event_id: validEvt,
+      name: "Rifa",
+      max_winners: 1,
+      enabled: true,
+      draw_type: "number_range",
+      number_range: { min: 1, max: 500 },
+    });
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect(r.data.number_range).toEqual({ min: 1, max: 500 });
+    }
+  });
+
+  it("rejects number_range when max < min", () => {
+    const r = DrawConfigContractSchema.safeParse({
+      draw_config_id: validDcf,
+      event_id: validEvt,
+      name: "X",
+      number_range: { min: 10, max: 2 },
+    });
+    expect(r.success).toBe(false);
+  });
 });
 
 describe("MediaRequirementContractSchema", () => {

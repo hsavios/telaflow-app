@@ -1,5 +1,11 @@
-﻿import type { MediaRequirementContract, SceneContract, SceneType } from "@telaflow/shared-contracts";
+﻿import type {
+  DrawConfigContract,
+  MediaRequirementContract,
+  SceneContract,
+  SceneType,
+} from "@telaflow/shared-contracts";
 import type { ExecutionLogLevel } from "../execution/executionLog.js";
+import { SceneDrawEngine } from "./SceneDrawEngine.js";
 import { SceneMediaRenderer } from "./SceneMediaRenderer.js";
 import type { SceneMediaDerivedState } from "./sceneMediaResolution.js";
 
@@ -23,7 +29,8 @@ type Props = {
   sceneOrdinal: number;
   sceneTotal: number;
   mediaState: SceneMediaDerivedState;
-  drawConfigSummary?: string | null;
+  /** Config do pack para `scene.draw_config_id` (sorteio), se existir. */
+  drawConfig: DrawConfigContract | null;
   workspaceRoot: string | null;
   bindings: Record<string, string>;
   mediaRequirement: MediaRequirementContract | null;
@@ -35,7 +42,7 @@ export function ScenePresenter({
   sceneOrdinal,
   sceneTotal,
   mediaState,
-  drawConfigSummary,
+  drawConfig,
   workspaceRoot,
   bindings,
   mediaRequirement,
@@ -55,12 +62,6 @@ export function ScenePresenter({
       <p className="scene-presenter__type-meta">
         Tipo contratual: <code>{scene.type}</code> · Ordem <strong>{scene.sort_order}</strong>
       </p>
-      {scene.type === "draw" && (
-        <p className="scene-presenter__draw-hint">
-          Cena de sorteio (MVP): sem animação nem extração real.
-          {drawConfigSummary ? <> {drawConfigSummary}</> : null}
-        </p>
-      )}
       <dl className="scene-presenter__facts">
         <div>
           <dt>scene_id</dt>
@@ -85,6 +86,7 @@ export function ScenePresenter({
           </div>
         ) : null}
       </dl>
+      {scene.type === "draw" && <SceneDrawEngine scene={scene} drawConfig={drawConfig} />}
       <SceneMediaRenderer
         scene={scene}
         mediaState={mediaState}

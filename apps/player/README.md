@@ -39,7 +39,7 @@ Conforme `PLAYER_RUNTIME_FEATURE_SPEC` / `ARCHITECTURE_SPEC` (subconjunto MVP):
 | **`pack_loaded`** | Pack + licença OK; workspace/bindings a configurar; pre-flight ainda não passou ou foi invalidado. |
 | **`preflight_failed`** | Último pre-flight com bloqueantes (detalhe em `lastPreflight`). |
 | **`ready`** | Último pre-flight **sem** bloqueantes — **gate** para iniciar roteiro. |
-| **`executing`** | Roteiro com **Runtime Visual MVP** + **Playback Engine MVP** (imagem/vídeo via bindings), sem sorteio visual real. |
+| **`executing`** | Roteiro com **Runtime Visual MVP**, **Playback MVP** e **Draw Engine MVP** (`number_range`), sem painel público nem Cloud. |
 
 Fluxo típico: `idle` → (abrir pack) → `pack_loaded` → (pre-flight) → `preflight_failed` **ou** `ready` → (**Iniciar roteiro**) → `executing` → (**Concluir execução**) → `ready`. Alterar workspace/bindings repõe `pack_loaded`.
 
@@ -52,10 +52,9 @@ Implementação: `src/pack/playerPackState.ts` + `src/App.tsx`.
 
 ## Runtime Visual MVP
 
-- **Scene Presenter** (`src/runtime/ScenePresenter.tsx`): cartão operacional da cena ativa (metadados, tipo `SceneType` em pt-BR, hints em `draw`). **Não** contém lógica de ficheiro/reprodução — delega mídia ao **Scene Media Renderer**.
+- **Scene Presenter** (`src/runtime/ScenePresenter.tsx`): cartão operacional da cena ativa (metadados, tipo `SceneType` em pt-BR). Delega **mídia** ao **Scene Media Renderer** e **sorteio** ao **Scene Draw Engine** (cenas `draw`).
 - **Scene Media Renderer** (`src/runtime/SceneMediaRenderer.tsx`): zona de mídia da cena (placeholder, fallback ou playback).
 - Tipos de cena (`SceneType`): **`opening`**, **`institutional`**, **`sponsor`**, **`draw`**, **`break`**, **`closing`**.
-- Cenas **`draw`**: texto explícito de que não há sorteio visual; se existir `draw_config_id` no pack, mostra-se resumo da configuração (nome, `max_winners`).
 
 ## Playback Engine (MVP)
 
@@ -66,6 +65,12 @@ Implementação: `src/pack/playerPackState.ts` + `src/App.tsx`.
 - **`media_id`** sem linha no manifest: não há tipo declarado — placeholder + `media_failed`.
 - Estados derivados **sem** ficheiro pronto (`media_missing_binding`, `media_file_missing`): mantém-se o **placeholder / cartão de fallback** (sem tentar carregar URL).
 - **Tauri:** `app.security.assetProtocol` + CSP com `asset:` / `http://asset.localhost` para o WebView carregar ficheiros locais; âmbito amplo `**` no MVP (workspace escolhido pelo operador).
+
+## Draw Engine (MVP)
+
+- Contrato **`DrawConfig`** em `@telaflow/shared-contracts`: `draw_type` (MVP: **`number_range`**), `number_range` opcional `{ min, max }`. Se `number_range` ausente no pack, o Player usa intervalo por omissão **1…1000** (`drawNumberRange.ts`).
+- **`SceneDrawEngine`** (`src/runtime/SceneDrawEngine.tsx`), só em cenas **`draw`** com `draw_config_id`: resumo (nome, modo, intervalo, `max_winners`), **Iniciar sorteio** → valor aleatório inclusivo → **Confirmar resultado**.
+- Sem animações, sem painel público separado, sem Cloud.
 
 ## Logging de playback
 
@@ -93,7 +98,8 @@ Textos para operador: `describeSceneMediaDerivedStatePt`.
 
 ## Fora de escopo
 
-- **Sorteio visual** real (extração, animação, telão dedicado).
+- **Sorteio visual** avançado (animações, telão dedicado, modos múltiplos além do MVP `number_range`).
+- **Dual-screen** / painel público separado.
 - **Multi-monitor** / projeção estendida.
 - **Transições** avançadas entre cenas ou efeitos no telão.
 - **Cloud** em runtime (o pack é local).

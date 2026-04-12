@@ -479,6 +479,97 @@
   background: #000;
 }
 
+.scene-draw-engine {
+  margin: 0.75rem 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.scene-draw-engine--warn {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(217, 119, 6, 0.35);
+}
+
+.scene-draw-engine__muted {
+  margin: 0 0 0.65rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: #555;
+}
+
+.scene-draw-engine__summary {
+  margin: 0 0 0.75rem;
+  display: grid;
+  gap: 0.35rem 1rem;
+  font-size: 0.88rem;
+}
+
+.scene-draw-engine__summary div {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+}
+
+.scene-draw-engine__summary dt {
+  margin: 0;
+  font-weight: 600;
+  color: #444;
+}
+
+.scene-draw-engine__summary dd {
+  margin: 0;
+}
+
+.scene-draw-engine__hint {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.scene-draw-engine__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.scene-draw-engine__primary {
+  font-size: 0.9rem;
+  padding: 0.45rem 0.75rem;
+}
+
+.scene-draw-engine__result-block {
+  margin-top: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.scene-draw-engine__result-block--confirmed {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(5, 150, 105, 0.35);
+}
+
+.scene-draw-engine__result-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #555;
+}
+
+.scene-draw-engine__result-value {
+  margin: 0 0 0.65rem;
+  font-size: 2rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
 .player-exec-ops {
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 10px;
@@ -700,6 +791,32 @@
 
   .player-exec-details summary {
     color: #d1d5db;
+  }
+
+  .scene-draw-engine {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .scene-draw-engine--warn {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(251, 191, 36, 0.25);
+  }
+
+  .scene-draw-engine__muted,
+  .scene-draw-engine__summary dt,
+  .scene-draw-engine__result-label {
+    color: #bbb;
+  }
+
+  .scene-draw-engine__result-block {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .scene-draw-engine__result-block--confirmed {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(52, 211, 153, 0.35);
   }
 }
 
