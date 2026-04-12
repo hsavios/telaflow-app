@@ -26,6 +26,14 @@ jobs:
       DATABASE_URL: postgresql+psycopg://telaflow:telaflow@localhost:5432/telaflow_ci
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install monorepo (schemas para pytest de conformidade)
+        run: npm ci
+      - name: Gerar JSON Schemas (shared-contracts → dist/schema)
+        run: npm run build -w @telaflow/shared-contracts
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
