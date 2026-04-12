@@ -18,3 +18,6 @@ padrão
 compartilhar
 ausente
 console
+senha (evitar «palavra-passe»)
+e-mail (com hífen)
+Carregando… / Entrando… (evitar «A carregar» / «A entrar», pt-PT)

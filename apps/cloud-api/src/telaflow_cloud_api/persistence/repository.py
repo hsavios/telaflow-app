@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from telaflow_cloud_api.persistence.ids import new_draw_config_id, new_media_id, new_scene_id
@@ -15,8 +15,10 @@ from telaflow_cloud_api.persistence.models import (
     EventRow,
     ExportPackageRow,
     MediaRequirementRow,
+    MembershipRow,
     OrganizationRow,
     SceneRow,
+    UserRow,
 )
 
 
@@ -31,6 +33,72 @@ class Repository:
         if row is None:
             self.session.add(OrganizationRow(organization_id=organization_id, name=name))
             self.session.flush()
+
+    # --- users / memberships ---
+
+    def count_users(self) -> int:
+        n = self.session.scalar(select(func.count()).select_from(UserRow))
+        return int(n or 0)
+
+    def get_user_by_email(self, email: str) -> dict | None:
+        row = self.session.scalar(select(UserRow).where(UserRow.email == email.strip().lower()))
+        if row is None:
+            return None
+        return {
+            "user_id": row.user_id,
+            "email": row.email,
+            "password_hash": row.password_hash,
+            "display_name": row.display_name,
+        }
+
+    def create_user(
+        self,
+        *,
+        user_id: str,
+        email: str,
+        password_hash: str,
+        display_name: str | None,
+    ) -> dict:
+        row = UserRow(
+            user_id=user_id,
+            email=email.strip().lower(),
+            password_hash=password_hash,
+            display_name=display_name,
+        )
+        self.session.add(row)
+        self.session.flush()
+        return {"user_id": row.user_id, "email": row.email, "display_name": row.display_name}
+
+    def ensure_membership(
+        self,
+        *,
+        user_id: str,
+        organization_id: str,
+        role: str = "member",
+    ) -> None:
+        existing = self.session.scalar(
+            select(MembershipRow).where(
+                MembershipRow.user_id == user_id,
+                MembershipRow.organization_id == organization_id,
+            ),
+        )
+        if existing is None:
+            self.session.add(
+                MembershipRow(
+                    user_id=user_id,
+                    organization_id=organization_id,
+                    role=role,
+                ),
+            )
+            self.session.flush()
+
+    def list_organization_ids_for_user(self, user_id: str) -> list[str]:
+        q = (
+            select(MembershipRow.organization_id)
+            .where(MembershipRow.user_id == user_id)
+            .order_by(MembershipRow.organization_id)
+        )
+        return list(self.session.scalars(q).all())
 
     # --- events ---
 

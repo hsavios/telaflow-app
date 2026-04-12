@@ -8,6 +8,9 @@ from pathlib import Path
 if not os.environ.get("DATABASE_URL", "").strip():
     os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
+# Testes usam tenant por cabeçalho (sem JWT), a menos que um teste defina o segredo explicitamente.
+os.environ.pop("TELAFLOW_JWT_SECRET", None)
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -26,7 +29,10 @@ def cliente() -> TestClient:
         get_engine,
     )
     from telaflow_cloud_api.persistence.models import Base
-    from telaflow_cloud_api.seed import seed_showcase_event_if_absent
+    from telaflow_cloud_api.seed import (
+        seed_bootstrap_operator_if_absent,
+        seed_showcase_event_if_absent,
+    )
 
     dispose_engine()
     engine = get_engine()
@@ -35,6 +41,7 @@ def cliente() -> TestClient:
     s = _get_session_factory()()
     try:
         seed_showcase_event_if_absent(s)
+        seed_bootstrap_operator_if_absent(s)
         s.commit()
     finally:
         s.close()

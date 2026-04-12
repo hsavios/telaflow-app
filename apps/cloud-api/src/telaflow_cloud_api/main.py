@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from telaflow_cloud_api.persistence.database import _get_session_factory, create_all_tables
 from telaflow_cloud_api.routers import (
+    auth_router,
     draw_configs_router,
     events_router,
     export_router,
@@ -16,7 +17,7 @@ from telaflow_cloud_api.routers import (
     media_requirements_router,
     scenes_router,
 )
-from telaflow_cloud_api.seed import seed_showcase_event_if_absent
+from telaflow_cloud_api.seed import seed_bootstrap_operator_if_absent, seed_showcase_event_if_absent
 
 
 @asynccontextmanager
@@ -26,6 +27,7 @@ async def lifespan(_app: FastAPI):
     session = _get_session_factory()()
     try:
         seed_showcase_event_if_absent(session)
+        seed_bootstrap_operator_if_absent(session)
         session.commit()
     except Exception:
         session.rollback()
@@ -56,6 +58,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router)
 app.include_router(events_router)
 app.include_router(scenes_router)
 app.include_router(draw_configs_router)

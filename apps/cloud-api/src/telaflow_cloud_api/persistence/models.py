@@ -20,6 +20,35 @@ class OrganizationRow(Base):
     name: Mapped[str] = mapped_column(String(256), nullable=False)
 
 
+class UserRow(Base):
+    __tablename__ = "users"
+
+    user_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False, index=True)
+    password_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    display_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
+
+
+class MembershipRow(Base):
+    __tablename__ = "memberships"
+    __table_args__ = (UniqueConstraint("user_id", "organization_id", name="uq_membership_user_org"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    organization_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("organizations.organization_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    role: Mapped[str] = mapped_column(String(64), nullable=False, default="member")
+
+
 class EventRow(Base):
     __tablename__ = "events"
 

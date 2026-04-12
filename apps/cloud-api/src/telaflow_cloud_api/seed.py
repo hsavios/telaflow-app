@@ -2,15 +2,22 @@
 
 from __future__ import annotations
 
+import logging
+import os
+import uuid
+
 from sqlalchemy.orm import Session
 
 from telaflow_cloud_api.domain import Event, MediaRequirement, Scene
 from telaflow_cloud_api.domain.draw_config import DrawConfig, NumberRange
 from telaflow_cloud_api.domain.draw_public_copy import DrawPublicCopy
+from telaflow_cloud_api.auth.passwords import hash_password
 from telaflow_cloud_api.persistence.repository import Repository
 
 SHOWCASE_EVENT_ID = "evt_telaflow_demo_v1"
 SHOWCASE_ORG_ID = "org_telaflow_d1"
+
+_LOG = logging.getLogger(__name__)
 
 
 def seed_showcase_event_if_absent(session: Session) -> None:
@@ -87,3 +94,46 @@ def seed_showcase_event_if_absent(session: Session) -> None:
                 draw_config_id=did,
             ).model_dump(),
         )
+
+
+def seed_bootstrap_operator_if_absent(session: Session) -> None:
+    """
+    Cria o primeiro usuário (operador) se a tabela `users` estiver vazia.
+
+    - E-mail: `TELAFLOW_BOOTSTRAP_ADMIN_EMAIL` (padrão `admin@telaflow.local`).
+    - Senha: `TELAFLOW_BOOTSTRAP_ADMIN_PASSWORD`; se `TELAFLOW_JWT_SECRET` estiver
+      definido e a senha estiver vazia, **não** cria usuário.
+    - Sem JWT: se a senha estiver vazia, usa `TelaflowDev!2026` (apenas desenvolvimento).
+    """
+    repo = Repository(session)
+    if repo.count_users() > 0:
+        return
+
+    email = os.environ.get("TELAFLOW_BOOTSTRAP_ADMIN_EMAIL", "admin@telaflow.local").strip().lower()
+    if repo.get_user_by_email(email):
+        return
+
+    jwt_on = bool(os.environ.get("TELAFLOW_JWT_SECRET", "").strip())
+    password = os.environ.get("TELAFLOW_BOOTSTRAP_ADMIN_PASSWORD", "").strip()
+    if jwt_on and not password:
+        _LOG.warning(
+            "TELAFLOW_JWT_SECRET está definido mas TELAFLOW_BOOTSTRAP_ADMIN_PASSWORD está vazio; "
+            "nenhum usuário bootstrap foi criado.",
+        )
+        return
+    if not password:
+        password = "TelaflowDev!2026"
+        _LOG.warning(
+            "Usando senha bootstrap de desenvolvimento. Defina TELAFLOW_BOOTSTRAP_ADMIN_PASSWORD "
+            "antes de expor a API.",
+        )
+
+    repo.ensure_organization(SHOWCASE_ORG_ID, "TelaFlow Demo Organization")
+    user_id = f"usr_{uuid.uuid4().hex[:24]}"
+    repo.create_user(
+        user_id=user_id,
+        email=email,
+        password_hash=hash_password(password),
+        display_name="Operador bootstrap",
+    )
+    repo.ensure_membership(user_id=user_id, organization_id=SHOWCASE_ORG_ID, role="admin")

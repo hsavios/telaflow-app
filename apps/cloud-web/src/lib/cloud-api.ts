@@ -1,4 +1,11 @@
-﻿export type CloudEvent = {
+﻿import {
+  clearAuthSession,
+  getAccessToken,
+  getSessionOrganizationId,
+} from "./auth-session";
+import { PROVISIONAL_ORGANIZATION_ID } from "./default-organization";
+
+export type CloudEvent = {
   event_id: string;
   organization_id: string;
   name: string;
@@ -39,11 +46,30 @@ export function getCloudApiBase(): string | null {
   return raw.replace(/\/$/, "");
 }
 
-/** Cabeçalho multi-tenant (MVP) — alinhado à FastAPI `X-Telaflow-Organization-Id`. */
+/** Cabeçalho multi-tenant — alinhado a `PROVISIONAL_ORGANIZATION_ID` na web. */
 export function defaultTelaflowOrganizationId(): string {
-  return (
-    process.env.NEXT_PUBLIC_TELAFLOW_ORGANIZATION_ID?.trim() || "org_telaflow_d1"
-  );
+  return PROVISIONAL_ORGANIZATION_ID;
+}
+
+/** Org efetiva: sessão pós-login ou env provisório. */
+export function effectiveTelaflowOrganizationId(): string {
+  const s = getSessionOrganizationId()?.trim();
+  if (s) return s;
+  return defaultTelaflowOrganizationId();
+}
+
+async function telaflowFetch(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  const res = await fetch(input, init);
+  if (res.status === 401 && typeof window !== "undefined") {
+    clearAuthSession();
+    const rt = `${window.location.pathname}${window.location.search}`;
+    window.location.assign(`/login?returnTo=${encodeURIComponent(rt)}`);
+    throw new Error("telaflow_auth_redirect");
+  }
+  return res;
 }
 
 /** Cabeçalhos para rotas públicas (ex.: `/join/{token}`) — sem organização. */
@@ -57,12 +83,20 @@ function cloudApiHeaders(
   extra?: Record<string, string>,
   organizationId?: string,
 ): Record<string, string> {
-  const oid = (organizationId ?? defaultTelaflowOrganizationId()).trim();
-  return {
+  const fallback = defaultTelaflowOrganizationId();
+  const oid = (
+    organizationId ??
+    getSessionOrganizationId() ??
+    fallback
+  ).trim() || fallback;
+  const h: Record<string, string> = {
     Accept: "application/json",
-    "X-Telaflow-Organization-Id": oid || defaultTelaflowOrganizationId(),
+    "X-Telaflow-Organization-Id": oid,
     ...extra,
   };
+  const token = getAccessToken()?.trim();
+  if (token) h.Authorization = `Bearer ${token}`;
+  return h;
 }
 
 async function parseJsonOrText(res: Response): Promise<unknown> {
@@ -108,11 +142,41 @@ export function summarizeTelaflowApiErrorBody(body: unknown): string | null {
           return null;
         })
         .filter((x): x is string => Boolean(x));
-      return parts.length ? parts.join(" · ") : "validation_failed";
+      return parts.length ? parts.join(" · ") : "Falha de validação";
     }
     if (typeof d.message === "string") return d.message;
   }
   return null;
+}
+
+export type TelaflowLoginResponse = {
+  ok: boolean;
+  access_token: string;
+  token_type: string;
+  organization_id: string;
+  user_id: string;
+  email: string;
+};
+
+export async function loginTelaflowCloud(
+  email: string,
+  password: string,
+): Promise<TelaflowLoginResponse> {
+  const base = getCloudApiBase();
+  if (!base) throw new Error("missing_api_url");
+  const res = await fetch(`${base}/auth/login`, {
+    method: "POST",
+    headers: publicApiHeaders(true),
+    body: JSON.stringify({ email, password }),
+  });
+  const body = await parseJsonOrText(res);
+  if (res.status === 503) {
+    throw new Error("jwt_not_configured", { cause: body });
+  }
+  if (!res.ok) {
+    throw new Error(`login_failed:${res.status}`, { cause: body });
+  }
+  return body as TelaflowLoginResponse;
 }
 
 export async function fetchEvents(): Promise<CloudEvent[]> {
@@ -120,7 +184,7 @@ export async function fetchEvents(): Promise<CloudEvent[]> {
   if (!base) {
     throw new Error("missing_api_url");
   }
-  const res = await fetch(`${base}/events`, {
+  const res = await telaflowFetch(`${base}/events`, {
     method: "GET",
     cache: "no-store",
     headers: cloudApiHeaders(),
@@ -142,7 +206,7 @@ export async function createEvent(payload: {
   if (!base) {
     throw new Error("missing_api_url");
   }
-  const res = await fetch(`${base}/events`, {
+  const res = await telaflowFetch(`${base}/events`, {
     method: "POST",
     headers: cloudApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
@@ -164,7 +228,7 @@ function enc(s: string): string {
 export async function fetchEvent(eventId: string): Promise<CloudEvent> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(`${base}/events/${enc(eventId)}`, {
+  const res = await telaflowFetch(`${base}/events/${enc(eventId)}`, {
     method: "GET",
     cache: "no-store",
     headers: cloudApiHeaders(),
@@ -194,7 +258,7 @@ export async function fetchEvent(eventId: string): Promise<CloudEvent> {
 export async function fetchScenes(eventId: string): Promise<CloudScene[]> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(`${base}/events/${enc(eventId)}/scenes`, {
+  const res = await telaflowFetch(`${base}/events/${enc(eventId)}/scenes`, {
     method: "GET",
     cache: "no-store",
     headers: cloudApiHeaders(),
@@ -313,7 +377,7 @@ export async function createScene(
 ): Promise<CreateSceneResponse> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(`${base}/events/${enc(eventId)}/scenes`, {
+  const res = await telaflowFetch(`${base}/events/${enc(eventId)}/scenes`, {
     method: "POST",
     headers: cloudApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
@@ -361,7 +425,7 @@ export async function reorderScenes(
 ): Promise<CloudScene[]> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(`${base}/events/${enc(eventId)}/scenes/reorder`, {
+  const res = await telaflowFetch(`${base}/events/${enc(eventId)}/scenes/reorder`, {
     method: "POST",
     headers: cloudApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ scene_ids: sceneIds }),
@@ -391,7 +455,7 @@ export async function updateScene(
 ): Promise<UpdateSceneResponse> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(
+  const res = await telaflowFetch(
     `${base}/events/${enc(eventId)}/scenes/${enc(sceneId)}`,
     {
       method: "PATCH",
@@ -435,7 +499,7 @@ export async function deleteScene(
 ): Promise<void> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(
+  const res = await telaflowFetch(
     `${base}/events/${enc(eventId)}/scenes/${enc(sceneId)}`,
     {
       method: "DELETE",
@@ -456,7 +520,7 @@ export async function fetchDrawConfigs(
 ): Promise<CloudDrawConfig[]> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(`${base}/events/${enc(eventId)}/draw-configs`, {
+  const res = await telaflowFetch(`${base}/events/${enc(eventId)}/draw-configs`, {
     method: "GET",
     cache: "no-store",
     headers: cloudApiHeaders(),
@@ -490,7 +554,7 @@ export async function createDrawConfig(
 ): Promise<{ ok: boolean; draw_config: CloudDrawConfig }> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(`${base}/events/${enc(eventId)}/draw-configs`, {
+  const res = await telaflowFetch(`${base}/events/${enc(eventId)}/draw-configs`, {
     method: "POST",
     headers: cloudApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
@@ -530,7 +594,7 @@ export async function updateDrawConfig(
 ): Promise<{ ok: boolean; draw_config: CloudDrawConfig }> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(
+  const res = await telaflowFetch(
     `${base}/events/${enc(eventId)}/draw-configs/${enc(drawConfigId)}`,
     {
       method: "PATCH",
@@ -558,7 +622,7 @@ export async function deleteDrawConfig(
 ): Promise<void> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(
+  const res = await telaflowFetch(
     `${base}/events/${enc(eventId)}/draw-configs/${enc(drawConfigId)}`,
     {
       method: "DELETE",
@@ -580,7 +644,7 @@ export async function fetchMediaRequirements(
 ): Promise<CloudMediaRequirement[]> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(
+  const res = await telaflowFetch(
     `${base}/events/${enc(eventId)}/media-requirements`,
     {
       method: "GET",
@@ -611,7 +675,7 @@ export async function createMediaRequirement(
 ): Promise<{ ok: boolean; media_requirement: CloudMediaRequirement }> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(
+  const res = await telaflowFetch(
     `${base}/events/${enc(eventId)}/media-requirements`,
     {
       method: "POST",
@@ -642,7 +706,7 @@ export async function updateMediaRequirement(
 ): Promise<{ ok: boolean; media_requirement: CloudMediaRequirement }> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(
+  const res = await telaflowFetch(
     `${base}/events/${enc(eventId)}/media-requirements/${enc(mediaId)}`,
     {
       method: "PATCH",
@@ -666,7 +730,7 @@ export async function deleteMediaRequirement(
 ): Promise<void> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(
+  const res = await telaflowFetch(
     `${base}/events/${enc(eventId)}/media-requirements/${enc(mediaId)}`,
     {
       method: "DELETE",
@@ -692,7 +756,7 @@ export async function fetchExportReadiness(
 ): Promise<ExportReadinessBody> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(
+  const res = await telaflowFetch(
     `${base}/events/${enc(eventId)}/export-readiness`,
     {
       method: "GET",
@@ -727,7 +791,7 @@ export async function runPackExport(
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
   const q = options?.archiveZip ? "?archive=zip" : "";
-  const res = await fetch(`${base}/events/${enc(eventId)}/export${q}`, {
+  const res = await telaflowFetch(`${base}/events/${enc(eventId)}/export${q}`, {
     method: "POST",
     cache: "no-store",
     headers: cloudApiHeaders(),
@@ -757,7 +821,7 @@ export async function createDrawRegistrationSession(
 ): Promise<CreateDrawRegistrationSessionResponse> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(
+  const res = await telaflowFetch(
     `${base}/events/${enc(eventId)}/draw-configs/${enc(drawConfigId)}/registration-sessions`,
     {
       method: "POST",

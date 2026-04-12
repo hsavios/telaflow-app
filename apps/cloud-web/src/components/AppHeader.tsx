@@ -1,7 +1,9 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { clearAuthSession, isAuthenticated } from "@/lib/auth-session";
 
 const navClass =
   "text-sm text-tf-muted transition-colors hover:text-tf-fg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tf-accent/60";
@@ -11,9 +13,23 @@ const navActive =
 
 export function AppHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setLoggedIn(isAuthenticated());
+  }, [pathname]);
+
+  const logout = useCallback(() => {
+    clearAuthSession();
+    setLoggedIn(false);
+    router.refresh();
+  }, [router]);
+
   const onHome = pathname === "/";
   const onEvents =
     pathname === "/events" || pathname?.startsWith("/events/");
+  const onLogin = pathname === "/login";
 
   return (
     <>
@@ -41,6 +57,19 @@ export function AppHeader() {
             <Link href="/events" className={onEvents ? navActive : navClass}>
               Eventos
             </Link>
+            {loggedIn ? (
+              <button
+                type="button"
+                onClick={logout}
+                className={navClass}
+              >
+                Sair
+              </button>
+            ) : (
+              <Link href="/login" className={onLogin ? navActive : navClass}>
+                Entrar
+              </Link>
+            )}
             <span className="hidden h-4 w-px bg-tf-border sm:inline" aria-hidden />
             <Link
               href="https://telaflow.ia.br/"

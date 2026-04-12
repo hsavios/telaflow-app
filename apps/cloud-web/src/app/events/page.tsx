@@ -6,11 +6,11 @@ import { AppFooter } from "@/components/AppFooter";
 import { AppHeader } from "@/components/AppHeader";
 import {
   createEvent,
+  effectiveTelaflowOrganizationId,
   fetchEvents,
   getCloudApiBase,
   type CloudEvent,
 } from "@/lib/cloud-api";
-import { PROVISIONAL_ORGANIZATION_ID } from "@/lib/default-organization";
 import { generateEventId } from "@/lib/event-id";
 import { SHOWCASE_EVENT_ID } from "@/lib/showcase-event";
 
@@ -18,6 +18,9 @@ type LoadState = "idle" | "loading" | "ok" | "error";
 
 function formatErrorMessage(err: unknown): string {
   if (err instanceof Error) {
+    if (err.message === "telaflow_auth_redirect") {
+      return "Sessão expirada ou inexistente. Faça login de novo.";
+    }
     if (err.message === "missing_api_url") {
       return "A URL da Cloud API não está configurada (NEXT_PUBLIC_CLOUD_API_URL).";
     }
@@ -78,6 +81,9 @@ export default function EventsPage() {
       setEvents(rows);
       setLoadState("ok");
     } catch (e) {
+      if (e instanceof Error && e.message === "telaflow_auth_redirect") {
+        return;
+      }
       setLoadState("error");
       setListError(formatErrorMessage(e));
     }
@@ -128,7 +134,7 @@ export default function EventsPage() {
       try {
         await createEvent({
           event_id,
-          organization_id: PROVISIONAL_ORGANIZATION_ID,
+          organization_id: effectiveTelaflowOrganizationId(),
           name: trimmed,
         });
         setModalOpen(false);
@@ -139,6 +145,10 @@ export default function EventsPage() {
         return;
       } catch (e) {
         lastErr = e;
+        if (e instanceof Error && e.message === "telaflow_auth_redirect") {
+          setSubmitting(false);
+          return;
+        }
         if (e instanceof Error && e.message === "event_id_conflict") {
           continue;
         }
@@ -326,9 +336,8 @@ export default function EventsPage() {
               Novo evento
             </h2>
             <p className="mt-2 text-xs leading-relaxed text-tf-subtle">
-              Sem login nesta fase: todos os eventos usam o mesmo{" "}
-              <span className="font-mono text-tf-muted">organization_id</span>{" "}
-              provisório até existir tenant real.
+              O evento é criado na organização da sua sessão (após login, a org vem do
+              servidor) ou no ID provisório de desenvolvimento quando a API não exige JWT.
             </p>
 
             <label className="mt-6 block text-sm font-medium text-tf-muted">
@@ -347,8 +356,8 @@ export default function EventsPage() {
 
             <div className="mt-4 rounded-tf border border-tf-border bg-tf-bg/80 px-3 py-2 text-xs text-tf-subtle">
               <span className="text-tf-faint">organization_id · </span>
-              <span className="font-mono text-tf-muted">
-                {PROVISIONAL_ORGANIZATION_ID}
+              <span className="font-mono text-tf-muted break-all">
+                {effectiveTelaflowOrganizationId()}
               </span>
             </div>
 
