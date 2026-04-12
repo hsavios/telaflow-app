@@ -6,6 +6,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from telaflow_cloud_api.domain.scene_behavior import SceneBehavior
+
 _ID_PATTERN = r"^[a-zA-Z0-9_-]+$"
 
 SceneType = Literal["opening", "institutional", "sponsor", "draw", "break", "closing"]
@@ -27,6 +29,7 @@ class Scene(BaseModel):
     enabled: bool = True
     media_id: str | None = None
     draw_config_id: str | None = None
+    scene_behavior: SceneBehavior | None = None
 
 
 class SceneCreate(BaseModel):
@@ -38,6 +41,7 @@ class SceneCreate(BaseModel):
     enabled: bool = True
     media_id: str | None = None
     draw_config_id: str | None = None
+    scene_behavior: SceneBehavior | None = None
 
 
 class SceneUpdate(BaseModel):
@@ -51,6 +55,7 @@ class SceneUpdate(BaseModel):
     enabled: bool | None = None
     media_id: str | None = None
     draw_config_id: str | None = None
+    scene_behavior: SceneBehavior | None = None
 
 
 class SceneReorderBody(BaseModel):

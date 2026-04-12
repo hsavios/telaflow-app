@@ -6,6 +6,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from telaflow_cloud_api.domain.draw_public_copy import DrawPublicCopy
+
 _ID_PATTERN = r"^[a-zA-Z0-9_-]+$"
 
 
@@ -29,6 +31,7 @@ class DrawConfig(BaseModel):
     enabled: bool = True
     draw_type: Literal["number_range"] = "number_range"
     number_range: NumberRange | None = None
+    public_copy: DrawPublicCopy | None = None
 
     @model_validator(mode="after")
     def _number_range_bounds(self) -> DrawConfig:
@@ -46,6 +49,7 @@ class DrawConfigCreate(BaseModel):
     enabled: bool = True
     draw_type: Literal["number_range"] = "number_range"
     number_range: NumberRange | None = None
+    public_copy: DrawPublicCopy | None = None
 
 
 class DrawConfigUpdate(BaseModel):
@@ -59,3 +63,4 @@ class DrawConfigUpdate(BaseModel):
     enabled: bool | None = None
     draw_type: Literal["number_range"] | None = None
     number_range: NumberRange | None = None
+    public_copy: DrawPublicCopy | None = None

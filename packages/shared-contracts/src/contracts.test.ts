@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  BrandingExportMvpSchema,
   DrawConfigContractSchema,
   EventContractSchema,
   EventExportFileSchema,
@@ -116,6 +117,14 @@ describe("SceneContractSchema", () => {
       SceneContractSchema.safeParse({ ...base, media_id: "short" }).success,
     ).toBe(false);
   });
+
+  it("parses optional scene_behavior", () => {
+    const r = SceneContractSchema.safeParse({
+      ...base,
+      scene_behavior: { mode: "draw_operator_confirm" },
+    });
+    expect(r.success).toBe(true);
+  });
 });
 
 describe("DrawConfigContractSchema", () => {
@@ -155,6 +164,20 @@ describe("DrawConfigContractSchema", () => {
     });
     expect(r.success).toBe(false);
   });
+
+  it("parses optional public_copy", () => {
+    const r = DrawConfigContractSchema.safeParse({
+      draw_config_id: validDcf,
+      event_id: validEvt,
+      name: "Sorteio",
+      public_copy: {
+        headline: "Prêmios",
+        audience_instructions: "Aguarde o sorteio.",
+        result_label: "Número sorteado",
+      },
+    });
+    expect(r.success).toBe(true);
+  });
 });
 
 describe("MediaRequirementContractSchema", () => {
@@ -165,6 +188,18 @@ describe("MediaRequirementContractSchema", () => {
       label: "Vinheta",
       media_type: "video",
       required: true,
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("parses usage_role and presentation", () => {
+    const r = MediaRequirementContractSchema.safeParse({
+      media_id: validMed,
+      event_id: validEvt,
+      label: "Logo",
+      media_type: "image",
+      usage_role: "brand_mark",
+      presentation: "contain",
     });
     expect(r.success).toBe(true);
   });
@@ -281,6 +316,27 @@ describe("Pack MVP artifact schemas", () => {
       valid_from: iso,
       valid_until: "2026-05-10T12:00:00Z",
       scope: "event_player_binding_mvp",
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("parses branding export with scene_type_presets", () => {
+    const r = BrandingExportMvpSchema.safeParse({
+      schema_version: "branding_export.v1",
+      event_id: validEvt,
+      organization_id: validOrg,
+      export_id: validExp2,
+      resolved_at: iso,
+      source: "default_mvp",
+      tokens: {
+        primary_color: "#000",
+        accent_color: "#0ff",
+        font_family_sans: "system-ui",
+      },
+      scene_type_presets: {
+        draw: { default_behavior_mode: "draw_operator_confirm" },
+        opening: { default_behavior_mode: "standard" },
+      },
     });
     expect(r.success).toBe(true);
   });

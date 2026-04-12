@@ -21,6 +21,18 @@ export { PACK_VERSION, SCHEMA_VERSION, SNAPSHOT_VERSION } from "./constants.js";
 
 export { SceneTypeSchema, type SceneType } from "./scene-type.js";
 
+export {
+  SceneBehaviorModeSchema,
+  SceneBehaviorMvpSchema,
+  SceneTypePresetMvpSchema,
+  BrandingSceneTypePresetsMvpSchema,
+  sceneTypesForPresets,
+  type SceneBehaviorMode,
+  type SceneBehaviorMvp,
+  type SceneTypePresetMvp,
+  type BrandingSceneTypePresetsMvp,
+} from "./scene-behavior.js";
+
 export { MediaKindSchema, type MediaKind } from "./media-kind.js";
 
 export { EventContractSchema, type EventContract } from "./event.js";
@@ -31,14 +43,20 @@ export {
   DrawConfigContractSchema,
   DrawNumberRangeSchema,
   DrawTypeSchema,
+  DrawPublicCopyMvpSchema,
   type DrawConfigContract,
   type DrawNumberRange,
   type DrawType,
+  type DrawPublicCopyMvp,
 } from "./draw-config.js";
 
 export {
   MediaRequirementContractSchema,
+  MediaUsageRoleSchema,
+  MediaPresentationSchema,
   type MediaRequirementContract,
+  type MediaUsageRole,
+  type MediaPresentation,
 } from "./media-requirement.js";
 
 export {

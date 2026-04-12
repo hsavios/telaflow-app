@@ -51,6 +51,8 @@ def create_media_requirement(event_id: str, body: MediaRequirementCreate) -> dic
         required=body.required,
         scene_id=body.scene_id,
         allowed_extensions_hint=body.allowed_extensions_hint,
+        usage_role=body.usage_role,
+        presentation=body.presentation,
     )
     payload = mr.model_dump()
     bucket.append(payload)

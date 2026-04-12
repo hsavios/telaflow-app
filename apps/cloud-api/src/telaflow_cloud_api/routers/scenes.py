@@ -100,6 +100,7 @@ def create_scene(event_id: str, body: SceneCreate) -> dict:
         enabled=body.enabled,
         media_id=body.media_id,
         draw_config_id=body.draw_config_id,
+        scene_behavior=body.scene_behavior,
     )
     payload = scene.model_dump()
     bucket.append(payload)
@@ -151,6 +152,7 @@ def update_scene(event_id: str, scene_id: str, body: SceneUpdate) -> dict:
     row = dict(bucket[idx])
     row.setdefault("media_id", None)
     row.setdefault("draw_config_id", None)
+    row.setdefault("scene_behavior", None)
     row.update(patch)
     memory._validate_scene_links(
         event_id,

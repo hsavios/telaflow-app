@@ -2,6 +2,7 @@
 import { DrawConfigContractSchema } from "./draw-config.js";
 import { EventIdSchema, ExportIdSchema, OrganizationIdSchema } from "./ids.js";
 import { MediaRequirementContractSchema } from "./media-requirement.js";
+import { BrandingSceneTypePresetsMvpSchema } from "./scene-behavior.js";
 import { SceneContractSchema } from "./scene.js";
 
 /** manifest.json — ponto de entrada do pack (export direto MVP, sem ZIP). */
@@ -85,6 +86,8 @@ export const BrandingExportMvpSchema = z.object({
     accent_color: z.string().min(1),
     font_family_sans: z.string().min(1),
   }),
+  /** Defaults por tipo de scene quando `scene_behavior` não vem na scene. */
+  scene_type_presets: BrandingSceneTypePresetsMvpSchema.nullish(),
 });
 
 export type BrandingExportMvp = z.infer<typeof BrandingExportMvpSchema>;

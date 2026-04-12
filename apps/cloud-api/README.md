@@ -8,7 +8,7 @@ FastAPI service — Fase 1 skeleton (`PHASE_1_EXECUTION_SPEC.md`). Requer Python
 - `POST /events` — cria evento em **memória** (stub; `409` se `event_id` repetido)
 - `GET /events/{event_id}/scenes` — lista scenes do evento (ordenadas por `sort_order`) ou `404` se o evento não existir
 - `POST /events/{event_id}/scenes/reorder` — redefine ordem; corpo `{"scene_ids":[...]}` (todos os ids do evento, cada um uma vez, na nova ordem; `sort_order` 0..n-1)
-- `POST /events/{event_id}/scenes` — cria scene (`scene_id` gerado no servidor); corpo: `sort_order` **único por evento**, `type` (enum), `name`, `enabled` (default true), opcionais `media_id` / `draw_config_id`
+- `POST /events/{event_id}/scenes` — cria scene (`scene_id` gerado no servidor); corpo: `sort_order` **único por evento**, `type` (enum), `name`, `enabled` (default true), opcionais `media_id` / `draw_config_id` / `scene_behavior` (`{ "mode": "…" }`, ver `docs/project/PACK_AUTHORING_SEMANTICS_MVP.md`)
 - `GET /events/{event_id}/scenes/{scene_id}` — detalhe da scene ou `404`
 - `PATCH /events/{event_id}/scenes/{scene_id}` — atualização parcial (`SceneUpdate`)
 - `DELETE /events/{event_id}/scenes/{scene_id}` — remove e recompacta `sort_order`; limpa `scene_id` em `MediaRequirement` que apontavam para essa scene
@@ -17,14 +17,14 @@ FastAPI service — Fase 1 skeleton (`PHASE_1_EXECUTION_SPEC.md`). Requer Python
 - `POST /events/{event_id}/export` — **Pack export MVP (diretório em disco)**  
   - Sempre executa o mesmo gate que `export_readiness.v1`; se `ready == false` → **`409`** `export_not_ready` com `export_readiness` no `detail`.  
   - Cria pasta `{TELAFLOW_PACK_EXPORT_DIR}/{export_id}/` (padrão: `apps/cloud-api/data/pack-exports/{export_id}/`).  
-  - Grava **seis** JSON em UTF-8, LF, sem BOM, chaves ordenadas: `manifest.json` (entrada do pack), `event.json` (evento + scenes ordenadas), `draw-configs.json` (**só** sorteios referenciados por alguma scene), `media-manifest.json` (todos os `MediaRequirement` do evento), `branding.json` (tokens mínimos `default_mvp`), `license.json` (janela **30 dias** a partir de `generated_at`, escopo `event_player_binding_mvp`).  
+  - Grava **seis** JSON em UTF-8, LF, sem BOM, chaves ordenadas: `manifest.json` (entrada do pack), `event.json` (evento + scenes ordenadas), `draw-configs.json` (**só** sorteios referenciados por alguma scene), `media-manifest.json` (todos os `MediaRequirement` do evento), `branding.json` (tokens `default_mvp` + `scene_type_presets` padrão MVP), `license.json` (janela **30 dias** a partir de `generated_at`, escopo `event_player_binding_mvp`).  
   - **Sem** mídia binária, **sem** ZIP, **sem** assinatura criptográfica.  
   - Resposta HTTP: `export_id`, `generated_at`, `export_directory`, `files_written`, `artifacts` (mesmo conteúdo gravado, útil para clientes que não leem o disco).
-- **DrawConfig** (sorteio por evento): `GET/POST /events/{event_id}/draw-configs`, `GET/PATCH/DELETE …/draw-configs/{draw_config_id}` — `409` `draw_config_in_use` se alguma scene referencia
-- **MediaRequirement** (manifesto por evento, sem upload): `GET/POST …/media-requirements`, `GET/PATCH/DELETE …/media-requirements/{media_id}` — `media_id` gerado no servidor; `409` `media_requirement_in_use` se scene usa o slot
+- **DrawConfig** (sorteio por evento): `GET/POST /events/{event_id}/draw-configs`, `GET/PATCH/DELETE …/draw-configs/{draw_config_id}` — `409` `draw_config_in_use` se alguma scene referencia; opcional `public_copy` (textos para audiência)
+- **MediaRequirement** (manifesto por evento, sem upload): `GET/POST …/media-requirements`, `GET/PATCH/DELETE …/media-requirements/{media_id}` — `media_id` gerado no servidor; `409` `media_requirement_in_use` se scene usa o slot; opcionais `usage_role` e `presentation`
 - `409` em criação/atualização de scene se `sort_order` duplicado no mesmo evento (`sort_order_conflict`)
 - CORS: variável `CLOUD_API_CORS_ORIGINS`; métodos `GET`, `POST`, `PATCH`, `DELETE`, `OPTIONS`
-- `domain/` — `event`, `scene`, `draw_config`, `media_requirement` (Pydantic)
+- `domain/` — `event`, `scene`, `scene_behavior`, `draw_config`, `draw_public_copy`, `media_requirement` (Pydantic)
 
 ## Layout do código
 

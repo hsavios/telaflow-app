@@ -1,5 +1,6 @@
 ﻿import { z } from "zod";
 import { DrawConfigIdSchema, EventIdSchema, MediaIdSchema, SceneIdSchema } from "./ids.js";
+import { SceneBehaviorMvpSchema } from "./scene-behavior.js";
 import { SceneTypeSchema } from "./scene-type.js";
 
 /**
@@ -17,6 +18,8 @@ export const SceneContractSchema = z.object({
   enabled: z.boolean().default(true),
   media_id: MediaIdSchema.nullish(),
   draw_config_id: DrawConfigIdSchema.nullish(),
+  /** Semântica operacional opcional (Pack Authoring MVP). */
+  scene_behavior: SceneBehaviorMvpSchema.nullish(),
 });
 
 export type SceneContract = z.infer<typeof SceneContractSchema>;

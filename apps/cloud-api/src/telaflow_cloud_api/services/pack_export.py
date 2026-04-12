@@ -91,6 +91,21 @@ def _all_media_requirements(event_id: str) -> list[dict]:
     return [dict(m) for m in rows]
 
 
+def _mvp_scene_type_presets() -> dict[str, dict[str, str]]:
+    """
+    Defaults por tipo de scene (Pack Authoring Semantics MVP).
+    Alinhado a `BrandingSceneTypePresetsMvpSchema` — o Player pode usar quando a scene não traz `scene_behavior`.
+    """
+    return {
+        "opening": {"default_behavior_mode": "standard"},
+        "institutional": {"default_behavior_mode": "placard"},
+        "sponsor": {"default_behavior_mode": "placard"},
+        "draw": {"default_behavior_mode": "draw_operator_confirm"},
+        "break": {"default_behavior_mode": "transition"},
+        "closing": {"default_behavior_mode": "standard"},
+    }
+
+
 def build_pack_payloads(
     event_id: str,
     *,
@@ -137,6 +152,7 @@ def build_pack_payloads(
             "accent_color": "#2dd4bf",
             "font_family_sans": "system-ui, sans-serif",
         },
+        "scene_type_presets": _mvp_scene_type_presets(),
     }
 
     valid_until = _add_days_iso_z(generated_at, 30)

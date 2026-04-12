@@ -10,6 +10,10 @@ _ID_PATTERN = r"^[a-zA-Z0-9_-]+$"
 
 MediaKind = Literal["video", "image", "audio", "other"]
 
+MediaUsageRole = Literal["scene_primary", "supporting", "brand_mark", "ambient"]
+
+MediaPresentation = Literal["default", "fullscreen", "contain", "background"]
+
 
 class MediaRequirement(BaseModel):
     """
@@ -24,6 +28,8 @@ class MediaRequirement(BaseModel):
     required: bool = False
     scene_id: str | None = None
     allowed_extensions_hint: str | None = Field(default=None, max_length=512)
+    usage_role: MediaUsageRole | None = None
+    presentation: MediaPresentation | None = None
 
 
 class MediaRequirementCreate(BaseModel):
@@ -34,6 +40,8 @@ class MediaRequirementCreate(BaseModel):
     required: bool = False
     scene_id: str | None = None
     allowed_extensions_hint: str | None = Field(default=None, max_length=512)
+    usage_role: MediaUsageRole | None = None
+    presentation: MediaPresentation | None = None
 
 
 class MediaRequirementUpdate(BaseModel):
@@ -46,3 +54,5 @@ class MediaRequirementUpdate(BaseModel):
     required: bool | None = None
     scene_id: str | None = None
     allowed_extensions_hint: str | None = Field(default=None, max_length=512)
+    usage_role: MediaUsageRole | None = None
+    presentation: MediaPresentation | None = None
