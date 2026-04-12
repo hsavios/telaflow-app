@@ -1,14 +1,20 @@
 ﻿import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useCallback, useState } from "react";
-import { buildPackSummary } from "./pack/packSummary.js";
-import type { PlayerPackUiState } from "./pack/playerPackState.js";
+import { PackLoadedWorkspace } from "./components/PackLoadedWorkspace.js";
+import {
+  evaluateLicense,
+  formatLicenseBlockMessage,
+} from "./license/licenseValidator.js";
+import type { PlayerAppState } from "./pack/playerPackState.js";
 import type { LoadedPackInvokePayload } from "./pack/validateLoadedPack.js";
 import { validateLoadedPackPayload } from "./pack/validateLoadedPack.js";
+import { phaseAfterPreflight } from "./runtime/operationalState.js";
+import type { PreflightResult } from "./preflight/types.js";
 import "./App.css";
 
 export default function App() {
-  const [estado, setEstado] = useState<PlayerPackUiState>({ kind: "idle" });
+  const [estado, setEstado] = useState<PlayerAppState>({ kind: "idle" });
   const [carregando, setCarregando] = useState(false);
 
   const abrirPastaPack = useCallback(async () => {
@@ -42,17 +48,30 @@ export default function App() {
         });
         return;
       }
-      const resumo = buildPackSummary(bruto.rootPath, validado);
+
+      const lic = evaluateLicense(validado.license, {
+        nowMs: Date.now(),
+        expectedEventId: validado.manifest.event_id,
+        expectedExportId: validado.manifest.export_id,
+        expectedOrganizationId: validado.manifest.organization_id,
+      });
+      if (lic.status !== "valid") {
+        setEstado({
+          kind: "blocked",
+          message: `Licença: ${formatLicenseBlockMessage(lic)}`,
+        });
+        return;
+      }
+
       setEstado({
         kind: "pack_loaded",
-        rootPath: resumo.rootPath,
-        eventName: resumo.eventName,
-        exportId: resumo.exportId,
-        generatedAt: resumo.generatedAt,
-        sceneCount: resumo.sceneCount,
-        drawConfigCount: resumo.drawConfigCount,
-        mediaRequirementCount: resumo.mediaRequirementCount,
-        packFormat: resumo.packFormat,
+        packRoot: bruto.rootPath,
+        packData: validado,
+        workspaceRoot: null,
+        bindings: {},
+        lastPreflight: null,
+        operationalPhase: "binding_pending",
+        sceneIndex: 0,
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -69,13 +88,61 @@ export default function App() {
     setEstado({ kind: "idle" });
   }, []);
 
+  const onWorkspaceChange = useCallback((root: string | null, nextBindings: Record<string, string>) => {
+    setEstado((s) => {
+      if (s.kind !== "pack_loaded") return s;
+      return {
+        ...s,
+        workspaceRoot: root,
+        bindings: nextBindings,
+        lastPreflight: null,
+        operationalPhase: "binding_pending",
+      };
+    });
+  }, []);
+
+  const onBindingsChange = useCallback((next: Record<string, string>) => {
+    setEstado((s) => {
+      if (s.kind !== "pack_loaded") return s;
+      return {
+        ...s,
+        bindings: next,
+        lastPreflight: null,
+        operationalPhase: "binding_pending",
+      };
+    });
+  }, []);
+
+  const onPreflightComplete = useCallback((r: PreflightResult) => {
+    setEstado((s) => {
+      if (s.kind !== "pack_loaded") return s;
+      const phase = phaseAfterPreflight(r);
+      return {
+        ...s,
+        lastPreflight: r,
+        operationalPhase: phase,
+      };
+    });
+  }, []);
+
+  const onStartExecution = useCallback(() => {
+    setEstado((s) => {
+      if (s.kind !== "pack_loaded" || s.operationalPhase !== "ready") return s;
+      return {
+        ...s,
+        operationalPhase: "executing",
+        sceneIndex: 0,
+      };
+    });
+  }, []);
+
   return (
     <main className="player-shell">
       <header className="player-header">
         <h1>TelaFlow Player</h1>
         <p className="player-tagline">
-          Loader de pack (MVP) — sem Cloud em runtime, sem execução de cenas, sem
-          pre-flight completo.
+          Pack, licença, vínculos, pre-flight e FSM operacional — sem Cloud em runtime e sem
+          playback de mídia.
         </p>
       </header>
 
@@ -99,46 +166,19 @@ export default function App() {
           <pre className="player-error">{estado.message}</pre>
         )}
         {estado.kind === "pack_loaded" && (
-          <dl className="player-summary">
-            <div>
-              <dt>Pasta</dt>
-              <dd>{estado.rootPath}</dd>
-            </div>
-            <div>
-              <dt>Evento</dt>
-              <dd>{estado.eventName}</dd>
-            </div>
-            <div>
-              <dt>export_id</dt>
-              <dd>
-                <code>{estado.exportId}</code>
-              </dd>
-            </div>
-            <div>
-              <dt>generated_at</dt>
-              <dd>
-                <code>{estado.generatedAt}</code>
-              </dd>
-            </div>
-            <div>
-              <dt>pack_format</dt>
-              <dd>
-                <code>{estado.packFormat}</code>
-              </dd>
-            </div>
-            <div>
-              <dt>Scenes</dt>
-              <dd>{estado.sceneCount}</dd>
-            </div>
-            <div>
-              <dt>Draw configs (no pack)</dt>
-              <dd>{estado.drawConfigCount}</dd>
-            </div>
-            <div>
-              <dt>Requisitos de mídia</dt>
-              <dd>{estado.mediaRequirementCount}</dd>
-            </div>
-          </dl>
+          <PackLoadedWorkspace
+            packRoot={estado.packRoot}
+            packData={estado.packData}
+            workspaceRoot={estado.workspaceRoot}
+            bindings={estado.bindings}
+            operationalPhase={estado.operationalPhase}
+            sceneIndex={estado.sceneIndex}
+            onWorkspaceChange={onWorkspaceChange}
+            onBindingsChange={onBindingsChange}
+            lastPreflight={estado.lastPreflight}
+            onPreflightComplete={onPreflightComplete}
+            onStartExecution={onStartExecution}
+          />
         )}
         {estado.kind === "idle" && !carregando && (
           <p className="player-hint">
