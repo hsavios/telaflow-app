@@ -1,28 +1,28 @@
 ﻿/**
- * FSM operacional mínima (MVP) — alinhada em espírito a ARCHITECTURE_SPEC / PLAYER_RUNTIME_FEATURE_SPEC.
- * Não inclui playback nem execução real de conteúdo.
+ * FSM operacional do Player (MVP) — alinhada a ARCHITECTURE_SPEC / PLAYER_RUNTIME_FEATURE_SPEC.
+ * Estados de topo: idle, pack_loaded, preflight_failed, ready, executing, blocked.
  */
 
 import type { PreflightResult } from "../preflight/types.js";
 
-/** Fases operacionais após pack + licença válidos. */
-export type OperationalPhase =
-  | "binding_pending"
+/** Estados após pack + licença válidos (nível de topo em `PlayerAppState.kind`). */
+export type PlayerOperationalKind =
+  | "pack_loaded"
   | "preflight_failed"
   | "ready"
   | "executing";
 
-/** Após pre-flight: `ready` só se zero bloqueantes (gate). */
-export function phaseAfterPreflight(result: PreflightResult): OperationalPhase {
+/** Resultado do pre-flight: sem bloqueantes → `ready`, caso contrário `preflight_failed`. */
+export function kindAfterPreflight(result: PreflightResult): "ready" | "preflight_failed" {
   return result.blockingCount === 0 ? "ready" : "preflight_failed";
 }
 
-export function describeOperationalPhasePt(phase: OperationalPhase): string {
-  const m: Record<OperationalPhase, string> = {
-    binding_pending: "aguardando vínculos / nova validação",
+export function describeOperationalKindPt(kind: PlayerOperationalKind): string {
+  const m: Record<PlayerOperationalKind, string> = {
+    pack_loaded: "pack carregado — configurar workspace / bindings e correr pre-flight",
     preflight_failed: "pre-flight com bloqueantes",
-    ready: "pronto (gate OK)",
+    ready: "pronto (gate sem bloqueantes)",
     executing: "a executar roteiro (MVP sem playback)",
   };
-  return m[phase];
+  return m[kind];
 }

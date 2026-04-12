@@ -3,6 +3,8 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { buildPackSummary } from "../pack/packSummary.js";
 import type { PackLoaderSuccess } from "../pack/validateLoadedPack.js";
+import type { PlayerOperationalKind } from "../runtime/operationalState.js";
+import { describeOperationalKindPt } from "../runtime/operationalState.js";
 import {
   createEmptyBindingsFile,
   MediaBindingsFileSchema,
@@ -12,8 +14,6 @@ import { ExecutionLogPanel } from "../execution/ExecutionLogPanel.js";
 import type { ExecutionLogEntry } from "../execution/executionLog.js";
 import { runPreflightMvp } from "../preflight/runPreflight.js";
 import type { PreflightResult } from "../preflight/types.js";
-import type { OperationalPhase } from "../runtime/operationalState.js";
-import { describeOperationalPhasePt } from "../runtime/operationalState.js";
 import { SceneRuntimeNav } from "../runtime/sceneNavigator.js";
 
 type StatusMidia = "nao_vinculado" | "vinculado" | "ausente";
@@ -34,35 +34,37 @@ function statusMidia(
 }
 
 type Props = {
+  runtimeKind: PlayerOperationalKind;
   packRoot: string;
   packData: PackLoaderSuccess;
   workspaceRoot: string | null;
   bindings: Record<string, string>;
-  operationalPhase: OperationalPhase;
+  lastPreflight: PreflightResult | null;
   sceneIndex: number;
   executionLog: ExecutionLogEntry[];
   onWorkspaceChange: (root: string | null, bindings: Record<string, string>) => void;
   onBindingsChange: (next: Record<string, string>) => void;
-  lastPreflight: PreflightResult | null;
   onPreflightComplete: (r: PreflightResult) => void;
   onStartExecution: () => void;
   onSceneIndexChange: (index: number) => void;
+  onFinishExecution: () => void;
 };
 
 export function PackLoadedWorkspace({
+  runtimeKind,
   packRoot,
   packData,
   workspaceRoot,
   bindings,
-  operationalPhase,
+  lastPreflight,
   sceneIndex,
   executionLog,
   onWorkspaceChange,
   onBindingsChange,
-  lastPreflight,
   onPreflightComplete,
   onStartExecution,
   onSceneIndexChange,
+  onFinishExecution,
 }: Props) {
   const resumo = useMemo(() => buildPackSummary(packRoot, packData), [packRoot, packData]);
   const [existeCache, setExisteCache] = useState<Map<string, boolean>>(new Map());
@@ -206,9 +208,11 @@ export function PackLoadedWorkspace({
     return { req, st };
   });
 
+  const podeCorrerPreflight = runtimeKind !== "executing";
+
   return (
     <div className="pack-workspace">
-      <h2>Pack carregado</h2>
+      <h2>Sessão com pack</h2>
       <dl className="player-summary">
         <div>
           <dt>Pasta do pack</dt>
@@ -229,7 +233,7 @@ export function PackLoadedWorkspace({
           </dd>
         </div>
         <div>
-          <dt>Scenes</dt>
+          <dt>Scenes (total no pack)</dt>
           <dd>{resumo.sceneCount}</dd>
         </div>
         <div>
@@ -237,9 +241,9 @@ export function PackLoadedWorkspace({
           <dd>{resumo.mediaRequirementCount}</dd>
         </div>
         <div>
-          <dt>Fase operacional</dt>
+          <dt>Estado operacional (FSM)</dt>
           <dd>
-            <code>{operationalPhase}</code> — {describeOperationalPhasePt(operationalPhase)}
+            <code>{runtimeKind}</code> — {describeOperationalKindPt(runtimeKind)}
           </dd>
         </div>
       </dl>
@@ -247,15 +251,15 @@ export function PackLoadedWorkspace({
       <section className="player-section">
         <h3>Gate ready → execução (MVP)</h3>
         <p className="player-hint">
-          Só após pre-flight <strong>sem bloqueantes</strong> a fase passa a <code>ready</code>.
-          O botão abaixo entra em <code>executing</code> (sem playback de mídia).
+          O pre-flight sem bloqueantes coloca o estado em <code>ready</code>. Aí pode iniciar o
+          roteiro (sem playback). Em <code>executing</code> pode concluir para voltar a{" "}
+          <code>ready</code> mantendo o último pre-flight válido.
         </p>
-        <button
-          type="button"
-          disabled={operationalPhase !== "ready"}
-          onClick={onStartExecution}
-        >
+        <button type="button" disabled={runtimeKind !== "ready"} onClick={onStartExecution}>
           Iniciar roteiro (MVP)
+        </button>{" "}
+        <button type="button" disabled={runtimeKind !== "executing"} onClick={onFinishExecution}>
+          Concluir execução
         </button>
       </section>
 
@@ -264,7 +268,8 @@ export function PackLoadedWorkspace({
         <p className="player-hint">
           Escolha a pasta raiz onde estão (ou estarão) os ficheiros de mídia. Os bindings
           gravam-se em <code>.telaflow/media-bindings.json</code> com caminhos relativos a
-          essa raiz.
+          essa raiz. O registo de execução JSONL usa <code>.telaflow/execution-log.jsonl</code>{" "}
+          (workspace se existir; senão pasta do pack).
         </p>
         <button type="button" disabled={binderBusy} onClick={escolherWorkspace}>
           {workspaceRoot ? "Alterar workspace…" : "Selecionar workspace…"}
@@ -331,10 +336,14 @@ export function PackLoadedWorkspace({
       <section className="player-section">
         <h3>Pre-flight</h3>
         <p className="player-hint">
-          Checagens mínimas (pack, licença, bindings, ficheiros, roteiro). Reexecute após
-          alterar workspace ou vínculos.
+          Com bloqueantes → estado <code>preflight_failed</code>. Sem bloqueantes →{" "}
+          <code>ready</code>. Reexecute após alterar workspace ou vínculos.
         </p>
-        <button type="button" disabled={preflightBusy} onClick={() => void executarPreflight()}>
+        <button
+          type="button"
+          disabled={preflightBusy || !podeCorrerPreflight}
+          onClick={() => void executarPreflight()}
+        >
           {preflightBusy ? "A executar…" : "Executar checagens"}
         </button>
         {lastPreflight && (
@@ -361,9 +370,9 @@ export function PackLoadedWorkspace({
         )}
       </section>
 
-      {operationalPhase === "executing" && (
+      {runtimeKind === "executing" && (
         <section className="player-section">
-          <h3>Roteiro (navegação)</h3>
+          <h3>Roteiro (cenas ativas)</h3>
           <SceneRuntimeNav
             scenes={packData.event.scenes}
             sceneIndex={sceneIndex}
@@ -374,7 +383,15 @@ export function PackLoadedWorkspace({
 
       <section className="player-section">
         <h3>Registo de execução (MVP)</h3>
-        <ExecutionLogPanel entries={executionLog} />
+        {runtimeKind === "executing" ? (
+          <ExecutionLogPanel entries={executionLog} />
+        ) : (
+          <p className="player-hint">
+            O ficheiro <code>.telaflow/execution-log.jsonl</code> regista{" "}
+            <code>execution_started</code>, <code>scene_activated</code> e{" "}
+            <code>execution_finished</code> após iniciar o roteiro.
+          </p>
+        )}
       </section>
     </div>
   );

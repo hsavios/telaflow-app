@@ -1,31 +1,55 @@
 ﻿/**
- * Estados do Player (MVP) — loader, licença, binding, pre-flight e FSM operacional.
- * Playback de mídia e lógica completa de cena ficam fora de escopo.
+ * FSM do Player (MVP) — estados de topo conforme ARCHITECTURE_SPEC / PLAYER_RUNTIME_FEATURE_SPEC.
+ * idle → pack_loaded → (pre-flight) → preflight_failed | ready → executing → …
  */
 
 import type { ExecutionLogEntry } from "../execution/executionLog.js";
-import type { OperationalPhase } from "../runtime/operationalState.js";
 import type { PreflightResult } from "../preflight/types.js";
 import type { PackLoaderSuccess } from "./validateLoadedPack.js";
 
-export type { OperationalPhase } from "../runtime/operationalState.js";
+/** Campos partilhados enquanto há sessão com pack válido em memória. */
+export type PlayerSessionCore = {
+  packRoot: string;
+  packData: PackLoaderSuccess;
+  workspaceRoot: string | null;
+  bindings: Record<string, string>;
+  sceneIndex: number;
+  /**
+   * Registo de execução: preenchido apenas em `executing` (inicia ao entrar neste estado).
+   */
+  executionLog: ExecutionLogEntry[];
+};
+
+export type PlayerActiveSession =
+  | ({ kind: "pack_loaded" } & PlayerSessionCore & { lastPreflight: PreflightResult | null })
+  | ({ kind: "preflight_failed" } & PlayerSessionCore & { lastPreflight: PreflightResult })
+  | ({ kind: "ready" } & PlayerSessionCore & { lastPreflight: PreflightResult })
+  | ({ kind: "executing" } & PlayerSessionCore & { lastPreflight: PreflightResult });
 
 export type PlayerAppState =
   | { kind: "idle" }
   | { kind: "blocked"; message: string }
-  | {
-      kind: "pack_loaded";
-      packRoot: string;
-      packData: PackLoaderSuccess;
-      /** Pasta de workspace local (mídia, bindings). */
-      workspaceRoot: string | null;
-      /** media_id → caminho relativo ao workspaceRoot. */
-      bindings: Record<string, string>;
-      lastPreflight: PreflightResult | null;
-      /** FSM após pack válido (ver ARCHITECTURE_SPEC §14). */
-      operationalPhase: OperationalPhase;
-      /** Índice na sequência ordenada de cenas (usado quando `executing`). */
-      sceneIndex: number;
-      /** Registo de execução em memória (MVP). */
-      executionLog: ExecutionLogEntry[];
-    };
+  | PlayerActiveSession;
+
+export function isActiveSession(s: PlayerAppState): s is PlayerActiveSession {
+  return (
+    s.kind === "pack_loaded" ||
+    s.kind === "preflight_failed" ||
+    s.kind === "ready" ||
+    s.kind === "executing"
+  );
+}
+
+/** Volta a `pack_loaded` após alteração de workspace/bindings (exige novo pre-flight). */
+export function resetSessionToPackLoaded(s: PlayerActiveSession): PlayerAppState {
+  return {
+    kind: "pack_loaded",
+    packRoot: s.packRoot,
+    packData: s.packData,
+    workspaceRoot: s.workspaceRoot,
+    bindings: s.bindings,
+    lastPreflight: null,
+    sceneIndex: 0,
+    executionLog: [],
+  };
+}
