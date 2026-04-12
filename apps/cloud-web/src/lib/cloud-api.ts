@@ -49,6 +49,46 @@ async function parseJsonOrText(res: Response): Promise<unknown> {
   }
 }
 
+/**
+ * Extrai mensagem legível de respostas FastAPI/Pydantic (ex.: 422) para a UI.
+ */
+export function summarizeTelaflowApiErrorBody(body: unknown): string | null {
+  if (body == null || typeof body !== "object") return null;
+  const root = body as Record<string, unknown>;
+  const detail = root.detail;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    const parts = detail
+      .map((item) => {
+        if (item && typeof item === "object" && "msg" in item) {
+          return String((item as { msg: unknown }).msg);
+        }
+        return null;
+      })
+      .filter((x): x is string => Boolean(x));
+    return parts.length ? parts.join("; ") : null;
+  }
+  if (detail && typeof detail === "object") {
+    const d = detail as Record<string, unknown>;
+    if (d.error === "validation_failed" && Array.isArray(d.issues)) {
+      const parts = (d.issues as unknown[])
+        .map((it) => {
+          if (it && typeof it === "object" && "msg" in it) {
+            return String((it as { msg: unknown }).msg);
+          }
+          if (it && typeof it === "object" && "type" in it) {
+            return String((it as { type: unknown }).type);
+          }
+          return null;
+        })
+        .filter((x): x is string => Boolean(x));
+      return parts.length ? parts.join(" · ") : "validation_failed";
+    }
+    if (typeof d.message === "string") return d.message;
+  }
+  return null;
+}
+
 export async function fetchEvents(): Promise<CloudEvent[]> {
   const base = getCloudApiBase();
   if (!base) {
@@ -423,6 +463,12 @@ export async function createDrawConfig(
   if (res.status === 404) throw new Error("event_not_found");
   const body = await parseJsonOrText(res);
   if (!res.ok) {
+    if (res.status === 422) {
+      const human = summarizeTelaflowApiErrorBody(body);
+      throw new Error(
+        `draw_config_validation:${human ?? "Corrija os dados do sorteio e tente de novo."}`,
+      );
+    }
     throw new Error(`draw_config_create_failed:${res.status}`, { cause: body });
   }
   return body as { ok: boolean; draw_config: CloudDrawConfig };
@@ -457,6 +503,12 @@ export async function updateDrawConfig(
   if (res.status === 404) throw new Error("draw_config_not_found");
   const body = await parseJsonOrText(res);
   if (!res.ok) {
+    if (res.status === 422) {
+      const human = summarizeTelaflowApiErrorBody(body);
+      throw new Error(
+        `draw_config_validation:${human ?? "Corrija intervalo ou textos e tente de novo."}`,
+      );
+    }
     throw new Error(`draw_config_update_failed:${res.status}`, { cause: body });
   }
   return body as { ok: boolean; draw_config: CloudDrawConfig };

@@ -1,15 +1,21 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   createDrawConfig,
   deleteDrawConfig,
+  summarizeTelaflowApiErrorBody,
   updateDrawConfig,
   type CloudDrawConfig,
 } from "@/lib/cloud-api";
 
+const PREFIX_VAL = "draw_config_validation:";
+
 function errText(err: unknown): string {
   if (err instanceof Error) {
+    if (err.message.startsWith(PREFIX_VAL)) {
+      return err.message.slice(PREFIX_VAL.length);
+    }
     if (err.message === "draw_config_in_use") {
       return "Este sorteio ainda está vinculado a uma ou mais scenes. Remova o vínculo nas scenes antes de excluir.";
     }
@@ -17,10 +23,14 @@ function errText(err: unknown): string {
       return "Sorteio não encontrado.";
     }
     if (err.message.startsWith("draw_config_update_failed:")) {
-      return "Não foi possível salvar o sorteio.";
+      const fromCause =
+        err.cause != null ? summarizeTelaflowApiErrorBody(err.cause) : null;
+      return fromCause ?? "Não foi possível salvar o sorteio.";
     }
     if (err.message.startsWith("draw_config_create_failed:")) {
-      return "Não foi possível criar o sorteio.";
+      const fromCause =
+        err.cause != null ? summarizeTelaflowApiErrorBody(err.cause) : null;
+      return fromCause ?? "Não foi possível criar o sorteio.";
     }
     if (err.message.startsWith("draw_config_delete_failed:")) {
       return "Não foi possível excluir o sorteio.";
@@ -69,6 +79,36 @@ export function DrawConfigsWorkspace({
   const [banner, setBanner] = useState<string | null>(null);
 
   const selected = drawConfigs.find((d) => d.draw_config_id === selectedId) ?? null;
+
+  const telaoPreview = useMemo(() => {
+    const title = draftName.trim() || "Nome do sorteio";
+    const rangeLabel = useFixedRange
+      ? `${draftRangeMin}–${draftRangeMax}`
+      : "1–1000 (padrão no Player)";
+    const span =
+      useFixedRange && draftRangeMax >= draftRangeMin
+        ? draftRangeMax - draftRangeMin + 1
+        : null;
+    const headline = draftHeadline.trim();
+    const audience = draftAudience.trim();
+    const resultLabel = draftResultLabel.trim() || "Número sorteado";
+    return {
+      title,
+      rangeLabel,
+      span,
+      headline,
+      audience,
+      resultLabel,
+    };
+  }, [
+    draftName,
+    useFixedRange,
+    draftRangeMin,
+    draftRangeMax,
+    draftHeadline,
+    draftAudience,
+    draftResultLabel,
+  ]);
 
   useEffect(() => {
     if (!selected) {
@@ -147,9 +187,18 @@ export function DrawConfigsWorkspace({
       setPanelError("Nome obrigatório.");
       return;
     }
-    if (useFixedRange && draftRangeMin > draftRangeMax) {
-      setPanelError("No intervalo, o mínimo não pode ser maior que o máximo.");
-      return;
+    if (useFixedRange) {
+      if (draftRangeMin > draftRangeMax) {
+        setPanelError("No intervalo, o mínimo não pode ser maior que o máximo.");
+        return;
+      }
+      const span = draftRangeMax - draftRangeMin + 1;
+      if (span > 500_000) {
+        setPanelError(
+          "Intervalo muito grande (acima de 500 mil números). Reduza a diferença entre mínimo e máximo.",
+        );
+        return;
+      }
     }
     setPanelSaving(true);
     setPanelError(null);
@@ -311,8 +360,8 @@ export function DrawConfigsWorkspace({
           <aside className="rounded-tf-lg border border-tf-border bg-tf-mid/30 p-5 lg:min-h-[18rem]">
             {!selected ? (
               <p className="text-sm text-tf-muted">
-                Selecione um sorteio na lista para editar nome, quantidade de
-                ganhadores e notas internas.
+                Selecione um sorteio na lista para editar nome, ganhadores, intervalo
+                numérico, textos do telão e notas internas.
               </p>
             ) : (
               <div className="space-y-5">
@@ -400,6 +449,7 @@ export function DrawConfigsWorkspace({
                         Mínimo (inclusivo)
                         <input
                           type="number"
+                          step={1}
                           value={draftRangeMin}
                           onChange={(e) => {
                             const v = parseInt(e.target.value, 10);
@@ -412,6 +462,7 @@ export function DrawConfigsWorkspace({
                         Máximo (inclusivo)
                         <input
                           type="number"
+                          step={1}
                           value={draftRangeMax}
                           onChange={(e) => {
                             const v = parseInt(e.target.value, 10);
@@ -421,6 +472,22 @@ export function DrawConfigsWorkspace({
                         />
                       </label>
                     </div>
+                  ) : null}
+                  {useFixedRange && draftRangeMax >= draftRangeMin ? (
+                    <p className="mt-2 text-xs text-tf-muted">
+                      {(() => {
+                        const n = draftRangeMax - draftRangeMin + 1;
+                        return `${n.toLocaleString("pt-BR")} ${n === 1 ? "número possível" : "números possíveis"} neste intervalo.`;
+                      })()}
+                    </p>
+                  ) : null}
+                  {useFixedRange &&
+                  draftRangeMax >= draftRangeMin &&
+                  draftRangeMax - draftRangeMin + 1 > 10_000 ? (
+                    <p className="mt-1 text-xs text-amber-200/90">
+                      Intervalo grande: o Player suporta, mas eventos muito amplos exigem mais
+                      atenção do operador no vivo.
+                    </p>
                   ) : null}
                 </div>
 
@@ -465,6 +532,58 @@ export function DrawConfigsWorkspace({
                       className="mt-2 w-full rounded-tf border border-tf-border bg-tf-bg px-3 py-2 text-sm text-tf-fg outline-none focus:border-tf-accent/50"
                     />
                   </label>
+                </div>
+
+                <div className="border-t border-tf-border/60 pt-4">
+                  <h4 className="text-xs font-semibold uppercase tracking-wide text-tf-subtle">
+                    Pré-visualização do telão (aproximada)
+                  </h4>
+                  <p className="mt-2 text-xs text-tf-muted">
+                    Intenção visual apenas — o layout final depende do tema no pack e do
+                    TelaFlow Player no equipamento do evento.
+                  </p>
+                  <div
+                    className="mt-3 overflow-hidden rounded-tf border border-slate-600/50 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-5 py-5 text-slate-100 shadow-inner"
+                    aria-label="Pré-visualização interpretativa do telão"
+                  >
+                    <p className="text-[0.65rem] font-bold uppercase tracking-widest text-slate-400">
+                      Sorteio
+                    </p>
+                    <h4 className="mt-1 font-display text-lg font-bold leading-tight text-white">
+                      {telaoPreview.title}
+                    </h4>
+                    {telaoPreview.headline ? (
+                      <p className="mt-2 text-sm font-medium text-amber-100/95">
+                        {telaoPreview.headline}
+                      </p>
+                    ) : null}
+                    {telaoPreview.audience ? (
+                      <p className="mt-2 text-sm leading-snug text-slate-300">
+                        {telaoPreview.audience}
+                      </p>
+                    ) : null}
+                    <p className="mt-3 text-xs text-slate-500">
+                      Intervalo no pack:{" "}
+                      <span className="font-mono text-slate-400">{telaoPreview.rangeLabel}</span>
+                      {telaoPreview.span != null && telaoPreview.span > 0 ? (
+                        <span className="text-slate-500">
+                          {" "}
+                          · {telaoPreview.span.toLocaleString("pt-BR")} possibilidades
+                        </span>
+                      ) : null}
+                    </p>
+                    <div className="mt-4 rounded-lg border border-slate-600/40 bg-slate-950/60 px-4 py-4 text-center">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                        {telaoPreview.resultLabel}
+                      </p>
+                      <p className="mt-2 font-mono text-3xl font-bold tabular-nums text-white">
+                        —
+                      </p>
+                      <p className="mt-2 text-[0.7rem] text-slate-500">
+                        O número aparece aqui após o sorteio no Player.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 {panelError ? (
