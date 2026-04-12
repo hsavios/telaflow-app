@@ -13,9 +13,9 @@ pub fn public_window_open(app: AppHandle) -> Result<(), String> {
     }
 
     WebviewWindowBuilder::new(&app, "public", WebviewUrl::App("public-panel.html".into()))
-        .title("TelaFlow — Público")
-        .inner_size(960.0, 540.0)
-        .min_inner_size(480.0, 270.0)
+        .title("TelaFlow — Telão (somente leitura)")
+        .inner_size(1280.0, 720.0)
+        .min_inner_size(640.0, 360.0)
         .build()
         .map_err(|e| e.to_string())?;
 

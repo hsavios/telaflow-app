@@ -245,23 +245,30 @@ export function PackLoadedWorkspace() {
         </div>
       </dl>
 
-      <section className="player-section">
-        <h3>Gate ready → execução (MVP)</h3>
+      <section className="player-section player-section--event-start">
+        <h3>Início do evento</h3>
         <p className="player-hint">
-          O pre-flight sem bloqueantes coloca o estado em <code>ready</code>. Aí pode iniciar o
-          roteiro (sem playback). Em <code>executing</code> use o painel <strong>Operação</strong>{" "}
-          para navegar e concluir; volta a <code>ready</code> mantendo o último pre-flight válido.
+          Quando o pré-check estiver ok, o estado fica <strong>pronto</strong>. Use o botão abaixo para
+          colocar o roteiro no ar. Durante o evento, use o painel <strong>Operação</strong> (à direita) para
+          mudar de cena e encerrar; o telão segue o operador numa janela separada.
+        </p>
+        <p className="player-fsm-badge" aria-live="polite">
+          <span className="player-fsm-badge__label">Estado agora</span>
+          <span className="player-fsm-badge__value">{describeOperationalKindPt(runtimeKind)}</span>
         </p>
         {runtimeKind === "executing" ? (
-          <p className="player-hint">Execução ativa — a navegação e o botão Concluir execução estão no painel lateral de operação.</p>
+          <p className="player-hint player-hint--success">
+            Evento em curso — use o painel <strong>Operação</strong> para navegar e concluir.
+          </p>
         ) : (
           <button
             type="button"
+            className="player-btn-event-start"
             disabled={!cmdIniciarExecucao.permitido}
             title={cmdIniciarExecucao.permitido ? undefined : cmdIniciarExecucao.motivo}
             onClick={() => comandos.iniciar_execucao()}
           >
-            Iniciar roteiro (MVP)
+            Iniciar evento
           </button>
         )}
       </section>

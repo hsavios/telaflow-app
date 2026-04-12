@@ -55,6 +55,10 @@ function drawMirrorBody(
   winnerValue: number | null,
   errorMessage: string | null,
 ) {
+  const publicCopy = drawConfig?.public_copy;
+  const resultLabel = publicCopy?.result_label?.trim() || "Número sorteado";
+  const audienceHint = publicCopy?.audience_instructions?.trim();
+
   if (panelState === "error" && errorMessage) {
     return (
       <div className="public-scene-view__draw public-scene-view__draw--error" role="alert">
@@ -84,6 +88,7 @@ function drawMirrorBody(
       <div className="public-scene-view__draw public-scene-view__draw--ready" role="status">
         <p className="public-scene-view__draw-line">Pronto para sortear</p>
         <p className="public-scene-view__draw-sub">{drawConfig.name}</p>
+        {audienceHint ? <p className="public-scene-view__draw-hint">{audienceHint}</p> : null}
       </div>
     );
   }
@@ -92,6 +97,7 @@ function drawMirrorBody(
     return (
       <div className="public-scene-view__draw public-scene-view__draw--drawing" role="status">
         <p className="public-scene-view__draw-line public-scene-view__draw-line--pulse">Sorteando...</p>
+        {audienceHint ? <p className="public-scene-view__draw-hint">{audienceHint}</p> : null}
       </div>
     );
   }
@@ -99,7 +105,7 @@ function drawMirrorBody(
   if (panelState === "result_generated" && winnerValue != null) {
     return (
       <div className="public-scene-view__draw public-scene-view__draw--result" role="status">
-        <p className="public-scene-view__draw-label">Número sorteado</p>
+        <p className="public-scene-view__draw-label">{resultLabel}</p>
         <p className="public-scene-view__draw-number" aria-live="polite">
           {winnerValue}
         </p>
@@ -112,7 +118,7 @@ function drawMirrorBody(
     return (
       <div className="public-scene-view__draw public-scene-view__draw--confirmed" role="status">
         <p className="public-scene-view__draw-label">Sorteio confirmado</p>
-        <p className="public-scene-view__draw-number">{winnerValue}</p>
+        <p className="public-scene-view__draw-number public-scene-view__draw-number--confirmed">{winnerValue}</p>
       </div>
     );
   }
@@ -170,6 +176,9 @@ export function PublicSceneView({
       <header className="public-scene-view__header">
         <p className="public-scene-view__kind">{typeLabel}</p>
         <h1 className="public-scene-view__title">{scene.name}</h1>
+        {scene.type === "draw" && drawConfig?.public_copy?.headline ? (
+          <p className="public-scene-view__headline">{drawConfig.public_copy.headline}</p>
+        ) : null}
       </header>
 
       {scene.type === "draw" ? (

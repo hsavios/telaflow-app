@@ -210,10 +210,10 @@ export function SceneMediaRenderer({
         aria-label="Mídia da cena"
       >
         <div className="scene-media__fallback-card">
-          <strong>Mídia indisponível</strong>
+          <strong>{isPublic ? "Não foi possível exibir esta mídia" : "Mídia indisponível"}</strong>
           <p>
             {isPublic
-              ? "O conteúdo de mídia não está disponível no momento."
+              ? "O arquivo não está vinculado ou não foi encontrado no workspace. O operador pode corrigir os vínculos na janela principal."
               : describeSceneMediaDerivedStatePt(mediaState)}
           </p>
           {!isPublic && mediaId ? (
@@ -236,7 +236,7 @@ export function SceneMediaRenderer({
           <strong>{isPublic ? "Conteúdo indisponível" : "Arquivo inacessível"}</strong>
           <p>
             {isPublic
-              ? "Não foi possível carregar o conteúdo desta fase."
+              ? "Não foi possível abrir o arquivo desta fase. Peça ao operador para verificar o workspace e o caminho da mídia."
               : "Não foi possível preparar o caminho para reprodução."}
           </p>
         </div>
@@ -275,7 +275,9 @@ export function SceneMediaRenderer({
         <img
           src={assetSrc}
           alt={mediaRequirement?.label ?? scene.name}
-          className="scene-media__img"
+          className={isPublic ? "scene-media__img scene-media__img--public" : "scene-media__img"}
+          decoding="async"
+          fetchPriority={isPublic ? "high" : "auto"}
           onLoad={() => onMediaStarted("image", assetSrc, pb)}
           onError={() => onMediaDecodeFailed(assetSrc, pb)}
         />
@@ -288,12 +290,13 @@ export function SceneMediaRenderer({
     return (
       <section className={`scene-media scene-media--playback${pubClass}`} aria-label="Mídia da cena">
         <video
-          className="scene-media__video"
+          className={isPublic ? "scene-media__video scene-media__video--public" : "scene-media__video"}
           src={assetSrc}
           controls
           muted
           autoPlay
           playsInline
+          preload="metadata"
           onLoadedData={() => onMediaStarted("video", assetSrc, pb)}
           onError={() => onMediaDecodeFailed(assetSrc, pb)}
         />

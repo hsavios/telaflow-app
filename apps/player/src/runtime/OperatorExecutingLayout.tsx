@@ -90,9 +90,12 @@ export function OperatorExecutingLayout({
 
       <aside className="player-exec-ops" aria-label="Controle operacional">
         <h3 className="player-exec-ops__title">Operação</h3>
+        <p className="player-exec-ops__scene-focus" aria-live="polite">
+          Cena no ar: <strong>{scene.name}</strong>
+        </p>
         <p className="player-exec-ops__state">
           <span className="player-exec-ops__label">Estado</span>
-          <code className="player-exec-ops__code">executing</code>
+          <span className="player-exec-ops__code">Evento em execução</span>
         </p>
         <p className="player-exec-ops__hint">{describeOperationalKindPt("executing")}</p>
         <div className="player-exec-ops__nav">

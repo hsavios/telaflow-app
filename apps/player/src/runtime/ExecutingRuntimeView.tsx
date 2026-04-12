@@ -97,7 +97,7 @@ export function ExecutingRuntimeView({ fileExistsCache }: Props) {
         <section className="player-exec-public-shell" aria-label="Saída pública (pré-visualização)">
           <div className="player-exec-public-shell__toolbar">
             <p className="player-exec-public-shell__label">
-              Saída pública — pré-visualização nesta janela; use também a janela dedicada para o público.
+              Prévia do telão nesta janela. Abra a janela <strong>Telão</strong> no monitor do público — ela só mostra o palco, sem controles.
             </p>
             <button
               type="button"
@@ -105,7 +105,7 @@ export function ExecutingRuntimeView({ fileExistsCache }: Props) {
               disabled={publicWindowBusy}
               onClick={() => void abrirJanelaPublica()}
             >
-              {publicWindowBusy ? "Abrindo…" : "Abrir janela pública"}
+              {publicWindowBusy ? "Abrindo…" : "Abrir janela do telão"}
             </button>
           </div>
           <PublicSceneView

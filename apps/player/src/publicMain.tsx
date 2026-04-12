@@ -33,14 +33,14 @@ function PublicWindowRoot() {
     const aguardandoExecucao = fase !== "executing";
     return (
       <div className="public-window-root public-window-root--waiting">
-        <p className="public-window-root__title">TelaFlow — Saída pública</p>
+        <p className="public-window-root__title">TelaFlow — Telão</p>
         <p className="public-window-root__hint">
           {aguardandoExecucao
-            ? "Aguardando o operador iniciar ou retomar a execução do roteiro na janela principal…"
-            : "Aguardando cena ativa no roteiro…"}
+            ? "O operador ainda não iniciou o evento neste equipamento. Esta janela só exibe o que o operador colocar no palco."
+            : "O roteiro está em curso. Em instantes aparece aqui a cena que o operador selecionar."}
         </p>
-        <p className="public-window-root__meta" aria-hidden="true">
-          Estado: <code>{fase}</code>
+        <p className="public-window-root__meta">
+          {aguardandoExecucao ? "Aguardando início do evento." : "Sincronizado com a mesa do operador."}
         </p>
       </div>
     );
