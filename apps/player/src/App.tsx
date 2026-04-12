@@ -2,6 +2,7 @@
 import { open } from "@tauri-apps/plugin-dialog";
 import { useCallback, useState } from "react";
 import { PackLoadedWorkspace } from "./components/PackLoadedWorkspace.js";
+import { appendExecutionLog } from "./execution/executionLog.js";
 import {
   evaluateLicense,
   formatLicenseBlockMessage,
@@ -63,6 +64,11 @@ export default function App() {
         return;
       }
 
+      const log0 = appendExecutionLog([], {
+        level: "info",
+        code: "PACK_SESSION_START",
+        message: `Pack carregado (${validado.manifest.export_id}).`,
+      });
       setEstado({
         kind: "pack_loaded",
         packRoot: bruto.rootPath,
@@ -72,6 +78,7 @@ export default function App() {
         lastPreflight: null,
         operationalPhase: "binding_pending",
         sceneIndex: 0,
+        executionLog: log0,
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -91,12 +98,18 @@ export default function App() {
   const onWorkspaceChange = useCallback((root: string | null, nextBindings: Record<string, string>) => {
     setEstado((s) => {
       if (s.kind !== "pack_loaded") return s;
+      const log = appendExecutionLog(s.executionLog, {
+        level: "info",
+        code: "WORKSPACE_CHANGE",
+        message: root ? `Workspace: ${root}` : "Workspace limpo.",
+      });
       return {
         ...s,
         workspaceRoot: root,
         bindings: nextBindings,
         lastPreflight: null,
         operationalPhase: "binding_pending",
+        executionLog: log,
       };
     });
   }, []);
@@ -104,11 +117,17 @@ export default function App() {
   const onBindingsChange = useCallback((next: Record<string, string>) => {
     setEstado((s) => {
       if (s.kind !== "pack_loaded") return s;
+      const log = appendExecutionLog(s.executionLog, {
+        level: "info",
+        code: "BINDINGS_UPDATE",
+        message: "Bindings de mídia atualizados.",
+      });
       return {
         ...s,
         bindings: next,
         lastPreflight: null,
         operationalPhase: "binding_pending",
+        executionLog: log,
       };
     });
   }, []);
@@ -117,10 +136,16 @@ export default function App() {
     setEstado((s) => {
       if (s.kind !== "pack_loaded") return s;
       const phase = phaseAfterPreflight(r);
+      const log = appendExecutionLog(s.executionLog, {
+        level: r.blockingCount > 0 ? "warn" : "info",
+        code: "PREFLIGHT_RUN",
+        message: `Pre-flight: ${r.blockingCount} bloqueante(s), ${r.warningCount} aviso(s). Fase → ${phase}.`,
+      });
       return {
         ...s,
         lastPreflight: r,
         operationalPhase: phase,
+        executionLog: log,
       };
     });
   }, []);
@@ -128,10 +153,16 @@ export default function App() {
   const onStartExecution = useCallback(() => {
     setEstado((s) => {
       if (s.kind !== "pack_loaded" || s.operationalPhase !== "ready") return s;
+      const log = appendExecutionLog(s.executionLog, {
+        level: "info",
+        code: "RUNTIME_ENTER_EXECUTING",
+        message: "Gate ready: entrada em execução (MVP sem playback).",
+      });
       return {
         ...s,
         operationalPhase: "executing",
         sceneIndex: 0,
+        executionLog: log,
       };
     });
   }, []);
@@ -139,7 +170,12 @@ export default function App() {
   const onSceneIndexChange = useCallback((next: number) => {
     setEstado((s) => {
       if (s.kind !== "pack_loaded" || s.operationalPhase !== "executing") return s;
-      return { ...s, sceneIndex: next };
+      const log = appendExecutionLog(s.executionLog, {
+        level: "info",
+        code: "SCENE_INDEX",
+        message: `Índice de cena: ${next}.`,
+      });
+      return { ...s, sceneIndex: next, executionLog: log };
     });
   }, []);
 
@@ -148,8 +184,8 @@ export default function App() {
       <header className="player-header">
         <h1>TelaFlow Player</h1>
         <p className="player-tagline">
-          Pack, licença, vínculos, pre-flight e FSM operacional — sem Cloud em runtime e sem
-          playback de mídia.
+          Pack, licença, vínculos, pre-flight, FSM, navegação de cenas e registo de execução — sem
+          Cloud em runtime e sem playback de mídia.
         </p>
       </header>
 
@@ -180,6 +216,7 @@ export default function App() {
             bindings={estado.bindings}
             operationalPhase={estado.operationalPhase}
             sceneIndex={estado.sceneIndex}
+            executionLog={estado.executionLog}
             onWorkspaceChange={onWorkspaceChange}
             onBindingsChange={onBindingsChange}
             lastPreflight={estado.lastPreflight}

@@ -3,6 +3,7 @@
  * Playback de mídia e lógica completa de cena ficam fora de escopo.
  */
 
+import type { ExecutionLogEntry } from "../execution/executionLog.js";
 import type { OperationalPhase } from "../runtime/operationalState.js";
 import type { PreflightResult } from "../preflight/types.js";
 import type { PackLoaderSuccess } from "./validateLoadedPack.js";
@@ -25,4 +26,6 @@ export type PlayerAppState =
       operationalPhase: OperationalPhase;
       /** Índice na sequência ordenada de cenas (usado quando `executing`). */
       sceneIndex: number;
+      /** Registo de execução em memória (MVP). */
+      executionLog: ExecutionLogEntry[];
     };
