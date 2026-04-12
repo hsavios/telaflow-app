@@ -16,7 +16,11 @@ _session_factory: sessionmaker[Session] | None = None
 
 
 def _database_url() -> str:
-    return os.environ.get("DATABASE_URL", "sqlite:///telaflow_cloud_api.db")
+    # Prioritize PostgreSQL for production/staging, fallback to SQLite for development
+    return os.environ.get(
+        "DATABASE_URL", 
+        "sqlite:///telaflow_cloud_api.db"
+    )
 
 
 def _make_engine():
