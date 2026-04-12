@@ -17,7 +17,7 @@ export type CloudScene = {
   enabled: boolean;
   /** Reservado — mídia principal (futuro). */
   media_id?: string | null;
-  /** Reservado — vínculo com DrawConfig (futuro; não editar sorteio nesta tela). */
+  /** Sorteio vinculado (cena tipo draw). */
   draw_config_id?: string | null;
 };
 
@@ -148,6 +148,13 @@ export async function fetchScenes(eventId: string): Promise<CloudScene[]> {
   throw new Error(`scenes_list_failed:${res.status}`, { cause: body });
 }
 
+/** Textos opcionais para o telão / público (Player). */
+export type CloudDrawPublicCopy = {
+  headline?: string | null;
+  audience_instructions?: string | null;
+  result_label?: string | null;
+};
+
 export type CloudDrawConfig = {
   draw_config_id: string;
   event_id: string;
@@ -155,6 +162,9 @@ export type CloudDrawConfig = {
   max_winners: number;
   notes: string | null;
   enabled: boolean;
+  draw_type?: "number_range";
+  number_range?: { min: number; max: number } | null;
+  public_copy?: CloudDrawPublicCopy | null;
 };
 
 export type CloudMediaRequirement = {
@@ -395,6 +405,9 @@ export async function createDrawConfig(
     max_winners?: number;
     notes?: string | null;
     enabled?: boolean;
+    draw_type?: "number_range";
+    number_range?: { min: number; max: number } | null;
+    public_copy?: CloudDrawPublicCopy | null;
   },
 ): Promise<{ ok: boolean; draw_config: CloudDrawConfig }> {
   const base = getCloudApiBase();
@@ -423,6 +436,9 @@ export async function updateDrawConfig(
     max_winners: number;
     notes: string | null;
     enabled: boolean;
+    draw_type: "number_range";
+    number_range: { min: number; max: number } | null;
+    public_copy: CloudDrawPublicCopy | null;
   }>,
 ): Promise<{ ok: boolean; draw_config: CloudDrawConfig }> {
   const base = getCloudApiBase();

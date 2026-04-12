@@ -301,8 +301,9 @@ export default function EventDetailPage() {
                   Sorteios (DrawConfig)
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm text-tf-muted">
-                  CRUD por evento. A scene só referencia um id estável; parâmetros
-                  mínimos ficam neste módulo.
+                  Cada sorteio tem nome, intervalo numérico opcional, textos para o telão
+                  (manchete, instruções, rótulo do resultado) e notas internas. A scene do tipo
+                  sorteio só referencia o id — a regra fica aqui.
                 </p>
                 <DrawConfigsWorkspace
                   eventId={eventId}

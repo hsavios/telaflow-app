@@ -194,8 +194,8 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
         </div>
       ) : null}
       <p className="draw-scene-panel__muted">
-        Sorteio MVP: um número por execução, sem exclusão persistente de números nem múltiplos vencedores.
-        Sem Cloud em runtime.
+        Um número por acionamento nesta cena. Intervalo e textos do telão vêm do pack; para alterar,
+        edite o sorteio na TelaFlow Cloud (evento → Sorteios) e exporte de novo.
       </p>
 
       <dl className="draw-scene-panel__summary">

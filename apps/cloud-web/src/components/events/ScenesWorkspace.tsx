@@ -562,10 +562,18 @@ export function ScenesWorkspace({
                         <option value="">Selecione…</option>
                         {drawConfigs.map((d) => (
                           <option key={d.draw_config_id} value={d.draw_config_id}>
-                            {d.name} ({d.draw_config_id})
+                            {d.name}
+                            {d.number_range
+                              ? ` · ${d.number_range.min}–${d.number_range.max}`
+                              : ""}{" "}
+                            ({d.draw_config_id})
                           </option>
                         ))}
                       </select>
+                      <p className="mt-1.5 text-xs leading-relaxed text-tf-muted">
+                        Intervalo de números e textos para o telão definem-se no registro deste sorteio
+                        (aba Sorteios), não nesta scene — aqui só escolhe qual sorteio dispara no Player.
+                      </p>
                     </div>
                   ) : (
                     <p className="text-xs text-tf-faint">
@@ -687,6 +695,10 @@ export function ScenesWorkspace({
                   {drawConfigs.map((d) => (
                     <option key={d.draw_config_id} value={d.draw_config_id}>
                       {d.name}
+                      {d.number_range
+                        ? ` · ${d.number_range.min}–${d.number_range.max}`
+                        : ""}{" "}
+                      ({d.draw_config_id})
                     </option>
                   ))}
                 </select>

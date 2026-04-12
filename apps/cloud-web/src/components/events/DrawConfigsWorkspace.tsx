@@ -52,6 +52,12 @@ export function DrawConfigsWorkspace({
   const [draftMaxWinners, setDraftMaxWinners] = useState(1);
   const [draftNotes, setDraftNotes] = useState("");
   const [draftEnabled, setDraftEnabled] = useState(true);
+  const [useFixedRange, setUseFixedRange] = useState(false);
+  const [draftRangeMin, setDraftRangeMin] = useState(1);
+  const [draftRangeMax, setDraftRangeMax] = useState(1000);
+  const [draftHeadline, setDraftHeadline] = useState("");
+  const [draftAudience, setDraftAudience] = useState("");
+  const [draftResultLabel, setDraftResultLabel] = useState("");
   const [panelSaving, setPanelSaving] = useState(false);
   const [panelError, setPanelError] = useState<string | null>(null);
 
@@ -73,6 +79,14 @@ export function DrawConfigsWorkspace({
     setDraftMaxWinners(selected.max_winners);
     setDraftNotes(selected.notes ?? "");
     setDraftEnabled(selected.enabled);
+    const nr = selected.number_range;
+    setUseFixedRange(nr != null && typeof nr.min === "number" && typeof nr.max === "number");
+    setDraftRangeMin(nr?.min ?? 1);
+    setDraftRangeMax(nr?.max ?? 1000);
+    const pc = selected.public_copy;
+    setDraftHeadline(pc?.headline?.trim() ?? "");
+    setDraftAudience(pc?.audience_instructions?.trim() ?? "");
+    setDraftResultLabel(pc?.result_label?.trim() ?? "");
     setPanelError(null);
   }, [selected]);
 
@@ -133,14 +147,34 @@ export function DrawConfigsWorkspace({
       setPanelError("Nome obrigatório.");
       return;
     }
+    if (useFixedRange && draftRangeMin > draftRangeMax) {
+      setPanelError("No intervalo, o mínimo não pode ser maior que o máximo.");
+      return;
+    }
     setPanelSaving(true);
     setPanelError(null);
     try {
+      const number_range = useFixedRange
+        ? { min: draftRangeMin, max: draftRangeMax }
+        : null;
+      const hasPublic =
+        draftHeadline.trim().length > 0 ||
+        draftAudience.trim().length > 0 ||
+        draftResultLabel.trim().length > 0;
+      const public_copy = hasPublic
+        ? {
+            headline: draftHeadline.trim() || null,
+            audience_instructions: draftAudience.trim() || null,
+            result_label: draftResultLabel.trim() || null,
+          }
+        : null;
       const out = await updateDrawConfig(eventId, selected.draw_config_id, {
         name: trimmed,
         max_winners: draftMaxWinners,
         notes: draftNotes.trim() || null,
         enabled: draftEnabled,
+        number_range,
+        public_copy,
       });
       setDrawConfigs(
         drawConfigs.map((d) =>
@@ -192,8 +226,9 @@ export function DrawConfigsWorkspace({
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-tf-subtle">
-          Sorteios pertencem ao evento. A scene do tipo «sorteio» só escolhe um
-          destes registros — a regra fica aqui, não no painel da scene.
+          Sorteios pertencem ao evento. A scene do tipo sorteio só escolhe um
+          destes registros — intervalo numérico, textos do telão e limite de
+          ganhadores ficam aqui; a scene apenas liga a este sorteio.
         </p>
         <button
           type="button"
@@ -245,6 +280,23 @@ export function DrawConfigsWorkspace({
                     <div className="mt-1 font-mono text-xs text-tf-faint">
                       {d.draw_config_id}
                     </div>
+                    {d.number_range ? (
+                      <div className="mt-1 text-xs text-tf-muted">
+                        Intervalo {d.number_range.min}–{d.number_range.max}
+                      </div>
+                    ) : (
+                      <div className="mt-1 text-xs text-tf-muted">
+                        Intervalo padrão no Player (1–1000) se não fixar aqui
+                      </div>
+                    )}
+                    {d.public_copy &&
+                    (d.public_copy.headline ||
+                      d.public_copy.audience_instructions ||
+                      d.public_copy.result_label) ? (
+                      <div className="mt-0.5 text-xs text-tf-teal/90">
+                        Textos para o telão definidos
+                      </div>
+                    ) : null}
                     {!d.enabled ? (
                       <span className="mt-1 inline-block text-xs text-tf-faint">
                         Desabilitado
@@ -315,6 +367,105 @@ export function DrawConfigsWorkspace({
                   />
                   Habilitado
                 </label>
+
+                <div className="border-t border-tf-border/60 pt-4">
+                  <h4 className="text-xs font-semibold uppercase tracking-wide text-tf-subtle">
+                    Motor e intervalo
+                  </h4>
+                  <p className="mt-2 text-xs text-tf-muted">
+                    Tipo suportado no export:{" "}
+                    <span className="font-medium text-tf-fg">números em intervalo</span>{" "}
+                    (<code className="text-tf-faint">number_range</code>).
+                  </p>
+                  <label className="mt-3 flex cursor-pointer items-start gap-3 text-sm text-tf-muted">
+                    <input
+                      type="checkbox"
+                      checked={useFixedRange}
+                      onChange={(e) => setUseFixedRange(e.target.checked)}
+                      className="mt-0.5 size-4 shrink-0 rounded border-tf-border bg-tf-bg text-tf-accent"
+                    />
+                    <span>
+                      <span className="font-medium text-tf-fg">
+                        Fixar intervalo no pack
+                      </span>
+                      <span className="mt-1 block text-xs leading-relaxed text-tf-muted">
+                        Se desmarcado, o Player usa 1–1000 até existir outra política no produto.
+                        Equivale ao «número inicial / final» do sorteador legado.
+                      </span>
+                    </span>
+                  </label>
+                  {useFixedRange ? (
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <label className="block text-sm font-medium text-tf-muted">
+                        Mínimo (inclusivo)
+                        <input
+                          type="number"
+                          value={draftRangeMin}
+                          onChange={(e) => {
+                            const v = parseInt(e.target.value, 10);
+                            setDraftRangeMin(Number.isNaN(v) ? 0 : v);
+                          }}
+                          className="mt-2 w-full rounded-tf border border-tf-border bg-tf-bg px-3 py-2 text-tf-fg"
+                        />
+                      </label>
+                      <label className="block text-sm font-medium text-tf-muted">
+                        Máximo (inclusivo)
+                        <input
+                          type="number"
+                          value={draftRangeMax}
+                          onChange={(e) => {
+                            const v = parseInt(e.target.value, 10);
+                            setDraftRangeMax(Number.isNaN(v) ? 0 : v);
+                          }}
+                          className="mt-2 w-full rounded-tf border border-tf-border bg-tf-bg px-3 py-2 text-tf-fg"
+                        />
+                      </label>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="border-t border-tf-border/60 pt-4">
+                  <h4 className="text-xs font-semibold uppercase tracking-wide text-tf-subtle">
+                    Textos para o telão (público)
+                  </h4>
+                  <p className="mt-2 text-xs text-tf-muted">
+                    Opcional. Aparecem na janela do telão do TelaFlow Player quando esta cena de
+                    sorteio está no ar. Campos vazios não são enviados ao pack.
+                  </p>
+                  <label className="mt-3 block text-sm font-medium text-tf-muted">
+                    Título / manchete (máx. 200)
+                    <input
+                      type="text"
+                      value={draftHeadline}
+                      onChange={(e) => setDraftHeadline(e.target.value)}
+                      maxLength={200}
+                      placeholder="Ex.: Sorteio do brinde ouro"
+                      className="mt-2 w-full rounded-tf border border-tf-border bg-tf-bg px-3 py-2 text-sm text-tf-fg outline-none focus:border-tf-accent/50"
+                    />
+                  </label>
+                  <label className="mt-3 block text-sm font-medium text-tf-muted">
+                    Instruções ao público (máx. 500)
+                    <textarea
+                      value={draftAudience}
+                      onChange={(e) => setDraftAudience(e.target.value)}
+                      maxLength={500}
+                      rows={2}
+                      placeholder="Ex.: Aguardem o número no telão…"
+                      className="mt-2 w-full rounded-tf border border-tf-border bg-tf-bg px-3 py-2 text-sm text-tf-fg outline-none focus:border-tf-accent/50"
+                    />
+                  </label>
+                  <label className="mt-3 block text-sm font-medium text-tf-muted">
+                    Rótulo do resultado (máx. 120)
+                    <input
+                      type="text"
+                      value={draftResultLabel}
+                      onChange={(e) => setDraftResultLabel(e.target.value)}
+                      maxLength={120}
+                      placeholder="Ex.: Número sorteado"
+                      className="mt-2 w-full rounded-tf border border-tf-border bg-tf-bg px-3 py-2 text-sm text-tf-fg outline-none focus:border-tf-accent/50"
+                    />
+                  </label>
+                </div>
 
                 {panelError ? (
                   <p className="text-sm text-red-300/90" role="alert">
