@@ -56,6 +56,7 @@ function PublicWindowRoot() {
           scene={payload.activeScene}
           mediaState={payload.mediaState}
           drawConfig={payload.drawConfig}
+          drawAttendees={payload.drawAttendees ?? null}
           workspaceRoot={payload.workspaceRoot}
           bindings={payload.bindings}
           mediaRequirement={payload.mediaRequirement}

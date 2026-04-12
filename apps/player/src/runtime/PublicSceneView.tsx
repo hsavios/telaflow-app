@@ -6,13 +6,14 @@
  */
 
 import type {
+  DrawAttendeesPackFile,
   DrawConfigContract,
   MediaRequirementContract,
   SceneContract,
   SceneType,
 } from "@telaflow/shared-contracts";
 import { DrawExperienceV1 } from "./draw/drawPresentation.js";
-import { effectiveNumberRange } from "./drawNumberRange.js";
+import { effectiveSpinBounds } from "./drawSelection.js";
 import { SceneMediaRenderer } from "./SceneMediaRenderer.js";
 import type { SceneMediaDerivedState } from "./sceneMediaResolution.js";
 import { fraseMomentoCenaPt } from "./sceneRuntimeUi.js";
@@ -38,6 +39,8 @@ type Props = {
   scene: SceneContract;
   mediaState: SceneMediaDerivedState;
   drawConfig: DrawConfigContract | null;
+  /** Opcional — intervalo de animação em `attendee_pool` / subset. */
+  drawAttendees?: DrawAttendeesPackFile | null;
   workspaceRoot: string | null;
   bindings: Record<string, string>;
   mediaRequirement: MediaRequirementContract | null;
@@ -60,6 +63,12 @@ function publicDrawUnavailable() {
   );
 }
 
+function joinUrlFromDrawConfig(drawConfig: DrawConfigContract): string | null {
+  const reg = drawConfig.registration;
+  if (!reg?.join_url_template?.trim() || !reg.public_token?.trim()) return null;
+  return reg.join_url_template.replace(/\{token\}/g, reg.public_token);
+}
+
 function publicDrawExperience(
   drawConfig: DrawConfigContract,
   snap: Pick<
@@ -72,11 +81,17 @@ function publicDrawExperience(
     | "drawAttemptId"
   >,
   drawBranding: PublicWindowDrawBranding | null | undefined,
+  drawAttendees: DrawAttendeesPackFile | null,
 ) {
-  const { min, max } = effectiveNumberRange(drawConfig);
+  const { min, max } = effectiveSpinBounds(drawConfig, drawAttendees);
   const publicCopy = drawConfig.public_copy;
   const resultLabel = publicCopy?.result_label?.trim() || "Número sorteado";
   const audienceHint = publicCopy?.audience_instructions?.trim() ?? null;
+  const soundEnabled = drawConfig.draw_presentation?.sound_enabled !== false;
+  const joinQrUrl =
+    snap.panelState === "ready" && snap.pendingWinner == null && snap.winnerValue == null
+      ? joinUrlFromDrawConfig(drawConfig)
+      : null;
 
   return (
     <DrawExperienceV1
@@ -92,7 +107,8 @@ function publicDrawExperience(
       drawName={drawConfig.name ?? ""}
       audienceHint={audienceHint}
       resultLabel={resultLabel}
-      soundEnabled
+      soundEnabled={soundEnabled}
+      joinQrUrl={joinQrUrl}
       branding={drawBranding ?? null}
     />
   );
@@ -102,16 +118,22 @@ function PublicDrawMirrorFromContext({
   scene,
   drawConfig,
   drawBranding,
+  drawAttendees,
 }: {
   scene: SceneContract;
   drawConfig: DrawConfigContract | null;
   drawBranding?: PublicWindowDrawBranding | null;
+  drawAttendees: DrawAttendeesPackFile | null;
 }) {
   const snap = useDrawRuntime();
-  if (!scene.draw_config_id || !drawConfig || drawConfig.draw_type !== "number_range") {
+  if (
+    !scene.draw_config_id ||
+    !drawConfig ||
+    (drawConfig.draw_type !== "number_range" && drawConfig.draw_type !== "attendee_pool")
+  ) {
     return publicDrawUnavailable();
   }
-  return publicDrawExperience(drawConfig, snap, drawBranding);
+  return publicDrawExperience(drawConfig, snap, drawBranding, drawAttendees);
 }
 
 function PublicDrawMirrorRemote({
@@ -119,22 +141,29 @@ function PublicDrawMirrorRemote({
   drawConfig,
   snapshot,
   drawBranding,
+  drawAttendees,
 }: {
   scene: SceneContract;
   drawConfig: DrawConfigContract | null;
   snapshot: PublicWindowDrawSnapshot;
   drawBranding?: PublicWindowDrawBranding | null;
+  drawAttendees: DrawAttendeesPackFile | null;
 }) {
-  if (!scene.draw_config_id || !drawConfig || drawConfig.draw_type !== "number_range") {
+  if (
+    !scene.draw_config_id ||
+    !drawConfig ||
+    (drawConfig.draw_type !== "number_range" && drawConfig.draw_type !== "attendee_pool")
+  ) {
     return publicDrawUnavailable();
   }
-  return publicDrawExperience(drawConfig, snapshot, drawBranding);
+  return publicDrawExperience(drawConfig, snapshot, drawBranding, drawAttendees);
 }
 
 export function PublicSceneView({
   scene,
   mediaState,
   drawConfig,
+  drawAttendees = null,
   workspaceRoot,
   bindings,
   mediaRequirement,
@@ -180,9 +209,15 @@ export function PublicSceneView({
               drawConfig={drawConfig}
               snapshot={remoteDrawSnapshot ?? emptySnap}
               drawBranding={drawBranding}
+              drawAttendees={drawAttendees}
             />
           ) : (
-            <PublicDrawMirrorFromContext scene={scene} drawConfig={drawConfig} drawBranding={drawBranding} />
+            <PublicDrawMirrorFromContext
+              scene={scene}
+              drawConfig={drawConfig}
+              drawBranding={drawBranding}
+              drawAttendees={drawAttendees}
+            />
           )}
         </div>
       ) : null}

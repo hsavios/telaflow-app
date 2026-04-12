@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   createDrawConfig,
+  createDrawRegistrationSession,
   deleteDrawConfig,
   summarizeTelaflowApiErrorBody,
   updateDrawConfig,
@@ -70,6 +71,10 @@ export function DrawConfigsWorkspace({
   const [draftResultLabel, setDraftResultLabel] = useState("");
   const [panelSaving, setPanelSaving] = useState(false);
   const [panelError, setPanelError] = useState<string | null>(null);
+  const [draftTelSound, setDraftTelSound] = useState(true);
+  const [draftDrawType, setDraftDrawType] = useState<"number_range" | "attendee_pool">("number_range");
+  const [registrationBusy, setRegistrationBusy] = useState(false);
+  const [registrationUrl, setRegistrationUrl] = useState<string | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [newName, setNewName] = useState("");
@@ -127,6 +132,9 @@ export function DrawConfigsWorkspace({
     setDraftHeadline(pc?.headline?.trim() ?? "");
     setDraftAudience(pc?.audience_instructions?.trim() ?? "");
     setDraftResultLabel(pc?.result_label?.trim() ?? "");
+    setDraftTelSound(selected.draw_presentation?.sound_enabled !== false);
+    setDraftDrawType(selected.draw_type === "attendee_pool" ? "attendee_pool" : "number_range");
+    setRegistrationUrl(null);
     setPanelError(null);
   }, [selected]);
 
@@ -222,8 +230,10 @@ export function DrawConfigsWorkspace({
         max_winners: draftMaxWinners,
         notes: draftNotes.trim() || null,
         enabled: draftEnabled,
+        draw_type: draftDrawType,
         number_range,
         public_copy,
+        draw_presentation: { sound_enabled: draftTelSound },
       });
       setDrawConfigs(
         drawConfigs.map((d) =>
@@ -236,6 +246,30 @@ export function DrawConfigsWorkspace({
       setPanelError(errText(err));
     } finally {
       setPanelSaving(false);
+    }
+  };
+
+  const criarSessaoInscricao = async () => {
+    if (!selected || !apiConfigured) return;
+    setRegistrationBusy(true);
+    setPanelError(null);
+    try {
+      const origin =
+        typeof window !== "undefined" && window.location?.origin
+          ? window.location.origin
+          : null;
+      const res = await createDrawRegistrationSession(eventId, selected.draw_config_id, {
+        join_base_url: origin,
+        opens_at: null,
+        closes_at: null,
+      });
+      setRegistrationUrl(res.join_url);
+      setBanner("Sessão de inscrição criada — reexporte o pack para o Player ver o QR.");
+      await reloadDrawConfigs();
+    } catch (err) {
+      setPanelError(errText(err));
+    } finally {
+      setRegistrationBusy(false);
     }
   };
 
@@ -422,10 +456,33 @@ export function DrawConfigsWorkspace({
                     Motor e intervalo
                   </h4>
                   <p className="mt-2 text-xs text-tf-muted">
-                    Tipo suportado no export:{" "}
-                    <span className="font-medium text-tf-fg">números em intervalo</span>{" "}
-                    (<code className="text-tf-faint">number_range</code>).
+                    Tipos no pack: intervalo (<code className="text-tf-faint">number_range</code>) ou
+                    inscritos (<code className="text-tf-faint">attendee_pool</code> + export com inscrições).
                   </p>
+                  <label className="mt-3 block text-sm font-medium text-tf-muted">
+                    Tipo de sorteio
+                    <select
+                      value={draftDrawType}
+                      onChange={(e) =>
+                        setDraftDrawType(
+                          e.target.value === "attendee_pool" ? "attendee_pool" : "number_range",
+                        )
+                      }
+                      className="mt-2 w-full rounded-tf border border-tf-border bg-tf-bg px-3 py-2 text-sm text-tf-fg"
+                    >
+                      <option value="number_range">Intervalo numérico</option>
+                      <option value="attendee_pool">Lista de inscritos (export)</option>
+                    </select>
+                  </label>
+                  <label className="mt-3 flex cursor-pointer items-center gap-3 text-sm text-tf-muted">
+                    <input
+                      type="checkbox"
+                      checked={draftTelSound}
+                      onChange={(e) => setDraftTelSound(e.target.checked)}
+                      className="size-4 rounded border-tf-border bg-tf-bg text-tf-accent"
+                    />
+                    Som no telão (sorteio)
+                  </label>
                   <label className="mt-3 flex cursor-pointer items-start gap-3 text-sm text-tf-muted">
                     <input
                       type="checkbox"
@@ -584,6 +641,32 @@ export function DrawConfigsWorkspace({
                       </p>
                     </div>
                   </div>
+                </div>
+
+                <div className="border-t border-tf-border/60 pt-4">
+                  <h4 className="text-xs font-semibold uppercase tracking-wide text-tf-subtle">
+                    Inscrições (QR)
+                  </h4>
+                  <p className="mt-2 text-xs text-tf-muted">
+                    Cria um token público. Após exportar de novo, o pack inclui a URL no sorteio para o
+                    telão mostrar o QR (estado «pronto»).
+                  </p>
+                  <button
+                    type="button"
+                    disabled={registrationBusy || !apiConfigured}
+                    onClick={() => void criarSessaoInscricao()}
+                    className="mt-3 rounded-tf border border-tf-accent/40 bg-tf-accent-soft/20 px-4 py-2 text-sm font-semibold text-tf-accent hover:bg-tf-accent-soft/30 disabled:opacity-50"
+                  >
+                    {registrationBusy ? "A criar…" : "Criar / renovar sessão de inscrição"}
+                  </button>
+                  {registrationUrl ? (
+                    <p className="mt-2 break-all font-mono text-[11px] text-tf-fg">{registrationUrl}</p>
+                  ) : selected?.registration?.public_token ? (
+                    <p className="mt-2 break-all font-mono text-[11px] text-tf-muted">
+                      Sessão existente — token: {selected.registration.public_token}. Reexporte para atualizar o
+                      pack.
+                    </p>
+                  ) : null}
                 </div>
 
                 {panelError ? (

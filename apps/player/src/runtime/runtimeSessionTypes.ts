@@ -73,7 +73,7 @@ export type RuntimeSessionDispatchAction =
   | { type: "ATUALIZAR_WORKSPACE"; workspaceRoot: string | null; bindings: Record<string, string> }
   | { type: "ATUALIZAR_BINDINGS"; bindings: Record<string, string> }
   | { type: "APLICAR_RESULTADO_PREFLIGHT"; resultado: PreflightResult }
-  | { type: "INICIAR_EXECUCAO"; drawResetKey: string }
+  | { type: "INICIAR_EXECUCAO"; drawResetKey: string; initialSceneIndex?: number }
   | { type: "CONCLUIR_EXECUCAO" }
   | { type: "ATIVAR_CENA"; indice: number; drawResetKey: string }
   | { type: "ANEXAR_LOG_EXECUCAO"; entrada: { level: ExecutionLogLevel; code: string; message: string } }

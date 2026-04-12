@@ -19,7 +19,7 @@ from schema_helpers import validador_para_arquivo, validar_instancia
 def _criar_evento_pronto_para_export(cliente: TestClient, tmp_path: Path) -> str:
     """Evento com uma scene válida e export_readiness.ready == true."""
     event_id = "evt_packcompliance01"
-    org_id = "org_packcompliance1"
+    org_id = "org_telaflow_d1"
     r = cliente.post(
         "/events",
         json={
@@ -94,7 +94,7 @@ def test_export_retorna_409_quando_nao_pronto(cliente: TestClient, tmp_path: Pat
         "/events",
         json={
             "event_id": event_id,
-            "organization_id": "org_exportnaopronto1",
+            "organization_id": "org_telaflow_d1",
             "name": "Sem cenas",
         },
     )

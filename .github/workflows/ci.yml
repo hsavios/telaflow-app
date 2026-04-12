@@ -1,0 +1,48 @@
+﻿name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  cloud-api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: telaflow
+          POSTGRES_PASSWORD: telaflow
+          POSTGRES_DB: telaflow_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U telaflow -d telaflow_ci"
+          --health-interval 4s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql+psycopg://telaflow:telaflow@localhost:5432/telaflow_ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install API + dev deps
+        run: cd apps/cloud-api && python3 -m pip install -q -e ".[dev]"
+      - name: Pytest (PostgreSQL)
+        run: cd apps/cloud-api && python3 -m pytest tests/ -q
+
+  typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install monorepo
+        run: npm ci
+      - name: Typecheck contracts + web + player
+        run: npm run typecheck

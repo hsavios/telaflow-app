@@ -1,4 +1,4 @@
-﻿# TelaFlow — Erros Recorrentes e Lições Aprendidas
+# TelaFlow — Erros Recorrentes e Lições Aprendidas
 
 Registro de erros reais já ocorridos no projeto para **evitar repetição**.
 

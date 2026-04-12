@@ -1,4 +1,5 @@
-﻿mod pack_io;
+﻿mod local_store;
+mod pack_io;
 mod public_window;
 mod workspace_bindings;
 
@@ -9,6 +10,11 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             pack_io::load_pack_from_directory,
             public_window::public_window_open,
+            local_store::draw_exclusions_list,
+            local_store::draw_exclusion_record,
+            local_store::session_checkpoint_load,
+            local_store::session_checkpoint_save,
+            local_store::session_checkpoint_clear,
             workspace_bindings::normalize_media_binding_relative,
             workspace_bindings::file_exists_under_workspace,
             workspace_bindings::resolve_workspace_file_path,

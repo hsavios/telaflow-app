@@ -7,28 +7,38 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from telaflow_cloud_api import memory
+from telaflow_cloud_api.persistence.database import _get_session_factory, create_all_tables
 from telaflow_cloud_api.routers import (
     draw_configs_router,
     events_router,
     export_router,
+    join_router,
     media_requirements_router,
     scenes_router,
 )
+from telaflow_cloud_api.seed import seed_showcase_event_if_absent
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    """Semeia evento de demonstração (idempotente) para fluxo Preview → Export → Player."""
-    memory.seed_showcase_event_if_absent()
+    """Cria tabelas e semeia evento de demonstração (idempotente)."""
+    create_all_tables()
+    session = _get_session_factory()()
+    try:
+        seed_showcase_event_if_absent(session)
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
     yield
 
 
 app = FastAPI(
     title="TelaFlow Cloud API",
     version="0.1.0",
-    description="API da TelaFlow Cloud — fase inicial: governança e integração, sem persistência completa.",
+    description="API da TelaFlow Cloud — PostgreSQL (ou SQLite em testes) + export pack.",
     lifespan=lifespan,
 )
 
@@ -51,6 +61,7 @@ app.include_router(scenes_router)
 app.include_router(draw_configs_router)
 app.include_router(media_requirements_router)
 app.include_router(export_router)
+app.include_router(join_router)
 
 
 @app.get("/health")

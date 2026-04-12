@@ -12,7 +12,8 @@ import { DrawExperienceV1 } from "./draw/drawPresentation.js";
 import { readDrawHistory } from "./draw/drawHistory.js";
 import { useDrawRuntime } from "./drawRuntimeContext.js";
 import { useRuntimeSession } from "./RuntimeSessionContext.js";
-import { effectiveNumberRange } from "./drawNumberRange.js";
+import { effectiveSpinBounds } from "./drawSelection.js";
+import { validateDrawSceneNumberRange } from "./drawValidation.js";
 
 export type { DrawPanelState } from "./drawRuntimeContext.js";
 
@@ -39,6 +40,7 @@ function logDraw(
 
 export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
   const { comandos, seletores } = useRuntimeSession();
+  const drawAttendees = seletores.loadedPack?.drawAttendees ?? null;
   const cmdSorteio = seletores.comandos.iniciarSorteio;
   const cmdConfirmar = seletores.comandos.confirmarSorteio;
   const cmdProximo = seletores.comandos.prepararProximoSorteio;
@@ -86,14 +88,19 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
       message = `scene_id=${scene.scene_id}; cena draw sem draw_config_id.`;
     } else if (!drawConfig) {
       message = `scene_id=${scene.scene_id}; draw_config_id=${scene.draw_config_id} não encontrado em draw-configs.json do pack.`;
-    } else if (drawConfig.draw_type !== "number_range") {
-      message = `scene_id=${scene.scene_id}; draw_config_id=${drawConfig.draw_config_id}; draw_type=${drawConfig.draw_type} não suportado (apenas number_range).`;
+    } else if (drawConfig.draw_type !== "number_range" && drawConfig.draw_type !== "attendee_pool") {
+      message = `scene_id=${scene.scene_id}; draw_config_id=${drawConfig.draw_config_id}; draw_type=${drawConfig.draw_type} não suportado.`;
+    } else {
+      const v = validateDrawSceneNumberRange(scene, drawConfig, drawAttendees);
+      if (!v.ok) {
+        message = `scene_id=${scene.scene_id}; draw_config_id=${drawConfig.draw_config_id}; ${v.reason}`;
+      }
     }
     if (!message) return;
     if (staticFailLoggedRef.current === k) return;
     staticFailLoggedRef.current = k;
     logDraw(onPlaybackLog, EXECUTION_LOG_CODES.DRAW_FAILED, message, "warn");
-  }, [drawConfig, onPlaybackLog, resetKey, scene]);
+  }, [drawAttendees, drawConfig, onPlaybackLog, resetKey, scene]);
 
   const iniciarSorteio = useCallback(() => {
     if (!drawConfig) return;
@@ -135,25 +142,39 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
     );
   }
 
-  if (drawConfig.draw_type !== "number_range") {
+  if (drawConfig.draw_type !== "number_range" && drawConfig.draw_type !== "attendee_pool") {
     return (
       <DrawPanelChrome variant="error">
         <p className="draw-scene-panel__hint">
-          Tipo <code>{drawConfig.draw_type}</code> não suportado nesta versão do Player (apenas{" "}
-          <code>number_range</code>).
+          Tipo <code>{drawConfig.draw_type}</code> não suportado nesta versão do Player (
+          <code>number_range</code> ou <code>attendee_pool</code>).
         </p>
       </DrawPanelChrome>
     );
   }
 
-  const { min: startNumber, max: endNumber } = effectiveNumberRange(drawConfig);
+  const staticCheck = validateDrawSceneNumberRange(scene, drawConfig, drawAttendees);
+  if (!staticCheck.ok) {
+    return (
+      <DrawPanelChrome variant="error">
+        <p className="draw-scene-panel__hint">{staticCheck.reason}</p>
+      </DrawPanelChrome>
+    );
+  }
+
+  const { min: startNumber, max: endNumber } = effectiveSpinBounds(drawConfig, drawAttendees);
   const publicCopy = drawConfig.public_copy;
   const resultLabel = publicCopy?.result_label?.trim() || "Número sorteado";
   const audienceHint = publicCopy?.audience_instructions?.trim() ?? null;
   const intervaloOrigem =
-    drawConfig.number_range != null
-      ? "Intervalo definido no pack (number_range.min / number_range.max)."
-      : "Intervalo padrão do Player (1…1000) — recomendamos definir number_range no pacote exportado.";
+    drawConfig.draw_type === "attendee_pool"
+      ? "Números atribuídos aos inscritos (draw-attendees.json)."
+      : drawConfig.pool_mode === "subset"
+        ? "Subconjunto definido no pack (eligible_numbers)."
+        : drawConfig.number_range != null
+          ? "Intervalo definido no pack (number_range.min / number_range.max)."
+          : "Intervalo padrão do Player (1…1000) — recomendamos definir number_range no pacote exportado.";
+  const operatorSoundPreview = drawConfig.draw_presentation?.sound_enabled === true;
 
   return (
     <DrawPanelChrome variant="default">
@@ -255,7 +276,7 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
             drawName={drawConfig.name ?? ""}
             audienceHint={audienceHint}
             resultLabel={resultLabel}
-            soundEnabled={false}
+            soundEnabled={operatorSoundPreview}
             branding={drawBranding}
           />
         </div>

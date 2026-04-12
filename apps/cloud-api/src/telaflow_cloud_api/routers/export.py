@@ -1,44 +1,58 @@
-﻿"""Export readiness e pack export (JSON no disco; sem ZIP / assinatura)."""
+﻿"""Export readiness e geração de pack."""
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
 
-from telaflow_cloud_api import memory
+from telaflow_cloud_api.access import assert_event_in_org
+from telaflow_cloud_api.export_readiness import compute_export_readiness
+from telaflow_cloud_api.persistence.database import get_session
+from telaflow_cloud_api.persistence.repository import Repository
 from telaflow_cloud_api.services import pack_export
+from telaflow_cloud_api.tenancy import get_organization_id
 
 router = APIRouter(tags=["export"])
 
 
 @router.get("/events/{event_id}/export-readiness")
-def export_readiness(event_id: str) -> dict:
-    """
-    Checagens mínimas server-side para futuro ExportPackage.
-    Não gera pack nem assinatura — só estrutura e consistência declarável.
-    """
-    if event_id not in memory._events_store:
-        raise HTTPException(
-            status_code=404,
-            detail={"error": "event_not_found", "event_id": event_id},
-        )
-    body = memory._compute_export_readiness(event_id)
-    return {"ok": True, "export_readiness": body}
+def get_export_readiness(
+    event_id: str,
+    db: Session = Depends(get_session),
+    organization_id: str = Depends(get_organization_id),
+) -> dict:
+    repo = Repository(db)
+    assert_event_in_org(repo, event_id, organization_id)
+    body = compute_export_readiness(
+        event_id,
+        repo.list_scenes(event_id),
+        repo.list_draw_configs(event_id),
+        repo.list_media_requirements(event_id),
+    )
+    return {"export_readiness": body}
 
 
 @router.post("/events/{event_id}/export", status_code=200)
-def run_export(event_id: str) -> dict:
+def run_export(
+    event_id: str,
+    db: Session = Depends(get_session),
+    organization_id: str = Depends(get_organization_id),
+    archive: str | None = Query(None, description="Use `zip` para gerar arquivo .zip do pack."),
+) -> dict:
     """
-    Gera pack mínimo (MVP) em diretório dedicado ao export_id.
+    Gera pack mínimo em diretório dedicado ao export_id.
 
     Exige export_readiness.ready == true; caso contrário 409 estruturado.
-    Não inclui mídia binária, ZIP nem assinatura criptográfica.
+    `?archive=zip` também grava `{export_id}.zip` junto à pasta do export.
     """
-    if event_id not in memory._events_store:
-        raise HTTPException(
-            status_code=404,
-            detail={"error": "event_not_found", "event_id": event_id},
-        )
-    readiness = memory._compute_export_readiness(event_id)
+    repo = Repository(db)
+    assert_event_in_org(repo, event_id, organization_id)
+    readiness = compute_export_readiness(
+        event_id,
+        repo.list_scenes(event_id),
+        repo.list_draw_configs(event_id),
+        repo.list_media_requirements(event_id),
+    )
     if not readiness.get("ready"):
         raise HTTPException(
             status_code=409,
@@ -48,7 +62,14 @@ def run_export(event_id: str) -> dict:
                 "export_readiness": readiness,
             },
         )
-    result = pack_export.run_pack_export_for_ready_event(event_id)
+    draw_attendees = _build_draw_attendees_document(repo, event_id)
+    write_zip = (archive or "").lower() == "zip"
+    result = pack_export.run_pack_export_for_ready_event(
+        repo,
+        event_id,
+        draw_attendees_document=draw_attendees,
+        write_zip=write_zip,
+    )
     return {
         "ok": True,
         "export_id": result["export_id"],
@@ -56,4 +77,32 @@ def run_export(event_id: str) -> dict:
         "export_directory": result["export_directory"],
         "files_written": result["files_written"],
         "artifacts": result["artifacts"],
+        "zip_path": result.get("zip_path"),
+        "zip_checksum_sha256": result.get("zip_checksum_sha256"),
+    }
+
+
+def _build_draw_attendees_document(repo: Repository, event_id: str) -> dict[str, object] | None:
+    """Agrega inscrições por draw_config (para `draw-attendees.json` no pack)."""
+    sessions = repo.list_registration_sessions(event_id)
+    if not sessions:
+        return None
+    by_draw: dict[str, list[dict]] = {}
+    for sess in sessions:
+        regs = repo.list_registrations(sess.id)
+        entries = [
+            {
+                "registration_id": r.id,
+                "display_name": r.display_name,
+                "assigned_number": r.assigned_number,
+            }
+            for r in regs
+        ]
+        by_draw.setdefault(sess.draw_config_id, []).extend(entries)
+    if not any(by_draw.values()):
+        return None
+    return {
+        "schema_version": "draw_attendees_pack.v1",
+        "event_id": event_id,
+        "entries_by_draw_config_id": by_draw,
     }

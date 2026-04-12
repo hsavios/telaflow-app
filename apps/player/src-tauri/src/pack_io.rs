@@ -22,6 +22,8 @@ pub struct LoadedPackPayload {
     pub manifest: Value,
     pub event: Value,
     pub draw_configs: Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub draw_attendees: Option<Value>,
     pub media_manifest: Value,
     pub branding: Value,
     pub license: Value,
@@ -120,11 +122,19 @@ pub fn load_pack_from_directory(path: String) -> Result<LoadedPackPayload, Strin
         })?,
     )?;
 
+    let draw_attendees = if let Some(rel) = mapa.get("draw_attendees") {
+        let p = caminho_seguro_sob_raiz(&raiz, rel)?;
+        Some(ler_json_arquivo(&p)?)
+    } else {
+        None
+    };
+
     Ok(LoadedPackPayload {
         root_path: raiz.to_string_lossy().to_string(),
         manifest,
         event: ler_json_arquivo(&p_evento)?,
         draw_configs: ler_json_arquivo(&p_draws)?,
+        draw_attendees,
         media_manifest: ler_json_arquivo(&p_media)?,
         branding: ler_json_arquivo(&p_branding)?,
         license: ler_json_arquivo(&p_license)?,

@@ -3,6 +3,7 @@
  * e agenda pura do `drawEngine` (sem lógica de negócio do sorteio).
  */
 
+import QRCode from "qrcode";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   buildDrawSpinSchedule,
@@ -28,9 +29,37 @@ export type DrawExperienceV1Props = {
   resultLabel: string;
   /** Tambor Web Audio; telão default true, operador default false. */
   soundEnabled?: boolean;
+  /** URL pública de inscrição (QR no telão, estado «pronto»). */
+  joinQrUrl?: string | null;
   /** Cores e fonte do pack (`branding.json`), quando disponíveis. */
   branding?: PublicWindowDrawBranding | null;
 };
+
+function DrawJoinQr({ url }: { url: string }) {
+  const [dataUrl, setDataUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void QRCode.toDataURL(url, { margin: 1, width: 240, errorCorrectionLevel: "M" }).then((d) => {
+      if (!cancelled) setDataUrl(d);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+  if (!dataUrl) {
+    return (
+      <div className="draw-join-qr draw-join-qr--loading" aria-hidden="true">
+        <span className="draw-join-qr__spinner" />
+      </div>
+    );
+  }
+  return (
+    <figure className="draw-join-qr">
+      <img src={dataUrl} alt="" width={240} height={240} />
+      <figcaption className="draw-join-qr__caption">Inscrição pelo telemóvel</figcaption>
+    </figure>
+  );
+}
 
 function estiloBranding(b: PublicWindowDrawBranding | null | undefined): CSSProperties | undefined {
   if (!b) return undefined;
@@ -135,6 +164,7 @@ export function DrawExperienceV1({
   audienceHint,
   resultLabel,
   soundEnabled: soundEnabledProp,
+  joinQrUrl,
   branding,
 }: DrawExperienceV1Props) {
   const soundEnabled =
@@ -199,6 +229,7 @@ export function DrawExperienceV1({
 
   if (panelState === "ready") {
     if (variant === "telao") {
+      const qr = joinQrUrl?.trim();
       return (
         <div className={`${rootClass} draw-exp--ready draw-exp--telao-stage`} style={brandStyle} role="status">
           {drawName.trim() ? (
@@ -207,6 +238,7 @@ export function DrawExperienceV1({
             <p className="draw-exp__line">Pronto para sortear</p>
           )}
           {hint ? <p className="draw-exp__hint draw-exp__hint--telao-subtle">{hint}</p> : null}
+          {qr ? <DrawJoinQr url={qr} /> : null}
         </div>
       );
     }

@@ -39,6 +39,32 @@ export function getCloudApiBase(): string | null {
   return raw.replace(/\/$/, "");
 }
 
+/** Cabeçalho multi-tenant (MVP) — alinhado à FastAPI `X-Telaflow-Organization-Id`. */
+export function defaultTelaflowOrganizationId(): string {
+  return (
+    process.env.NEXT_PUBLIC_TELAFLOW_ORGANIZATION_ID?.trim() || "org_telaflow_d1"
+  );
+}
+
+/** Cabeçalhos para rotas públicas (ex.: `/join/{token}`) — sem organização. */
+export function publicApiHeaders(jsonBody?: boolean): Record<string, string> {
+  const h: Record<string, string> = { Accept: "application/json" };
+  if (jsonBody) h["Content-Type"] = "application/json";
+  return h;
+}
+
+function cloudApiHeaders(
+  extra?: Record<string, string>,
+  organizationId?: string,
+): Record<string, string> {
+  const oid = (organizationId ?? defaultTelaflowOrganizationId()).trim();
+  return {
+    Accept: "application/json",
+    "X-Telaflow-Organization-Id": oid || defaultTelaflowOrganizationId(),
+    ...extra,
+  };
+}
+
 async function parseJsonOrText(res: Response): Promise<unknown> {
   const text = await res.text();
   if (!text) return null;
@@ -97,7 +123,7 @@ export async function fetchEvents(): Promise<CloudEvent[]> {
   const res = await fetch(`${base}/events`, {
     method: "GET",
     cache: "no-store",
-    headers: { Accept: "application/json" },
+    headers: cloudApiHeaders(),
   });
   if (!res.ok) {
     const body = await parseJsonOrText(res);
@@ -118,10 +144,7 @@ export async function createEvent(payload: {
   }
   const res = await fetch(`${base}/events`, {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
+    headers: cloudApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
   });
   const body = await parseJsonOrText(res);
@@ -144,7 +167,7 @@ export async function fetchEvent(eventId: string): Promise<CloudEvent> {
   const res = await fetch(`${base}/events/${enc(eventId)}`, {
     method: "GET",
     cache: "no-store",
-    headers: { Accept: "application/json" },
+    headers: cloudApiHeaders(),
   });
   if (res.ok) {
     const data = (await res.json()) as GetEventResponse;
@@ -174,7 +197,7 @@ export async function fetchScenes(eventId: string): Promise<CloudScene[]> {
   const res = await fetch(`${base}/events/${enc(eventId)}/scenes`, {
     method: "GET",
     cache: "no-store",
-    headers: { Accept: "application/json" },
+    headers: cloudApiHeaders(),
   });
   if (res.ok) {
     const data = (await res.json()) as ListScenesResponse;
@@ -195,6 +218,16 @@ export type CloudDrawPublicCopy = {
   result_label?: string | null;
 };
 
+export type CloudDrawPresentation = {
+  sound_enabled?: boolean | null;
+  visual_profile?: "premium" | "classic" | "pulsing" | null;
+};
+
+export type CloudDrawRegistration = {
+  join_url_template?: string | null;
+  public_token?: string | null;
+};
+
 export type CloudDrawConfig = {
   draw_config_id: string;
   event_id: string;
@@ -202,9 +235,15 @@ export type CloudDrawConfig = {
   max_winners: number;
   notes: string | null;
   enabled: boolean;
-  draw_type?: "number_range";
+  draw_type?: "number_range" | "attendee_pool";
   number_range?: { min: number; max: number } | null;
+  pool_mode?: "full_range" | "subset";
+  eligible_numbers?: number[] | null;
+  remove_winner_from_pool?: boolean;
+  prizes?: string[] | null;
   public_copy?: CloudDrawPublicCopy | null;
+  draw_presentation?: CloudDrawPresentation | null;
+  registration?: CloudDrawRegistration | null;
 };
 
 export type CloudMediaRequirement = {
@@ -276,10 +315,7 @@ export async function createScene(
   if (!base) throw new Error("missing_api_url");
   const res = await fetch(`${base}/events/${enc(eventId)}/scenes`, {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
+    headers: cloudApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
   });
   if (res.status === 404) {
@@ -327,10 +363,7 @@ export async function reorderScenes(
   if (!base) throw new Error("missing_api_url");
   const res = await fetch(`${base}/events/${enc(eventId)}/scenes/reorder`, {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
+    headers: cloudApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ scene_ids: sceneIds }),
   });
   if (res.status === 404) {
@@ -362,10 +395,7 @@ export async function updateScene(
     `${base}/events/${enc(eventId)}/scenes/${enc(sceneId)}`,
     {
       method: "PATCH",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
+      headers: cloudApiHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(payload),
     },
   );
@@ -409,7 +439,7 @@ export async function deleteScene(
     `${base}/events/${enc(eventId)}/scenes/${enc(sceneId)}`,
     {
       method: "DELETE",
-      headers: { Accept: "application/json" },
+      headers: cloudApiHeaders(),
     },
   );
   if (res.status === 404) {
@@ -429,7 +459,7 @@ export async function fetchDrawConfigs(
   const res = await fetch(`${base}/events/${enc(eventId)}/draw-configs`, {
     method: "GET",
     cache: "no-store",
-    headers: { Accept: "application/json" },
+    headers: cloudApiHeaders(),
   });
   if (res.status === 404) return [];
   if (!res.ok) {
@@ -447,19 +477,22 @@ export async function createDrawConfig(
     max_winners?: number;
     notes?: string | null;
     enabled?: boolean;
-    draw_type?: "number_range";
+    draw_type?: "number_range" | "attendee_pool";
     number_range?: { min: number; max: number } | null;
+    pool_mode?: "full_range" | "subset";
+    eligible_numbers?: number[] | null;
+    remove_winner_from_pool?: boolean;
+    prizes?: string[] | null;
     public_copy?: CloudDrawPublicCopy | null;
+    draw_presentation?: CloudDrawPresentation | null;
+    registration?: CloudDrawRegistration | null;
   },
 ): Promise<{ ok: boolean; draw_config: CloudDrawConfig }> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
   const res = await fetch(`${base}/events/${enc(eventId)}/draw-configs`, {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
+    headers: cloudApiHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
   });
   if (res.status === 404) throw new Error("event_not_found");
@@ -484,9 +517,15 @@ export async function updateDrawConfig(
     max_winners: number;
     notes: string | null;
     enabled: boolean;
-    draw_type: "number_range";
+    draw_type: "number_range" | "attendee_pool";
     number_range: { min: number; max: number } | null;
+    pool_mode: "full_range" | "subset";
+    eligible_numbers: number[] | null;
+    remove_winner_from_pool: boolean;
+    prizes: string[] | null;
     public_copy: CloudDrawPublicCopy | null;
+    draw_presentation: CloudDrawPresentation | null;
+    registration: CloudDrawRegistration | null;
   }>,
 ): Promise<{ ok: boolean; draw_config: CloudDrawConfig }> {
   const base = getCloudApiBase();
@@ -495,10 +534,7 @@ export async function updateDrawConfig(
     `${base}/events/${enc(eventId)}/draw-configs/${enc(drawConfigId)}`,
     {
       method: "PATCH",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
+      headers: cloudApiHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(payload),
     },
   );
@@ -526,7 +562,7 @@ export async function deleteDrawConfig(
     `${base}/events/${enc(eventId)}/draw-configs/${enc(drawConfigId)}`,
     {
       method: "DELETE",
-      headers: { Accept: "application/json" },
+      headers: cloudApiHeaders(),
     },
   );
   if (res.status === 404) throw new Error("draw_config_not_found");
@@ -549,7 +585,7 @@ export async function fetchMediaRequirements(
     {
       method: "GET",
       cache: "no-store",
-      headers: { Accept: "application/json" },
+      headers: cloudApiHeaders(),
     },
   );
   if (res.status === 404) return [];
@@ -579,10 +615,7 @@ export async function createMediaRequirement(
     `${base}/events/${enc(eventId)}/media-requirements`,
     {
       method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
+      headers: cloudApiHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(payload),
     },
   );
@@ -613,10 +646,7 @@ export async function updateMediaRequirement(
     `${base}/events/${enc(eventId)}/media-requirements/${enc(mediaId)}`,
     {
       method: "PATCH",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
+      headers: cloudApiHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(payload),
     },
   );
@@ -640,7 +670,7 @@ export async function deleteMediaRequirement(
     `${base}/events/${enc(eventId)}/media-requirements/${enc(mediaId)}`,
     {
       method: "DELETE",
-      headers: { Accept: "application/json" },
+      headers: cloudApiHeaders(),
     },
   );
   if (res.status === 404) throw new Error("media_requirement_not_found");
@@ -667,7 +697,7 @@ export async function fetchExportReadiness(
     {
       method: "GET",
       cache: "no-store",
-      headers: { Accept: "application/json" },
+      headers: cloudApiHeaders(),
     },
   );
   if (res.status === 404) throw new Error("event_not_found");
@@ -686,17 +716,21 @@ export type RunPackExportResponse = {
   export_directory: string;
   files_written: string[];
   artifacts?: unknown;
+  zip_path?: string | null;
+  zip_checksum_sha256?: string | null;
 };
 
 export async function runPackExport(
   eventId: string,
+  options?: { archiveZip?: boolean },
 ): Promise<RunPackExportResponse> {
   const base = getCloudApiBase();
   if (!base) throw new Error("missing_api_url");
-  const res = await fetch(`${base}/events/${enc(eventId)}/export`, {
+  const q = options?.archiveZip ? "?archive=zip" : "";
+  const res = await fetch(`${base}/events/${enc(eventId)}/export${q}`, {
     method: "POST",
     cache: "no-store",
-    headers: { Accept: "application/json" },
+    headers: cloudApiHeaders(),
   });
   const body = await parseJsonOrText(res);
   if (res.status === 404) throw new Error("event_not_found");
@@ -707,4 +741,59 @@ export async function runPackExport(
     throw new Error(`export_failed:${res.status}`, { cause: body });
   }
   return body as RunPackExportResponse;
+}
+
+export type CreateDrawRegistrationSessionResponse = {
+  ok: boolean;
+  session_id: string;
+  public_token: string;
+  join_url: string;
+};
+
+export async function createDrawRegistrationSession(
+  eventId: string,
+  drawConfigId: string,
+  body: { join_base_url?: string | null; opens_at?: string | null; closes_at?: string | null },
+): Promise<CreateDrawRegistrationSessionResponse> {
+  const base = getCloudApiBase();
+  if (!base) throw new Error("missing_api_url");
+  const res = await fetch(
+    `${base}/events/${enc(eventId)}/draw-configs/${enc(drawConfigId)}/registration-sessions`,
+    {
+      method: "POST",
+      headers: cloudApiHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify(body),
+    },
+  );
+  const parsed = await parseJsonOrText(res);
+  if (!res.ok) {
+    throw new Error(`registration_session_failed:${res.status}`, { cause: parsed });
+  }
+  return parsed as CreateDrawRegistrationSessionResponse;
+}
+
+export type JoinDrawResponse = {
+  ok: boolean;
+  registration_id: string;
+  assigned_number: number;
+  draw_config_id: string;
+  event_id: string;
+};
+
+export async function joinDrawPublic(
+  publicToken: string,
+  body: { display_name?: string | null },
+): Promise<JoinDrawResponse> {
+  const base = getCloudApiBase();
+  if (!base) throw new Error("missing_api_url");
+  const res = await fetch(`${base}/join/${encodeURIComponent(publicToken)}`, {
+    method: "POST",
+    headers: publicApiHeaders(true),
+    body: JSON.stringify(body),
+  });
+  const parsed = await parseJsonOrText(res);
+  if (!res.ok) {
+    throw new Error(`join_draw_failed:${res.status}`, { cause: parsed });
+  }
+  return parsed as JoinDrawResponse;
 }

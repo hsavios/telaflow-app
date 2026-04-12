@@ -1,4 +1,18 @@
+﻿# Perfil opcional: `docker compose --profile dev-db up -d postgres` para PostgreSQL local
+# (defina DATABASE_URL=postgresql+psycopg://telaflow:telaflow@postgres:5432/telaflow na API).
 services:
+  postgres:
+    profiles: ["dev-db"]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: telaflow
+      POSTGRES_PASSWORD: telaflow
+      POSTGRES_DB: telaflow
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - telaflow_pgdata:/var/lib/postgresql/data
+
   cloud-api:
     image: ghcr.io/${GHCR_OWNER}/telaflow-cloud-api:${IMAGE_TAG}
     container_name: telaflow-cloud-api
@@ -18,3 +32,6 @@ services:
       - "${WEB_PORT}:3000"
     depends_on:
       - cloud-api
+
+volumes:
+  telaflow_pgdata:

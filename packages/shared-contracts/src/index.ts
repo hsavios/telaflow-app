@@ -43,12 +43,27 @@ export {
   DrawConfigContractSchema,
   DrawNumberRangeSchema,
   DrawTypeSchema,
+  DrawPoolModeSchema,
+  DrawVisualProfileSchema,
+  DrawPresentationPartialSchema,
+  DrawRegistrationRefSchema,
   DrawPublicCopyMvpSchema,
   type DrawConfigContract,
   type DrawNumberRange,
   type DrawType,
+  type DrawPoolMode,
+  type DrawVisualProfile,
+  type DrawPresentationPartial,
+  type DrawRegistrationRef,
   type DrawPublicCopyMvp,
 } from "./draw-config.js";
+
+export {
+  DRAW_ATTENDEES_PACK_VERSION,
+  DrawAttendeesPackFileSchema,
+  DrawAttendeeEntrySchema,
+  type DrawAttendeesPackFile,
+} from "./draw-attendees-pack.js";
 
 export {
   MediaRequirementContractSchema,

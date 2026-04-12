@@ -2,42 +2,72 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 from telaflow_cloud_api.domain import Event
-from telaflow_cloud_api import memory
+from telaflow_cloud_api.persistence.database import get_session
+from telaflow_cloud_api.persistence.repository import Repository
+from telaflow_cloud_api.tenancy import get_organization_id
 
 router = APIRouter(tags=["events"])
 
 
 @router.get("/events")
-def list_events() -> dict:
-    """Lista eventos em memória (ordem de criação)."""
-    events = list(memory._events_store.values())
+def list_events(
+    db: Session = Depends(get_session),
+    organization_id: str = Depends(get_organization_id),
+) -> dict:
+    """Lista eventos da organização (cabeçalho multi-tenant)."""
+    repo = Repository(db)
+    events = repo.list_events(organization_id=organization_id)
     return {"events": events}
 
 
 @router.get("/events/{event_id}")
-def get_event(event_id: str) -> dict:
+def get_event(
+    event_id: str,
+    db: Session = Depends(get_session),
+    organization_id: str = Depends(get_organization_id),
+) -> dict:
     """Retorna um evento por id ou 404."""
-    if event_id not in memory._events_store:
+    repo = Repository(db)
+    row = repo.get_event(event_id)
+    if row is None:
         raise HTTPException(
             status_code=404,
             detail={"error": "event_not_found", "event_id": event_id},
         )
-    return {"event": memory._events_store[event_id]}
+    if row["organization_id"] != organization_id:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "event_not_found", "event_id": event_id},
+        )
+    return {"event": row}
 
 
 @router.post("/events", status_code=201)
-def create_event(body: Event) -> dict:
-    """
-    Cria evento em memória. Não é CRUD completo — apenas stub para integração inicial.
-    """
-    if body.event_id in memory._events_store:
+def create_event(
+    body: Event,
+    db: Session = Depends(get_session),
+    organization_id: str = Depends(get_organization_id),
+) -> dict:
+    """Cria evento persistido em PostgreSQL/SQLite (testes)."""
+    if body.organization_id != organization_id:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "organization_mismatch",
+                "message": "organization_id do corpo deve coincidir com X-Telaflow-Organization-Id.",
+            },
+        )
+    repo = Repository(db)
+    if repo.event_exists(body.event_id):
         raise HTTPException(
             status_code=409,
             detail={"error": "event_id_already_exists", "event_id": body.event_id},
         )
+    repo.ensure_organization(body.organization_id, body.organization_id)
     payload = body.model_dump()
-    memory._events_store[body.event_id] = payload
+    repo.create_event(payload)
     return {"ok": True, "event": payload}

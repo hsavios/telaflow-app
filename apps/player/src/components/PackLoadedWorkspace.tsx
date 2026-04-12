@@ -284,7 +284,7 @@ export function PackLoadedWorkspace() {
             className="player-btn-event-start"
             disabled={!cmdIniciarExecucao.permitido}
             title={cmdIniciarExecucao.permitido ? undefined : cmdIniciarExecucao.motivo}
-            onClick={() => comandos.iniciar_execucao()}
+            onClick={() => void comandos.iniciar_execucao()}
           >
             Iniciar evento
           </button>

@@ -16,6 +16,7 @@ export const PackManifestArtifactEntrySchema = z.object({
     "media_manifest",
     "branding",
     "license",
+    "draw_attendees",
   ]),
 });
 

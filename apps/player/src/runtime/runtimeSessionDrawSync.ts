@@ -2,7 +2,7 @@
  * Sincronização estática do painel de sorteio (sem I/O) — alinhada ao efeito anterior em `DrawScenePanel`.
  */
 
-import type { DrawConfigContract, SceneContract } from "@telaflow/shared-contracts";
+import type { DrawAttendeesPackFile, DrawConfigContract, SceneContract } from "@telaflow/shared-contracts";
 import type { DrawPanelState } from "./runtimeSessionTypes.js";
 import { validateDrawSceneNumberRange } from "./drawValidation.js";
 
@@ -18,6 +18,7 @@ export function planejarSincronizacaoEstaticaSorteio(
   scene: SceneContract,
   drawConfig: DrawConfigContract | null,
   resetKey: string,
+  drawAttendees: DrawAttendeesPackFile | null,
 ): PlanoSincronizacaoSorteio {
   if (scene.type !== "draw") {
     return {
@@ -48,16 +49,16 @@ export function planejarSincronizacaoEstaticaSorteio(
       pendingWinner: null,
     };
   }
-  if (drawConfig.draw_type !== "number_range") {
+  if (drawConfig.draw_type !== "number_range" && drawConfig.draw_type !== "attendee_pool") {
     return {
       resetKey,
       panelState: "error",
-      errorMessage: "Este tipo de sorteio não é suportado nesta versão do Player (apenas number_range).",
+      errorMessage: `Tipo de sorteio não suportado: ${drawConfig.draw_type}.`,
       winnerValue: null,
       pendingWinner: null,
     };
   }
-  const v = validateDrawSceneNumberRange(scene, drawConfig);
+  const v = validateDrawSceneNumberRange(scene, drawConfig, drawAttendees);
   if (!v.ok) {
     return {
       resetKey,

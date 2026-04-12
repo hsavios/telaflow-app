@@ -14,6 +14,7 @@ import {
 } from "../pack/playerPackState.js";
 import { kindAfterPreflight } from "./operationalState.js";
 import { mensagemAtivacaoCena } from "./runtimeSessionSceneActivation.js";
+import { chaveResetSorteioCena, enabledScenesSorted } from "./sceneOrder.js";
 import {
   contextoOperacionalInicial,
   criarSliceSorteioInicial,
@@ -139,6 +140,11 @@ export function transicionarSessaoRuntime(
 
     case "INICIAR_EXECUCAO": {
       if (app.kind !== "ready") return prev;
+      const ordenadas = enabledScenesSorted(app.packData.event.scenes);
+      const n = ordenadas.length;
+      const idx = Math.min(Math.max(0, action.initialSceneIndex ?? 0), Math.max(0, n - 1));
+      const cenaAtual = n > 0 ? ordenadas[idx]! : null;
+      const drawResetKey = cenaAtual ? chaveResetSorteioCena(cenaAtual) : action.drawResetKey;
       const started = appendExecutionLog([], {
         level: "info",
         code: EXECUTION_LOG_CODES.EXECUTION_STARTED,
@@ -147,7 +153,7 @@ export function transicionarSessaoRuntime(
       const withScene = appendExecutionLog(started, {
         level: "info",
         code: EXECUTION_LOG_CODES.SCENE_ACTIVATED,
-        message: mensagemAtivacaoCena(app.packData, 0),
+        message: mensagemAtivacaoCena(app.packData, idx),
       });
       return {
         appState: {
@@ -157,11 +163,11 @@ export function transicionarSessaoRuntime(
           workspaceRoot: app.workspaceRoot,
           bindings: app.bindings,
           lastPreflight: app.lastPreflight,
-          sceneIndex: 0,
+          sceneIndex: idx,
           executionLog: withScene,
         },
         drawRuntime: {
-          resetKey: action.drawResetKey,
+          resetKey: drawResetKey,
           panelState: "idle",
           pendingWinner: null,
           winnerValue: null,

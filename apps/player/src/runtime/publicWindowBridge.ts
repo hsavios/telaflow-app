@@ -4,6 +4,7 @@
  */
 
 import type {
+  DrawAttendeesPackFile,
   DrawConfigContract,
   MediaRequirementContract,
   SceneContract,
@@ -58,6 +59,8 @@ export type PublicWindowOperatorSnapshot = {
   drawBranding: PublicWindowDrawBranding | null;
   mediaState: SceneMediaDerivedState;
   drawConfig: DrawConfigContract | null;
+  /** Inscritos/números empacotados (opcional) — necessário para limites de animação coerentes. */
+  drawAttendees: DrawAttendeesPackFile | null;
   workspaceRoot: string | null;
   bindings: Record<string, string>;
   mediaRequirement: MediaRequirementContract | null;
@@ -111,6 +114,7 @@ export function derivarSnapshotJanelaPublica(
       drawRuntime: null,
       drawBranding: null,
       drawConfig: null,
+      drawAttendees: null,
       workspaceRoot,
       bindings,
       mediaRequirement: null,
@@ -139,6 +143,7 @@ export function derivarSnapshotJanelaPublica(
       drawRuntime: null,
       drawBranding,
       drawConfig: null,
+      drawAttendees: pack.drawAttendees ?? null,
       workspaceRoot,
       bindings,
       mediaRequirement: null,
@@ -179,6 +184,7 @@ export function derivarSnapshotJanelaPublica(
     drawRuntime,
     drawBranding,
     drawConfig,
+    drawAttendees: pack.drawAttendees ?? null,
     workspaceRoot,
     bindings,
     mediaRequirement,

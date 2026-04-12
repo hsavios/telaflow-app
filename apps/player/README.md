@@ -67,12 +67,14 @@ Implementação: `src/pack/playerPackState.ts` + `src/App.tsx`.
 - Estados derivados **sem** arquivo pronto (`media_missing_binding`, `media_file_missing`): mantém-se o **placeholder / cartão de fallback** (sem tentar carregar URL).
 - **Tauri:** `app.security.assetProtocol` + CSP com `asset:` / `http://asset.localhost` para o WebView carregar arquivos locais; escopo amplo `**` no MVP (workspace escolhido pelo operador).
 
-## Draw Engine (MVP)
+## Draw Engine (MVP + experiência premium v1)
 
-- Contrato **`DrawConfig`** em `@telaflow/shared-contracts`: `draw_type` (MVP: **`number_range`**), `number_range` opcional `{ min, max }`. Se `number_range` estiver ausente no pack, o Player usa intervalo padrão **1…1000** (`drawNumberRange.ts`).
-- **`DrawScenePanel`** (`src/runtime/DrawScenePanel.tsx`), só em cenas **`draw`** em **`executing`**: resolve `draw_config_id` em `draw-configs.json` do pack; só **`draw_type === number_range`**. Estados internos: `idle` → `ready` / `error`; `ready` → **Iniciar sorteio** → `drawing` (breve atraso) → `result_generated` (número em destaque + **Confirmar resultado**) → `result_confirmed`. Resumo na UI: nome, `draw_config_id`, tipo, intervalo (**start_number** / **end_number** mapeados a `number_range.min` / `number_range.max` no contrato).
+- Contrato **`DrawConfig`** em `@telaflow/shared-contracts`: `draw_type` (intervalo **`number_range`**, pool **`attendee_pool`** quando export inclui `draw-attendees.json`), `number_range` opcional `{ min, max }`, **`draw_presentation`** (som no telão, perfil visual, overrides de duração/ticks), **`pool_mode`** / **`eligible_numbers`** / exclusão conforme pack. Se `number_range` estiver ausente no pack, o Player usa intervalo padrão **1…1000** (`drawNumberRange.ts`).
+- **`DrawScenePanel`** (`src/runtime/DrawScenePanel.tsx`), só em cenas **`draw`** em **`executing`**: resolve `draw_config_id` em `draw-configs.json` do pack. Estados internos: `idle` → `ready` / `error`; `ready` → **Iniciar sorteio** → `drawing` → `result_generated` (número em destaque + **Confirmar resultado**) → `result_confirmed`. O valor sorteado vem do motor (`drawSelection.ts`): intervalo uniforme, **subset** do intervalo, ou **entrada de participantes** no pack; exclusão e pool persistidos em **SQLite** local (`tauri-plugin-sql`, ver `docs/adr/ADR-004-player-sqlite-local.md`).
 - Estado do sorteio compartilhado via **`DrawRuntimeProvider`** / **`drawRuntimeContext.tsx`** para o **`PublicSceneView`** espelhar fases (pronto, sorteando, resultado, confirmado).
-- Sem animação de sorteio elaborada, sem múltiplos vencedores, sem exclusão persistente de números, sem Cloud em runtime.
+- **Animação e som (telão):** `drawEngine.ts` — `buildDrawSpinSchedule` com fase rápida, **desaceleração progressiva** e freeze antes do valor final (~4,8s); `drawPresentation.tsx` + CSS (spin, reveal, branding); **`DrawSpinAudio`** — ticks durante o giro e chime no resultado. O telão usa `sound_enabled` do pack (`draw_presentation`); o painel do operador mantém som desligado por defeito (evita ruído na cabine).
+- **Prémios / fluxo:** lista `prizes` no `DrawConfig` (Cloud) exportada no pack; o telão pode mostrar o prémio corrente conforme `drawAttemptId` e `max_winners`.
+- **QR inscrições (v1):** URL pública na Cloud congelada no pack (`registration` em `DrawConfig`); o telão mostra QR na fase `ready` quando configurado. Sem Cloud em runtime obrigatório.
 
 ## Saída pública (MVP)
 
@@ -113,11 +115,12 @@ Textos para operador: `describeSceneMediaDerivedStatePt`.
 
 - O registro **inicia** ao entrar em **`executing`**: eventos **`execution_started`**, **`scene_activated`**, **`execution_finished`**, **`media_started`** / **`media_failed`**, e **`draw_started`** / **`draw_result_generated`** / **`draw_result_confirmed`** / **`draw_failed`** quando aplicável.
 - **Persistência:** comando Tauri `append_execution_jsonl` — arquivo **`.telaflow/execution-log.jsonl`** sob a raiz do **workspace** se existir; caso contrário sob a **pasta do pack** (append JSON por linha).
+- **SQLite local** (`.telaflow/telaflow-player.db` na mesma base): exclusões de sorteio confirmadas e último índice de cena para retomada após fechar o Player (comandos `draw_exclusion_*`, `session_checkpoint_*`).
 - Memória de sessão: `executionLog` + UI `ExecutionLogPanel` (visível em `executing`).
 
 ## Fora de escopo
 
-- **Sorteio visual** avançado (animações elaboradas, modos múltiplos além do MVP `number_range`).
+- **Sorteio visual** além dos perfis suportados em `draw_presentation.visual_profile` (ex.: motores 3D externos).
 - **Dual-screen avançado:** escolha explícita de monitor, fullscreen dedicado por ecrã, ou uma única instância de mídia partilhada entre operador e telão (o MVP oferece **segunda janela** + evento de estado, sem essas otimizações).
 - **Multi-monitor** / APIs de projeção além de abrir a janela `public` manualmente e arrastá-la para outro ecrã.
 - **Transições** avançadas entre cenas ou efeitos no telão.

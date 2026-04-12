@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import {
   BrandingExportMvpSchema,
+  DrawAttendeesPackFileSchema,
   DrawConfigContractSchema,
   DrawConfigsPackFileSchema,
   EventContractSchema,
@@ -48,6 +49,7 @@ writeSchema("export-readiness-v1", ExportReadinessV1Schema, "ExportReadinessV1")
 writeSchema("pack-manifest-mvp", PackManifestMvpSchema, "PackManifestMvp");
 writeSchema("event-export-file", EventExportFileSchema, "EventExportFile");
 writeSchema("draw-configs-pack-file", DrawConfigsPackFileSchema, "DrawConfigsPackFile");
+writeSchema("draw-attendees-pack-file", DrawAttendeesPackFileSchema, "DrawAttendeesPackFile");
 writeSchema("media-manifest-pack-file", MediaManifestPackFileSchema, "MediaManifestPackFile");
 writeSchema("branding-export-mvp", BrandingExportMvpSchema, "BrandingExportMvp");
 writeSchema("license-export-mvp", LicenseExportMvpSchema, "LicenseExportMvp");

@@ -38,7 +38,7 @@ type Props = {
   exportReadinessLoading: boolean;
   exportReadinessError: string | null;
   onRefreshExportReadiness: () => void;
-  onExportToPlayer: () => void;
+  onExportToPlayer: (archiveZip: boolean) => void;
   exportToPlayerRunning: boolean;
   exportToPlayerBanner: ExportBanner;
 };

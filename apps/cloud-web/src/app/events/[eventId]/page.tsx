@@ -183,20 +183,26 @@ export default function EventDetailPage() {
     ]);
   }, [eventId, reloadDrawConfigs, reloadMediaRequirements, reloadScenes]);
 
-  const handleExportFromPreview = useCallback(async () => {
+  const handleExportFromPreview = useCallback(async (archiveZip: boolean) => {
     if (!eventId || !getCloudApiBase() || !event) return;
     setPreviewExporting(true);
     setPreviewExportBanner(null);
     try {
-      const out = await runPackExport(eventId);
+      const out = await runPackExport(eventId, { archiveZip });
       recordPackExport({
         exportId: out.export_id,
         eventId,
         eventName: event.name,
       });
+      const zipNote =
+        archiveZip && out.zip_path
+          ? ` · ZIP: ${out.zip_path}`
+          : archiveZip
+            ? " · ZIP solicitado (verifique resposta da API)."
+            : "";
       setPreviewExportBanner({
         tone: "ok",
-        text: `Pack gerado: ${out.export_id} — pasta: ${out.export_directory}`,
+        text: `Pack gerado: ${out.export_id} — pasta: ${out.export_directory}${zipNote}`,
       });
       await reloadEditorBundles();
       await loadPreviewReadiness();
@@ -386,7 +392,7 @@ export default function EventDetailPage() {
               exportReadinessLoading={previewReadinessLoading}
               exportReadinessError={previewReadinessError}
               onRefreshExportReadiness={() => void loadPreviewReadiness()}
-              onExportToPlayer={() => void handleExportFromPreview()}
+              onExportToPlayer={(archiveZip) => void handleExportFromPreview(archiveZip)}
               exportToPlayerRunning={previewExporting}
               exportToPlayerBanner={previewExportBanner}
             />

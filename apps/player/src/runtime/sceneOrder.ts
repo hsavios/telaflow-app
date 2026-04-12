@@ -1,5 +1,10 @@
 ﻿import type { SceneContract } from "@telaflow/shared-contracts";
 
+/** Chave estável do reset do sorteio por cena (Player / telão). */
+export function chaveResetSorteioCena(scene: SceneContract): string {
+  return `${scene.scene_id}:${scene.draw_config_id ?? ""}`;
+}
+
 /** Cenas ativas (`enabled`), ordenadas por `sort_order` e `scene_id` (mesmo critério do runtime). */
 export function enabledScenesSorted(scenes: SceneContract[]): SceneContract[] {
   return [...scenes]

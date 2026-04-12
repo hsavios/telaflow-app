@@ -214,20 +214,22 @@ export function OperationalHome() {
   const lastOpenedValid =
     lastOpened && rows.some((r) => r.event.event_id === lastOpened);
 
-  const onExport = async (ev: CloudEvent) => {
+  const onExport = async (ev: CloudEvent, archiveZip = false) => {
     if (!getCloudApiBase()) return;
     setExportingId(ev.event_id);
     setExportBanner(null);
     try {
-      const out = await runPackExport(ev.event_id);
+      const out = await runPackExport(ev.event_id, { archiveZip });
       recordPackExport({
         exportId: out.export_id,
         eventId: ev.event_id,
         eventName: ev.name,
       });
+      const zipPart =
+        archiveZip && out.zip_path ? ` · ZIP: ${out.zip_path}` : archiveZip ? " · ZIP gerado no servidor." : "";
       setExportBanner({
         tone: "ok",
-        text: `Pack gerado: ${ev.name} · ${out.export_id}`,
+        text: `Pack gerado: ${ev.name} · ${out.export_id}${zipPart}`,
       });
       try {
         const readiness = await fetchExportReadiness(ev.event_id);
@@ -473,7 +475,7 @@ export function OperationalHome() {
                                     exportingId === ev.event_id ||
                                     readinessError
                                   }
-                                  onClick={() => void onExport(ev)}
+                                  onClick={() => void onExport(ev, false)}
                                   className="text-xs font-medium text-tf-fg underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:text-tf-faint disabled:no-underline sm:text-sm"
                                   title={
                                     podeExportar
@@ -484,6 +486,19 @@ export function OperationalHome() {
                                   {exportingId === ev.event_id
                                     ? "Exportando…"
                                     : "Exportar pack"}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={
+                                    !podeExportar ||
+                                    exportingId === ev.event_id ||
+                                    readinessError
+                                  }
+                                  onClick={() => void onExport(ev, true)}
+                                  className="text-xs font-medium text-tf-accent underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:text-tf-faint disabled:no-underline sm:text-sm"
+                                  title="Gera também ficheiro .zip junto ao export"
+                                >
+                                  ZIP
                                 </button>
                               </div>
                             </td>
@@ -581,7 +596,7 @@ export function OperationalHome() {
                         );
                       })()}
                     </div>
-                    <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                    <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                       <Link
                         href={`/events/${encodeURIComponent(focoRow.event.event_id)}`}
                         onClick={() =>
@@ -598,12 +613,24 @@ export function OperationalHome() {
                           exportingId === focoRow.event.event_id ||
                           focoRow.readinessError
                         }
-                        onClick={() => void onExport(focoRow.event)}
+                        onClick={() => void onExport(focoRow.event, false)}
                         className="inline-flex flex-1 items-center justify-center rounded-tf border border-tf-border bg-tf-mid/60 px-3 py-2 text-sm font-semibold text-tf-fg hover:bg-tf-mid disabled:cursor-not-allowed disabled:opacity-45"
                       >
                         {exportingId === focoRow.event.event_id
                           ? "Exportando…"
                           : "Exportar pack"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={
+                          !focoRow.readiness?.ready ||
+                          exportingId === focoRow.event.event_id ||
+                          focoRow.readinessError
+                        }
+                        onClick={() => void onExport(focoRow.event, true)}
+                        className="inline-flex flex-1 items-center justify-center rounded-tf border border-tf-accent/40 bg-tf-accent-soft/15 px-3 py-2 text-sm font-semibold text-tf-accent hover:bg-tf-accent-soft/25 disabled:cursor-not-allowed disabled:opacity-45"
+                      >
+                        Exportar ZIP
                       </button>
                     </div>
                   </div>

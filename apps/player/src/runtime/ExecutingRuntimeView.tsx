@@ -74,10 +74,15 @@ export function ExecutingRuntimeView({ fileExistsCache }: Props) {
   const drawRuntimeResetKey = atual ? `${atual.scene_id}:${atual.draw_config_id ?? ""}` : "";
 
   useEffect(() => {
-    if (!atual || atual.type !== "draw") return;
-    const plano = planejarSincronizacaoEstaticaSorteio(atual, drawConfigResolved, drawRuntimeResetKey);
+    if (!atual || atual.type !== "draw" || !packData) return;
+    const plano = planejarSincronizacaoEstaticaSorteio(
+      atual,
+      drawConfigResolved,
+      drawRuntimeResetKey,
+      packData.drawAttendees ?? null,
+    );
     acoes.sincronizarSorteioEstatico(plano);
-  }, [acoes, atual, drawConfigResolved, drawRuntimeResetKey]);
+  }, [acoes, atual, drawConfigResolved, drawRuntimeResetKey, packData]);
 
   if (!packData) {
     return (
@@ -123,6 +128,7 @@ export function ExecutingRuntimeView({ fileExistsCache }: Props) {
             scene={atual}
             mediaState={mediaState}
             drawConfig={drawConfigResolved}
+            drawAttendees={packData.drawAttendees ?? null}
             workspaceRoot={workspaceRoot}
             bindings={bindings}
             mediaRequirement={mediaRequirement}

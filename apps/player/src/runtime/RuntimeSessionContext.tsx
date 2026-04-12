@@ -2,7 +2,7 @@
  * Contexto da sessão de runtime — fonte única de verdade operacional e ações explícitas (pt-BR).
  */
 
-import type { DrawConfigContract, SceneContract } from "@telaflow/shared-contracts";
+import type { DrawAttendeesPackFile, DrawConfigContract, SceneContract } from "@telaflow/shared-contracts";
 import {
   createContext,
   useCallback,
@@ -30,9 +30,9 @@ import {
   spinScheduleSeed,
   spinScheduleTotalDuration,
 } from "./draw/drawEngine.js";
-import { effectiveNumberRange, randomIntInclusive } from "./drawNumberRange.js";
+import { effectiveSpinBounds, pickDrawWinnerNumber } from "./drawSelection.js";
 import { validateDrawSceneNumberRange } from "./drawValidation.js";
-import { enabledScenesSorted } from "./sceneOrder.js";
+import { chaveResetSorteioCena, enabledScenesSorted } from "./sceneOrder.js";
 import type { ComandoOperacionalResultado } from "./commands/commandPolicy.js";
 import { createRuntimeCommandExecutor, type ComandosRuntimeSafety } from "./commands/commandExecutor.js";
 import { drawAttemptCorresponde } from "./commands/runtimeEpochs.js";
@@ -44,6 +44,14 @@ import {
   type RuntimeSessionDispatchAction,
   type RuntimeSessionState,
 } from "./runtimeSessionTypes.js";
+import {
+  basePathParaEstadoLocal,
+  drawExclusionRecord,
+  drawExclusionsLoad,
+  sessionCheckpointClear,
+  sessionCheckpointLoad,
+  sessionCheckpointSave,
+} from "./playerLocalStore.js";
 
 function caminhoBaseLog(s: PlayerActiveSession): string {
   return (s.workspaceRoot && s.workspaceRoot.trim()) || s.packRoot;
@@ -62,10 +70,6 @@ function persistirSeNovoLogExecucao(prev: RuntimeSessionState, next: RuntimeSess
       persistirLinhaLog(next.appState, next.appState.executionLog[i]!);
     }
   }
-}
-
-function chaveResetSorteioCena(scene: SceneContract): string {
-  return `${scene.scene_id}:${scene.draw_config_id ?? ""}`;
 }
 
 export type AcoesSessaoRuntime = {
@@ -112,10 +116,41 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
   const estadoRef = useRef(estado);
   const avisoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sorteioAsyncLivreRef = useRef(true);
+  /** Números já confirmados por `resetKey` de sorteio (exclusão local). */
+  const sorteadosExcluidosRef = useRef<Map<string, Set<number>>>(new Map());
 
   useEffect(() => {
     estadoRef.current = estado;
   }, [estado]);
+
+  useEffect(() => {
+    const app = estado.appState;
+    if (!isActiveSession(app)) return;
+    const exportId = app.packData.manifest.export_id;
+    const basePath = basePathParaEstadoLocal(app);
+    let cancelled = false;
+    void (async () => {
+      try {
+        const rows = await drawExclusionsLoad(basePath, exportId);
+        if (cancelled) return;
+        const m = new Map<string, Set<number>>();
+        for (const r of rows) {
+          if (!m.has(r.resetKey)) m.set(r.resetKey, new Set());
+          m.get(r.resetKey)!.add(r.number);
+        }
+        sorteadosExcluidosRef.current = m;
+      } catch {
+        /* SQLite local opcional */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    estado.appState.kind === "idle" || estado.appState.kind === "blocked"
+      ? ""
+      : `${estado.appState.packRoot}\0${estado.appState.packData.manifest.export_id}\0${estado.appState.workspaceRoot ?? ""}`,
+  ]);
 
   const mostrarAvisoComando = useCallback((mensagemPt: string) => {
     if (avisoTimeoutRef.current) clearTimeout(avisoTimeoutRef.current);
@@ -260,7 +295,18 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
     [mostrarAvisoComando, registroComandoBloqueado],
   );
 
-  const runIniciarExecucaoInterno = useCallback((): ComandoOperacionalResultado => {
+  const runIniciarExecucaoInterno = useCallback(async (): Promise<ComandoOperacionalResultado> => {
+    const snap = estadoRef.current;
+    if (snap.appState.kind !== "ready") return { ok: false, codigo: "estado", mensagemPt: "O evento não está pronto para iniciar." };
+    const exportId = snap.appState.packData.manifest.export_id;
+    const basePath = basePathParaEstadoLocal(snap.appState);
+    let initialSceneIndex = 0;
+    try {
+      const ck = await sessionCheckpointLoad(basePath, exportId, snap.appState.packRoot);
+      if (ck != null) initialSceneIndex = ck;
+    } catch {
+      /* ignora */
+    }
     setEstado((prev) => {
       if (prev.appState.kind !== "ready") return prev;
       const ordenadas = enabledScenesSorted(prev.appState.packData.event.scenes);
@@ -269,6 +315,7 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
       const next = transicionarSessaoRuntime(prev, {
         type: "INICIAR_EXECUCAO",
         drawResetKey,
+        initialSceneIndex,
       });
       persistirSeNovoLogExecucao(prev, next);
       estadoRef.current = next;
@@ -278,6 +325,15 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const runConcluirExecucaoInterno = useCallback((): ComandoOperacionalResultado => {
+    const pre = estadoRef.current;
+    if (pre.appState.kind === "executing") {
+      const app = pre.appState;
+      void sessionCheckpointClear(
+        basePathParaEstadoLocal(app),
+        app.packData.manifest.export_id,
+        app.packRoot,
+      ).catch(() => undefined);
+    }
     setEstado((prev) => {
       if (prev.appState.kind !== "executing") return prev;
       const row = appendExecutionLog(prev.appState.executionLog, {
@@ -294,6 +350,16 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const runAtivarCenaPorIndiceInterno = useCallback((indice: number): ComandoOperacionalResultado => {
+    const pre = estadoRef.current;
+    if (pre.appState.kind === "executing") {
+      const app = pre.appState;
+      void sessionCheckpointSave(
+        basePathParaEstadoLocal(app),
+        app.packData.manifest.export_id,
+        app.packRoot,
+        indice,
+      ).catch(() => undefined);
+    }
     setEstado((prev) => {
       if (prev.appState.kind !== "executing") return prev;
       const ordenadas = enabledScenesSorted(prev.appState.packData.event.scenes);
@@ -354,7 +420,11 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
         return dup;
       }
 
-      const v = validateDrawSceneNumberRange(scene, drawConfig);
+      const snap0 = estadoRef.current;
+      const attendees: DrawAttendeesPackFile | null =
+        snap0.appState.kind === "executing" ? (snap0.appState.packData.drawAttendees ?? null) : null;
+
+      const v = validateDrawSceneNumberRange(scene, drawConfig, attendees);
       if (!v.ok) {
         aplicarEncadeado([
           {
@@ -370,8 +440,29 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
         return { ok: false, codigo: "validacao", mensagemPt: v.reason };
       }
 
-      const { min, max } = effectiveNumberRange(drawConfig);
-      const value = randomIntInclusive(min, max);
+      const rk = chaveResetSorteioCena(scene);
+      if (!sorteadosExcluidosRef.current.has(rk)) {
+        sorteadosExcluidosRef.current.set(rk, new Set());
+      }
+      const excluded = sorteadosExcluidosRef.current.get(rk)!;
+      const picked = pickDrawWinnerNumber(drawConfig, attendees, excluded);
+      if (!picked.ok) {
+        aplicarEncadeado([
+          {
+            type: "ANEXAR_LOG_EXECUCAO",
+            entrada: {
+              level: "warn",
+              code: EXECUTION_LOG_CODES.DRAW_FAILED,
+              message: `draw_config_id=${drawConfig.draw_config_id}; ${picked.reason}`,
+            },
+          },
+          { type: "SORTEIO_PARA_ERRO", errorMessage: picked.reason },
+        ]);
+        return { ok: false, codigo: "validacao", mensagemPt: picked.reason };
+      }
+      const value = picked.value;
+      const spinBounds = effectiveSpinBounds(drawConfig, attendees);
+      const { min, max } = spinBounds;
       sorteioAsyncLivreRef.current = false;
       try {
         aplicarEncadeado([
@@ -380,13 +471,12 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
             entrada: {
               level: "info",
               code: EXECUTION_LOG_CODES.DRAW_STARTED,
-              message: `scene_id=${scene.scene_id}; draw_config_id=${drawConfig.draw_config_id}; draw_type=number_range; start_number=${v.startNumber}; end_number=${v.endNumber}`,
+              message: `scene_id=${scene.scene_id}; draw_config_id=${drawConfig.draw_config_id}; draw_type=${drawConfig.draw_type}; start_number=${v.startNumber}; end_number=${v.endNumber}`,
             },
           },
           { type: "SORTEIO_PARA_DESENHANDO", pendingWinner: value },
         ]);
 
-        const rk = chaveResetSorteioCena(scene);
         const attemptAfter = estadoRef.current.operationalContext.drawAttemptId;
         const seed = spinScheduleSeed(rk, attemptAfter);
         const ticks = buildDrawSpinSchedule({ min, max, target: value, seed });
@@ -448,6 +538,13 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
       const snap = estadoRef.current;
       const w = snap.drawRuntime.winnerValue;
       if (w == null) return { ok: false, codigo: "estado", mensagemPt: "Resultado já não está disponível para confirmar." };
+      if (drawConfig.remove_winner_from_pool !== false) {
+        const rk = chaveResetSorteioCena(scene);
+        if (!sorteadosExcluidosRef.current.has(rk)) {
+          sorteadosExcluidosRef.current.set(rk, new Set());
+        }
+        sorteadosExcluidosRef.current.get(rk)!.add(w);
+      }
       aplicarEncadeado([
         {
           type: "ANEXAR_LOG_EXECUCAO",
@@ -464,6 +561,15 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
         drawName: drawConfig.name ?? "",
         value: w,
       });
+      if (drawConfig.remove_winner_from_pool !== false && snap.appState.kind === "executing") {
+        const app = snap.appState;
+        void drawExclusionRecord(
+          basePathParaEstadoLocal(app),
+          app.packData.manifest.export_id,
+          chaveResetSorteioCena(scene),
+          w,
+        ).catch(() => undefined);
+      }
       return { ok: true };
     },
     [aplicarEncadeado],

@@ -1,43 +1,51 @@
-﻿"""MediaRequirement (manifesto por evento)."""
+﻿"""Requisitos de mídia por evento."""
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ValidationError
+from sqlalchemy.orm import Session
 
+from telaflow_cloud_api.access import assert_event_in_org
 from telaflow_cloud_api.domain import MediaRequirement, MediaRequirementCreate, MediaRequirementUpdate
-from telaflow_cloud_api import memory
+from telaflow_cloud_api.persistence.database import get_session
+from telaflow_cloud_api.persistence.ids import new_media_id
+from telaflow_cloud_api.persistence.repository import Repository, assert_scene_exists
+from telaflow_cloud_api.tenancy import get_organization_id
 
 router = APIRouter(tags=["media-requirements"])
 
 
 @router.get("/events/{event_id}/media-requirements")
-def list_media_requirements(event_id: str) -> dict:
-    if event_id not in memory._events_store:
-        raise HTTPException(
-            status_code=404,
-            detail={"error": "event_not_found", "event_id": event_id},
-        )
-    rows = list(memory._media_req_list(event_id))
+def list_media_requirements(
+    event_id: str,
+    db: Session = Depends(get_session),
+    organization_id: str = Depends(get_organization_id),
+) -> dict:
+    repo = Repository(db)
+    assert_event_in_org(repo, event_id, organization_id)
+    rows = list(repo.list_media_requirements(event_id))
     rows.sort(key=lambda m: (m.get("label", ""), m.get("media_id", "")))
     return {"media_requirements": rows}
 
 
 @router.post("/events/{event_id}/media-requirements", status_code=201)
-def create_media_requirement(event_id: str, body: MediaRequirementCreate) -> dict:
-    if event_id not in memory._events_store:
-        raise HTTPException(
-            status_code=404,
-            detail={"error": "event_not_found", "event_id": event_id},
-        )
+def create_media_requirement(
+    event_id: str,
+    body: MediaRequirementCreate,
+    db: Session = Depends(get_session),
+    organization_id: str = Depends(get_organization_id),
+) -> dict:
+    repo = Repository(db)
+    assert_event_in_org(repo, event_id, organization_id)
     if body.scene_id:
-        memory._assert_scene_exists(event_id, body.scene_id)
-    bucket = memory._media_req_list(event_id)
-    media_id = memory._new_media_id()
+        assert_scene_exists(repo, event_id, body.scene_id)
+    bucket = repo.list_media_requirements(event_id)
+    media_id = new_media_id()
     for _ in range(8):
         if not any(m.get("media_id") == media_id for m in bucket):
             break
-        media_id = memory._new_media_id()
+        media_id = new_media_id()
     else:
         raise HTTPException(
             status_code=500,
@@ -51,22 +59,22 @@ def create_media_requirement(event_id: str, body: MediaRequirementCreate) -> dic
         required=body.required,
         scene_id=body.scene_id,
         allowed_extensions_hint=body.allowed_extensions_hint,
-        usage_role=body.usage_role,
-        presentation=body.presentation,
     )
     payload = mr.model_dump()
-    bucket.append(payload)
+    repo.append_media_requirement(event_id, payload)
     return {"ok": True, "media_requirement": payload}
 
 
 @router.get("/events/{event_id}/media-requirements/{media_id}")
-def get_media_requirement(event_id: str, media_id: str) -> dict:
-    if event_id not in memory._events_store:
-        raise HTTPException(
-            status_code=404,
-            detail={"error": "event_not_found", "event_id": event_id},
-        )
-    row = memory._media_by_id(event_id, media_id)
+def get_media_requirement(
+    event_id: str,
+    media_id: str,
+    db: Session = Depends(get_session),
+    organization_id: str = Depends(get_organization_id),
+) -> dict:
+    repo = Repository(db)
+    assert_event_in_org(repo, event_id, organization_id)
+    row = repo.get_media_requirement(event_id, media_id)
     if row is None:
         raise HTTPException(
             status_code=404,
@@ -80,65 +88,56 @@ def update_media_requirement(
     event_id: str,
     media_id: str,
     body: MediaRequirementUpdate,
+    db: Session = Depends(get_session),
+    organization_id: str = Depends(get_organization_id),
 ) -> dict:
-    if event_id not in memory._events_store:
-        raise HTTPException(
-            status_code=404,
-            detail={"error": "event_not_found", "event_id": event_id},
-        )
-    bucket = memory._media_req_list(event_id)
-    idx = next(
-        (i for i, m in enumerate(bucket) if m.get("media_id") == media_id),
-        None,
-    )
-    if idx is None:
+    repo = Repository(db)
+    assert_event_in_org(repo, event_id, organization_id)
+    row = repo.get_media_requirement(event_id, media_id)
+    if row is None:
         raise HTTPException(
             status_code=404,
             detail={"error": "media_requirement_not_found", "media_id": media_id},
         )
     patch = body.model_dump(exclude_unset=True)
-    if "scene_id" in patch and patch["scene_id"] is not None:
-        memory._assert_scene_exists(event_id, patch["scene_id"])
-    row = dict(bucket[idx])
-    row.update(patch)
+    if patch.get("scene_id"):
+        assert_scene_exists(repo, event_id, patch["scene_id"])
+    merged = dict(row)
+    merged.update(patch)
     try:
-        validated = MediaRequirement.model_validate(row)
+        validated = MediaRequirement.model_validate(merged)
     except ValidationError as ve:
         raise HTTPException(
             status_code=422,
             detail={"error": "validation_failed", "issues": ve.errors()},
         ) from ve
     out = validated.model_dump()
-    bucket[idx] = out
+    repo.update_media_requirement(event_id, media_id, out)
     return {"ok": True, "media_requirement": out}
 
 
 @router.delete("/events/{event_id}/media-requirements/{media_id}", status_code=200)
-def delete_media_requirement(event_id: str, media_id: str) -> dict:
-    if event_id not in memory._events_store:
-        raise HTTPException(
-            status_code=404,
-            detail={"error": "event_not_found", "event_id": event_id},
-        )
-    refs = memory._scenes_referencing_media(event_id, media_id)
+def delete_media_requirement(
+    event_id: str,
+    media_id: str,
+    db: Session = Depends(get_session),
+    organization_id: str = Depends(get_organization_id),
+) -> dict:
+    repo = Repository(db)
+    assert_event_in_org(repo, event_id, organization_id)
+    refs = repo.scenes_referencing_media(event_id, media_id)
     if refs:
         raise HTTPException(
             status_code=409,
             detail={
                 "error": "media_requirement_in_use",
                 "scene_ids": refs,
-                "message": "Remova o media_id das scenes antes de excluir este requisito.",
+                "message": "Remova o vínculo nas scenes antes de excluir este slot.",
             },
         )
-    bucket = memory._media_req_list(event_id)
-    idx = next(
-        (i for i, m in enumerate(bucket) if m.get("media_id") == media_id),
-        None,
-    )
-    if idx is None:
+    if not repo.delete_media_requirement(event_id, media_id):
         raise HTTPException(
             status_code=404,
             detail={"error": "media_requirement_not_found", "media_id": media_id},
         )
-    del bucket[idx]
     return {"ok": True, "deleted_media_id": media_id}

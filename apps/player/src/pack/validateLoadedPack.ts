@@ -5,6 +5,7 @@
 
 import {
   BrandingExportMvpSchema,
+  DrawAttendeesPackFileSchema,
   DrawConfigsPackFileSchema,
   EventExportFileSchema,
   LicenseExportMvpSchema,
@@ -16,6 +17,7 @@ export type PackLoaderPhase =
   | "manifest"
   | "event"
   | "draw_configs"
+  | "draw_attendees"
   | "media_manifest"
   | "branding"
   | "license"
@@ -32,6 +34,7 @@ export type PackLoaderSuccess = {
   manifest: ReturnType<typeof PackManifestMvpSchema.parse>;
   event: ReturnType<typeof EventExportFileSchema.parse>;
   drawConfigs: ReturnType<typeof DrawConfigsPackFileSchema.parse>;
+  drawAttendees: ReturnType<typeof DrawAttendeesPackFileSchema.parse> | null;
   mediaManifest: ReturnType<typeof MediaManifestPackFileSchema.parse>;
   branding: ReturnType<typeof BrandingExportMvpSchema.parse>;
   license: ReturnType<typeof LicenseExportMvpSchema.parse>;
@@ -42,6 +45,7 @@ export type LoadedPackInvokePayload = {
   manifest: unknown;
   event: unknown;
   drawConfigs: unknown;
+  drawAttendees?: unknown;
   mediaManifest: unknown;
   branding: unknown;
   license: unknown;
@@ -80,6 +84,19 @@ export function validateLoadedPackPayload(
       phase: "draw_configs",
       message: formatZodMessage("draw-configs.json", dc.error),
     };
+  }
+
+  let drawAttendees: ReturnType<typeof DrawAttendeesPackFileSchema.parse> | null = null;
+  if (payload.drawAttendees != null) {
+    const da = DrawAttendeesPackFileSchema.safeParse(payload.drawAttendees);
+    if (!da.success) {
+      return {
+        ok: false,
+        phase: "draw_attendees",
+        message: formatZodMessage("draw-attendees.json", da.error),
+      };
+    }
+    drawAttendees = da.data;
   }
 
   const mm = MediaManifestPackFileSchema.safeParse(payload.mediaManifest);
@@ -200,12 +217,20 @@ export function validateLoadedPackPayload(
       message: "branding.json.organization_id inconsistente com o manifest",
     };
   }
+  if (drawAttendees && drawAttendees.event_id !== manifest.event_id) {
+    return {
+      ok: false,
+      phase: "coherence",
+      message: "draw-attendees.json.event_id inconsistente com o manifest",
+    };
+  }
 
   return {
     ok: true,
     manifest,
     event,
     drawConfigs,
+    drawAttendees,
     mediaManifest,
     branding,
     license,

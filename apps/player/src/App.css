@@ -732,6 +732,48 @@
   background: rgba(15, 23, 42, 0.45);
 }
 
+.draw-join-qr {
+  margin: 1.25rem auto 0;
+  text-align: center;
+}
+
+.draw-join-qr img {
+  display: block;
+  margin: 0 auto;
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px;
+}
+
+.draw-join-qr__caption {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.draw-join-qr--loading {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.draw-join-qr__spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid rgba(148, 163, 184, 0.35);
+  border-top-color: var(--draw-brand-accent, #2dd4bf);
+  animation: draw-join-qr-spin 0.85s linear infinite;
+}
+
+@keyframes draw-join-qr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .draw-exp--telao.draw-exp--drawing {
   border-color: rgba(148, 163, 184, 0.18);
   background: radial-gradient(ellipse 90% 70% at 50% 15%, rgba(51, 65, 85, 0.38) 0%, rgba(15, 23, 42, 0.72) 58%);

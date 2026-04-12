@@ -10,7 +10,7 @@ type Props = {
   data: ExportReadinessBody | null;
   error: string | null;
   onRefresh: () => void;
-  onExport: () => void;
+  onExport: (archiveZip: boolean) => void;
   exporting: boolean;
   exportBanner: ExportBanner;
 };
@@ -109,11 +109,19 @@ export function PreviewExportStrip({
           </button>
           <button
             type="button"
-            onClick={() => void onExport()}
+            onClick={() => void onExport(false)}
             disabled={!data?.ready || exporting}
             className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-950/40 hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {exporting ? "Exportando…" : "Exportar para Player"}
+            {exporting ? "Exportando…" : "Exportar pasta"}
+          </button>
+          <button
+            type="button"
+            onClick={() => void onExport(true)}
+            disabled={!data?.ready || exporting}
+            className="rounded-lg border border-emerald-500/50 bg-emerald-950/40 px-4 py-2.5 text-sm font-bold text-emerald-100 hover:bg-emerald-900/50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {exporting ? "Exportando…" : "Exportar ZIP"}
           </button>
         </div>
       </div>

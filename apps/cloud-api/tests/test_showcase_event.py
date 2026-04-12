@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from telaflow_cloud_api.memory import SHOWCASE_EVENT_ID
+from telaflow_cloud_api.seed import SHOWCASE_EVENT_ID
 
 
 def test_showcase_event_export_readiness_ready(cliente: TestClient) -> None:

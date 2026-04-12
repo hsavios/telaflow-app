@@ -11,7 +11,7 @@ export type ComandoOperacionalNegado = Extract<ComandoOperacionalResultado, { ok
 export type OnComandoOperacionalNegado = (nomeComando: string, res: ComandoOperacionalNegado) => void;
 
 export type ComandosRuntimeSafety = {
-  iniciar_execucao: () => ComandoOperacionalResultado;
+  iniciar_execucao: () => Promise<ComandoOperacionalResultado>;
   concluir_execucao: () => ComandoOperacionalResultado;
   cena_seguinte: () => ComandoOperacionalResultado;
   cena_anterior: () => ComandoOperacionalResultado;
@@ -30,7 +30,7 @@ export type ComandosRuntimeSafety = {
 export type RuntimeCommandExecutorDeps = {
   getEstado: () => import("../runtimeSessionTypes.js").RuntimeSessionState;
   onComandoNegado: OnComandoOperacionalNegado;
-  runIniciarExecucao: () => ComandoOperacionalResultado;
+  runIniciarExecucao: () => Promise<ComandoOperacionalResultado>;
   runConcluirExecucao: () => ComandoOperacionalResultado;
   runAtivarCenaPorIndice: (indice: number) => ComandoOperacionalResultado;
   runIniciarSorteio: (params: {
@@ -57,7 +57,7 @@ function negadoPolicy(
 
 export function createRuntimeCommandExecutor(d: RuntimeCommandExecutorDeps): ComandosRuntimeSafety {
   return {
-    iniciar_execucao: () => {
+    iniciar_execucao: async () => {
       const g = negadoPolicy(d.getEstado, { type: "iniciar_execucao" }, "iniciar_execucao", d.onComandoNegado);
       if (!g.ok) return g;
       return d.runIniciarExecucao();
