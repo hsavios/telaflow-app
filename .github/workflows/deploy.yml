@@ -58,6 +58,8 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
+          # Opcional: uma linha no formato `ssh-keyscan -H seu.servidor` (recomendado se a VPS bloqueia keyscan a partir do GitHub).
+          SSH_KNOWN_HOSTS_LINE: ${{ secrets.SSH_KNOWN_HOSTS_LINE }}
         run: |
           set -euo pipefail
           if [ -z "${SSH_HOST:-}" ]; then echo "::error::Segredo SSH_HOST vazio ou ausente no ambiente production."; exit 1; fi
@@ -66,28 +68,35 @@ jobs:
 
           SSH_DIR="${HOME}/.ssh"
           if [ -e "$SSH_DIR" ] && [ ! -d "$SSH_DIR" ]; then
-            echo "::notice::Removendo $SSH_DIR (existia como ficheiro, não pasta)."
+            echo "::notice::Removendo $SSH_DIR (existia como arquivo, não pasta)."
             rm -f "$SSH_DIR"
           fi
           mkdir -p "$SSH_DIR"
+          chmod 700 "$SSH_DIR"
           umask 077
           printf '%s\n' "$SSH_PRIVATE_KEY" > "$SSH_DIR/id_ed25519"
           chmod 600 "$SSH_DIR/id_ed25519"
-          KEYSCAN_ERR="$(mktemp)"
-          if ! ssh-keyscan -T 20 -H "$SSH_HOST" >> "$SSH_DIR/known_hosts" 2>"$KEYSCAN_ERR"; then
-            echo "::error::ssh-keyscan falhou para o anfitrião configurado em SSH_HOST (DNS, rede ou serviço SSH indisponível a partir do runner)."
-            cat "$KEYSCAN_ERR" >&2 || true
-            exit 1
+          : > "$SSH_DIR/known_hosts"
+          chmod 644 "$SSH_DIR/known_hosts"
+          if [ -n "${SSH_KNOWN_HOSTS_LINE:-}" ]; then
+            printf '%s\n' "$SSH_KNOWN_HOSTS_LINE" >> "$SSH_DIR/known_hosts"
+            echo "::notice::known_hosts preenchido pelo segredo SSH_KNOWN_HOSTS_LINE."
+          else
+            KEYSCAN_ERR="$(mktemp)"
+            if ssh-keyscan -T 25 -H "$SSH_HOST" >> "$SSH_DIR/known_hosts" 2>"$KEYSCAN_ERR"; then
+              echo "::notice::ssh-keyscan concluído para ${SSH_HOST}."
+            else
+              echo "::warning::ssh-keyscan não alcançou ${SSH_HOST} a partir do runner (firewall, DNS ou bloqueio comum). O deploy usará StrictHostKeyChecking=accept-new. Para evitar isso, crie o segredo SSH_KNOWN_HOSTS_LINE no ambiente production (saída de: ssh-keyscan -H SEU_HOST)."
+              cat "$KEYSCAN_ERR" >&2 || true
+              : > "$SSH_DIR/known_hosts"
+            fi
+            rm -f "$KEYSCAN_ERR"
           fi
-          if [ ! -s "$SSH_DIR/known_hosts" ]; then
-            echo "::error::known_hosts ficou vazio após ssh-keyscan."
-            exit 1
-          fi
-          rm -f "$KEYSCAN_ERR"
 
       - name: Deploy na VPS
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+          ssh -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="${HOME}/.ssh/known_hosts" \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
             export GHCR_USERNAME='hsavios' && \
             export GHCR_TOKEN='${{ secrets.GHCR_TOKEN }}' && \
             cd /opt/telaflow && \
