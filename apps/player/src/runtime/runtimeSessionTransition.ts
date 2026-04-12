@@ -287,5 +287,19 @@ export function transicionarSessaoRuntime(
           pendingWinner: null,
         },
       };
+
+    case "SORTEIO_PREPARAR_PRONTO": {
+      if (prev.drawRuntime.panelState !== "result_confirmed") return prev;
+      return {
+        ...prev,
+        drawRuntime: {
+          ...prev.drawRuntime,
+          panelState: "ready",
+          winnerValue: null,
+          pendingWinner: null,
+          errorMessage: null,
+        },
+      };
+    }
   }
 }

@@ -24,7 +24,12 @@ import { persistExecutionJsonl } from "../execution/persistExecutionLog.js";
 import { isActiveSession, type PlayerActiveSession } from "../pack/playerPackState.js";
 import type { PackLoaderSuccess } from "../pack/validateLoadedPack.js";
 import type { PreflightResult } from "../preflight/types.js";
-import { DRAW_SPIN_TOTAL_MS } from "./draw/drawEngine.js";
+import { appendDrawHistoryEntry } from "./draw/drawHistory.js";
+import {
+  buildDrawSpinSchedule,
+  spinScheduleSeed,
+  spinScheduleTotalDuration,
+} from "./draw/drawEngine.js";
 import { effectiveNumberRange, randomIntInclusive } from "./drawNumberRange.js";
 import { validateDrawSceneNumberRange } from "./drawValidation.js";
 import { enabledScenesSorted } from "./sceneOrder.js";
@@ -381,12 +386,18 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
           { type: "SORTEIO_PARA_DESENHANDO", pendingWinner: value },
         ]);
 
+        const rk = chaveResetSorteioCena(scene);
+        const attemptAfter = estadoRef.current.operationalContext.drawAttemptId;
+        const seed = spinScheduleSeed(rk, attemptAfter);
+        const ticks = buildDrawSpinSchedule({ min, max, target: value, seed });
+        const spinMs = spinScheduleTotalDuration(ticks);
+
         const ctx0 = estadoRef.current.operationalContext;
         const flightExec = ctx0.executionId;
         const flightScene = ctx0.sceneActivationId;
         const flightDraw = ctx0.drawAttemptId;
 
-        await sleep(DRAW_SPIN_TOTAL_MS);
+        await sleep(spinMs);
 
         const now = estadoRef.current;
         if (now.appState.kind !== "executing") return { ok: true };
@@ -448,10 +459,20 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
         },
         { type: "SORTEIO_PARA_CONFIRMADO" },
       ]);
+      appendDrawHistoryEntry({
+        resetKey: snap.drawRuntime.resetKey,
+        drawName: drawConfig.name ?? "",
+        value: w,
+      });
       return { ok: true };
     },
     [aplicarEncadeado],
   );
+
+  const runPrepararProximoSorteioInterno = useCallback((): ComandoOperacionalResultado => {
+    aplicar({ type: "SORTEIO_PREPARAR_PRONTO" });
+    return { ok: true };
+  }, [aplicar]);
 
   const comandos = useMemo(
     () =>
@@ -463,6 +484,7 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
         runAtivarCenaPorIndice: runAtivarCenaPorIndiceInterno,
         runIniciarSorteio: runIniciarSorteioInterno,
         runConfirmarResultadoSorteio: runConfirmarResultadoSorteioInterno,
+        runPrepararProximoSorteio: runPrepararProximoSorteioInterno,
       }),
     [
       onComandoNegado,
@@ -471,6 +493,7 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
       runConcluirExecucaoInterno,
       runIniciarExecucaoInterno,
       runIniciarSorteioInterno,
+      runPrepararProximoSorteioInterno,
     ],
   );
 

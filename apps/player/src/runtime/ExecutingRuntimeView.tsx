@@ -57,6 +57,16 @@ export function ExecutingRuntimeView({ fileExistsCache }: Props) {
     return packData.drawConfigs.draw_configs.find((d) => d.draw_config_id === did) ?? null;
   }, [atual, packData]);
 
+  const drawBranding = useMemo(() => {
+    if (!packData) return null;
+    const t = packData.branding.tokens;
+    return {
+      primary_color: t.primary_color,
+      accent_color: t.accent_color,
+      font_family_sans: t.font_family_sans,
+    };
+  }, [packData]);
+
   const mediaState: SceneMediaDerivedState = atual
     ? resolveSceneMediaState(atual, workspaceRoot, bindings, fileExistsCache)
     : "no_media_required";
@@ -115,6 +125,7 @@ export function ExecutingRuntimeView({ fileExistsCache }: Props) {
             workspaceRoot={workspaceRoot}
             bindings={bindings}
             mediaRequirement={mediaRequirement}
+            drawBranding={drawBranding}
           />
         </section>
 

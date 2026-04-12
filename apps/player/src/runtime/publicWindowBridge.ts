@@ -38,6 +38,13 @@ export type PublicWindowDrawSnapshot = {
   drawAttemptId: number;
 };
 
+/** Tokens mínimos de `branding.json` do pack para o telão (JSON-seguro). */
+export type PublicWindowDrawBranding = {
+  primary_color: string;
+  accent_color: string;
+  font_family_sans: string;
+};
+
 /**
  * Snapshot derivado do store para a janela pública (somente leitura).
  * Inclui tudo o que `PublicSceneView` precisa em modo remoto.
@@ -47,6 +54,8 @@ export type PublicWindowOperatorSnapshot = {
   activeSceneId: string | null;
   activeScene: SceneContract | null;
   drawRuntime: PublicWindowDrawSnapshot | null;
+  /** Branding do pack quando em execução; o telão aplica em sorteio / UI pública. */
+  drawBranding: PublicWindowDrawBranding | null;
   mediaState: SceneMediaDerivedState;
   drawConfig: DrawConfigContract | null;
   workspaceRoot: string | null;
@@ -100,6 +109,7 @@ export function derivarSnapshotJanelaPublica(
       activeScene: null,
       mediaState: "no_media_required",
       drawRuntime: null,
+      drawBranding: null,
       drawConfig: null,
       workspaceRoot,
       bindings,
@@ -109,6 +119,12 @@ export function derivarSnapshotJanelaPublica(
   }
 
   const pack = app.packData;
+  const bt = pack.branding.tokens;
+  const drawBranding: PublicWindowDrawBranding = {
+    primary_color: bt.primary_color,
+    accent_color: bt.accent_color,
+    font_family_sans: bt.font_family_sans,
+  };
   const ordenadas = enabledScenesSorted(pack.event.scenes);
   const n = ordenadas.length;
   const idx = indiceCenaSeguro(ordenadas, app.sceneIndex);
@@ -121,6 +137,7 @@ export function derivarSnapshotJanelaPublica(
       activeScene: null,
       mediaState: "no_media_required",
       drawRuntime: null,
+      drawBranding,
       drawConfig: null,
       workspaceRoot,
       bindings,
@@ -160,6 +177,7 @@ export function derivarSnapshotJanelaPublica(
     activeScene,
     mediaState,
     drawRuntime,
+    drawBranding,
     drawConfig,
     workspaceRoot,
     bindings,

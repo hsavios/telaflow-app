@@ -19,6 +19,7 @@ export type SeletoresComandosUi = {
   cenaSeguinte: { permitido: boolean; motivo?: string };
   iniciarSorteio: { permitido: boolean; motivo?: string };
   confirmarSorteio: { permitido: boolean; motivo?: string };
+  prepararProximoSorteio: { permitido: boolean; motivo?: string };
 };
 
 /** Comandos explícitos do palco (snake_case). */
@@ -29,6 +30,7 @@ export type RuntimeCommand =
   | { type: "cena_anterior" }
   | { type: "iniciar_sorteio" }
   | { type: "confirmar_resultado_sorteio" }
+  | { type: "preparar_proximo_sorteio" }
   | { type: "ativar_cena_por_indice"; indice: number };
 
 function negado(codigo: string, mensagemPt: string): ComandoOperacionalResultado {
@@ -102,6 +104,19 @@ export function podeConfirmarResultadoSorteio(estado: RuntimeSessionState): Coma
   return { ok: true };
 }
 
+export function podePrepararProximoSorteio(estado: RuntimeSessionState): ComandoOperacionalResultado {
+  if (estado.appState.kind !== "executing") {
+    return negado("fsm", "Não há execução ativa.");
+  }
+  if (estado.drawRuntime.panelState !== "result_confirmed") {
+    return negado(
+      "sorteio",
+      "Só é possível preparar outro sorteio após confirmar o resultado atual.",
+    );
+  }
+  return { ok: true };
+}
+
 /**
  * Avalia um comando explícito no estado atual (`permitido` + motivo pt-BR quando negado).
  */
@@ -135,6 +150,8 @@ export function avaliarComando(estado: RuntimeSessionState, cmd: RuntimeCommand)
       return podeIniciarSorteio(estado);
     case "confirmar_resultado_sorteio":
       return podeConfirmarResultadoSorteio(estado);
+    case "preparar_proximo_sorteio":
+      return podePrepararProximoSorteio(estado);
   }
 }
 
@@ -143,6 +160,7 @@ export function seletoresComandosUi(estado: RuntimeSessionState): SeletoresComan
   const concluir = podeConcluirExecucao(estado);
   const iniSort = podeIniciarSorteio(estado);
   const confSort = podeConfirmarResultadoSorteio(estado);
+  const proxSort = podePrepararProximoSorteio(estado);
 
   let cenaAnt = { permitido: false, motivo: undefined as string | undefined };
   let cenaSeg = { permitido: false, motivo: undefined as string | undefined };
@@ -169,6 +187,10 @@ export function seletoresComandosUi(estado: RuntimeSessionState): SeletoresComan
         confirmarSorteio: {
           permitido: confSort.ok,
           motivo: confSort.ok ? undefined : confSort.mensagemPt,
+        },
+        prepararProximoSorteio: {
+          permitido: proxSort.ok,
+          motivo: proxSort.ok ? undefined : proxSort.mensagemPt,
         },
       };
     }
@@ -220,6 +242,10 @@ export function seletoresComandosUi(estado: RuntimeSessionState): SeletoresComan
     confirmarSorteio: {
       permitido: confSort.ok,
       motivo: confSort.ok ? undefined : confSort.mensagemPt,
+    },
+    prepararProximoSorteio: {
+      permitido: proxSort.ok,
+      motivo: proxSort.ok ? undefined : proxSort.mensagemPt,
     },
   };
 }

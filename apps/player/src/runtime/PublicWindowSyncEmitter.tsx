@@ -16,7 +16,7 @@ export function PublicWindowSyncEmitter({ fileExistsCache }: Props) {
 
   const snapshot = useMemo(
     () => derivarSnapshotJanelaPublica(estado, fileExistsCache),
-    [estado.appState, estado.drawRuntime, fileExistsCache],
+    [estado.appState, estado.drawRuntime, estado.operationalContext, fileExistsCache],
   );
 
   const serial = useRef(0);

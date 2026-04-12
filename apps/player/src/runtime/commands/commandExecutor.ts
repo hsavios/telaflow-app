@@ -24,6 +24,7 @@ export type ComandosRuntimeSafety = {
     scene: SceneContract;
     drawConfig: DrawConfigContract;
   }) => ComandoOperacionalResultado;
+  preparar_proximo_sorteio: () => ComandoOperacionalResultado;
 };
 
 export type RuntimeCommandExecutorDeps = {
@@ -40,6 +41,7 @@ export type RuntimeCommandExecutorDeps = {
     scene: SceneContract;
     drawConfig: DrawConfigContract;
   }) => ComandoOperacionalResultado;
+  runPrepararProximoSorteio: () => ComandoOperacionalResultado;
 };
 
 function negadoPolicy(
@@ -109,6 +111,16 @@ export function createRuntimeCommandExecutor(d: RuntimeCommandExecutorDeps): Com
       );
       if (!g.ok) return g;
       return d.runConfirmarResultadoSorteio(params);
+    },
+    preparar_proximo_sorteio: () => {
+      const g = negadoPolicy(
+        d.getEstado,
+        { type: "preparar_proximo_sorteio" },
+        "preparar_proximo_sorteio",
+        d.onComandoNegado,
+      );
+      if (!g.ok) return g;
+      return d.runPrepararProximoSorteio();
     },
   };
 }

@@ -88,7 +88,9 @@ export type RuntimeSessionDispatchAction =
   | { type: "SORTEIO_PARA_DESENHANDO"; pendingWinner: number }
   | { type: "SORTEIO_PARA_RESULTADO"; winnerValue: number }
   | { type: "SORTEIO_PARA_CONFIRMADO" }
-  | { type: "SORTEIO_PARA_ERRO"; errorMessage: string };
+  | { type: "SORTEIO_PARA_ERRO"; errorMessage: string }
+  /** Volta o painel a «pronto» após resultado confirmado (novo sorteio na mesma cena). */
+  | { type: "SORTEIO_PREPARAR_PRONTO" };
 
 export const estadoSessaoRuntimeInicial: RuntimeSessionState = {
   appState: { kind: "idle" },

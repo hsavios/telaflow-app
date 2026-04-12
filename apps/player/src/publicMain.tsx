@@ -61,6 +61,7 @@ function PublicWindowRoot() {
           mediaRequirement={payload.mediaRequirement}
           drawMirrorMode="remote"
           remoteDrawSnapshot={payload.drawRuntime}
+          drawBranding={payload.drawBranding}
         />
       </section>
     </div>

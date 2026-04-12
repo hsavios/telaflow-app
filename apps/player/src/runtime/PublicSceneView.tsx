@@ -16,7 +16,7 @@ import { effectiveNumberRange } from "./drawNumberRange.js";
 import { SceneMediaRenderer } from "./SceneMediaRenderer.js";
 import type { SceneMediaDerivedState } from "./sceneMediaResolution.js";
 import { useDrawRuntime } from "./drawRuntimeContext.js";
-import type { PublicWindowDrawSnapshot } from "./publicWindowBridge.js";
+import type { PublicWindowDrawBranding, PublicWindowDrawSnapshot } from "./publicWindowBridge.js";
 
 const TYPE_LABELS_PUBLIC: Record<SceneType, string> = {
   opening: "Abertura",
@@ -44,6 +44,8 @@ type Props = {
   drawMirrorMode?: "context" | "remote";
   /** Obrigatório quando `drawMirrorMode === "remote"` e a cena é `draw`. */
   remoteDrawSnapshot?: PublicWindowDrawSnapshot | null;
+  /** Branding do pack (telão / prévia pública). */
+  drawBranding?: PublicWindowDrawBranding | null;
 };
 
 /** Sem logs de execução a partir da janela pública (operador mantém o registro JSONL). */
@@ -68,6 +70,7 @@ function publicDrawExperience(
     | "errorMessage"
     | "drawAttemptId"
   >,
+  drawBranding: PublicWindowDrawBranding | null | undefined,
 ) {
   const { min, max } = effectiveNumberRange(drawConfig);
   const publicCopy = drawConfig.public_copy;
@@ -89,6 +92,7 @@ function publicDrawExperience(
       audienceHint={audienceHint}
       resultLabel={resultLabel}
       soundEnabled
+      branding={drawBranding ?? null}
     />
   );
 }
@@ -96,30 +100,34 @@ function publicDrawExperience(
 function PublicDrawMirrorFromContext({
   scene,
   drawConfig,
+  drawBranding,
 }: {
   scene: SceneContract;
   drawConfig: DrawConfigContract | null;
+  drawBranding?: PublicWindowDrawBranding | null;
 }) {
   const snap = useDrawRuntime();
   if (!scene.draw_config_id || !drawConfig || drawConfig.draw_type !== "number_range") {
     return publicDrawUnavailable();
   }
-  return publicDrawExperience(drawConfig, snap);
+  return publicDrawExperience(drawConfig, snap, drawBranding);
 }
 
 function PublicDrawMirrorRemote({
   scene,
   drawConfig,
   snapshot,
+  drawBranding,
 }: {
   scene: SceneContract;
   drawConfig: DrawConfigContract | null;
   snapshot: PublicWindowDrawSnapshot;
+  drawBranding?: PublicWindowDrawBranding | null;
 }) {
   if (!scene.draw_config_id || !drawConfig || drawConfig.draw_type !== "number_range") {
     return publicDrawUnavailable();
   }
-  return publicDrawExperience(drawConfig, snapshot);
+  return publicDrawExperience(drawConfig, snapshot, drawBranding);
 }
 
 export function PublicSceneView({
@@ -131,6 +139,7 @@ export function PublicSceneView({
   mediaRequirement,
   drawMirrorMode = "context",
   remoteDrawSnapshot,
+  drawBranding = null,
 }: Props) {
   const typeLabel = TYPE_LABELS_PUBLIC[scene.type] ?? scene.type;
 
@@ -143,8 +152,13 @@ export function PublicSceneView({
     drawAttemptId: 0,
   };
 
+  const articleClass =
+    scene.type === "draw"
+      ? "public-scene-view public-scene-view--draw-stage"
+      : "public-scene-view";
+
   return (
-    <article className="public-scene-view" aria-label="Saída pública — cena atual">
+    <article className={articleClass} aria-label="Saída pública — cena atual">
       <header className="public-scene-view__header">
         <p className="public-scene-view__kind">{typeLabel}</p>
         <h1 className="public-scene-view__title">{scene.name}</h1>
@@ -154,15 +168,18 @@ export function PublicSceneView({
       </header>
 
       {scene.type === "draw" ? (
-        drawMirrorMode === "remote" ? (
-          <PublicDrawMirrorRemote
-            scene={scene}
-            drawConfig={drawConfig}
-            snapshot={remoteDrawSnapshot ?? emptySnap}
-          />
-        ) : (
-          <PublicDrawMirrorFromContext scene={scene} drawConfig={drawConfig} />
-        )
+        <div className="public-scene-view__draw-premium-shell">
+          {drawMirrorMode === "remote" ? (
+            <PublicDrawMirrorRemote
+              scene={scene}
+              drawConfig={drawConfig}
+              snapshot={remoteDrawSnapshot ?? emptySnap}
+              drawBranding={drawBranding}
+            />
+          ) : (
+            <PublicDrawMirrorFromContext scene={scene} drawConfig={drawConfig} drawBranding={drawBranding} />
+          )}
+        </div>
       ) : null}
 
       <div className="public-scene-view__media">
