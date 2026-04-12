@@ -1,4 +1,4 @@
-name: Deploy TelaFlow
+﻿name: Deploy TelaFlow
 
 on:
   push:
@@ -49,14 +49,31 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
     environment: production
+    permissions:
+      contents: read
 
     steps:
       - name: Configurar chave SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          set -euo pipefail
+          if [ -z "${SSH_HOST:-}" ]; then echo "::error::Segredo SSH_HOST vazio ou ausente no ambiente production."; exit 1; fi
+          if [ -z "${SSH_USER:-}" ]; then echo "::error::Segredo SSH_USER vazio ou ausente no ambiente production."; exit 1; fi
+          if [ -z "${SSH_PRIVATE_KEY:-}" ]; then echo "::error::Segredo SSH_PRIVATE_KEY vazio ou ausente no ambiente production."; exit 1; fi
+
+          SSH_DIR="${HOME}/.ssh"
+          if [ -e "$SSH_DIR" ] && [ ! -d "$SSH_DIR" ]; then
+            echo "::notice::Removendo $SSH_DIR (existia como ficheiro, não pasta)."
+            rm -f "$SSH_DIR"
+          fi
+          mkdir -p "$SSH_DIR"
+          umask 077
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$SSH_DIR/id_ed25519"
+          chmod 600 "$SSH_DIR/id_ed25519"
+          ssh-keyscan -H "$SSH_HOST" >> "$SSH_DIR/known_hosts"
 
       - name: Deploy na VPS
         run: |
