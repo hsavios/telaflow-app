@@ -216,6 +216,13 @@
   margin-top: 0;
 }
 
+.player-scene-nav-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
 @media (prefers-color-scheme: dark) {
   .player-section {
     border-top-color: rgba(255, 255, 255, 0.12);

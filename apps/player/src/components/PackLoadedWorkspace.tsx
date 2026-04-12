@@ -12,6 +12,7 @@ import { runPreflightMvp } from "../preflight/runPreflight.js";
 import type { PreflightResult } from "../preflight/types.js";
 import type { OperationalPhase } from "../runtime/operationalState.js";
 import { describeOperationalPhasePt } from "../runtime/operationalState.js";
+import { SceneRuntimeNav } from "../runtime/sceneNavigator.js";
 
 type StatusMidia = "nao_vinculado" | "vinculado" | "ausente";
 
@@ -42,6 +43,7 @@ type Props = {
   lastPreflight: PreflightResult | null;
   onPreflightComplete: (r: PreflightResult) => void;
   onStartExecution: () => void;
+  onSceneIndexChange: (index: number) => void;
 };
 
 export function PackLoadedWorkspace({
@@ -56,6 +58,7 @@ export function PackLoadedWorkspace({
   lastPreflight,
   onPreflightComplete,
   onStartExecution,
+  onSceneIndexChange,
 }: Props) {
   const resumo = useMemo(() => buildPackSummary(packRoot, packData), [packRoot, packData]);
   const [existeCache, setExisteCache] = useState<Map<string, boolean>>(new Map());
@@ -356,10 +359,12 @@ export function PackLoadedWorkspace({
 
       {operationalPhase === "executing" && (
         <section className="player-section">
-          <h3>Roteiro</h3>
-          <p className="player-hint">
-            Modo <code>executing</code> (MVP). Índice de cena atual: {sceneIndex}.
-          </p>
+          <h3>Roteiro (navegação)</h3>
+          <SceneRuntimeNav
+            scenes={packData.event.scenes}
+            sceneIndex={sceneIndex}
+            onSceneIndexChange={onSceneIndexChange}
+          />
         </section>
       )}
     </div>
