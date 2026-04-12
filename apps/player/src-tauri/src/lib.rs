@@ -1,4 +1,5 @@
 ﻿mod pack_io;
+mod public_window;
 mod workspace_bindings;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -7,6 +8,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             pack_io::load_pack_from_directory,
+            public_window::public_window_open,
             workspace_bindings::normalize_media_binding_relative,
             workspace_bindings::file_exists_under_workspace,
             workspace_bindings::resolve_workspace_file_path,

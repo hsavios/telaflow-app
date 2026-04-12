@@ -1,6 +1,6 @@
 ﻿/**
  * Layout da visão do operador em execução: roteiro, palco (ScenePresenter) e painel de operação.
- * Separado da saída pública para evoluir para dual-screen sem misturar componentes.
+ * Controlo operacional via `RuntimeSessionStore` (ações explícitas).
  */
 
 import type {
@@ -10,6 +10,7 @@ import type {
 } from "@telaflow/shared-contracts";
 import { describeOperationalKindPt } from "./operationalState.js";
 import { ScenePresenter } from "./ScenePresenter.js";
+import { useRuntimeSession } from "./RuntimeSessionContext.js";
 import type { SceneMediaDerivedState } from "./sceneMediaResolution.js";
 
 type PlaybackLogPayload = {
@@ -27,8 +28,6 @@ type Props = {
   workspaceRoot: string | null;
   bindings: Record<string, string>;
   mediaRequirement: MediaRequirementContract | null;
-  onSceneIndexChange: (next: number) => void;
-  onFinishExecution: () => void;
   onPlaybackLog: (entry: PlaybackLogPayload) => void;
 };
 
@@ -41,14 +40,14 @@ export function OperatorExecutingLayout({
   workspaceRoot,
   bindings,
   mediaRequirement,
-  onSceneIndexChange,
-  onFinishExecution,
   onPlaybackLog,
 }: Props) {
+  const { comandos, seletores } = useRuntimeSession();
+  const cmd = seletores.comandos;
   const n = ordenadas.length;
   const idx = sceneIndex;
-  const prev = () => onSceneIndexChange(Math.max(0, idx - 1));
-  const next = () => onSceneIndexChange(Math.min(n - 1, idx + 1));
+  const prev = () => comandos.cena_anterior();
+  const next = () => comandos.cena_seguinte();
 
   return (
     <div className="player-exec-layout player-exec-layout--operator">
@@ -62,7 +61,7 @@ export function OperatorExecutingLayout({
                 className={
                   i === idx ? "player-exec-script__btn is-current" : "player-exec-script__btn"
                 }
-                onClick={() => onSceneIndexChange(i)}
+                onClick={() => comandos.ativar_cena_por_indice(i)}
               >
                 <span className="player-exec-script__name">{sc.name}</span>
                 <span className="player-exec-script__meta">
@@ -84,6 +83,7 @@ export function OperatorExecutingLayout({
           workspaceRoot={workspaceRoot}
           bindings={bindings}
           mediaRequirement={mediaRequirement}
+          mediaPlaybackId={seletores.operationalContext.mediaPlaybackId}
           onPlaybackLog={onPlaybackLog}
         />
       </div>
@@ -96,14 +96,30 @@ export function OperatorExecutingLayout({
         </p>
         <p className="player-exec-ops__hint">{describeOperationalKindPt("executing")}</p>
         <div className="player-exec-ops__nav">
-          <button type="button" disabled={idx <= 0} onClick={prev}>
+          <button
+            type="button"
+            disabled={!cmd.cenaAnterior.permitido}
+            title={cmd.cenaAnterior.motivo ?? "Cena anterior"}
+            onClick={prev}
+          >
             Anterior
           </button>
-          <button type="button" disabled={idx >= n - 1} onClick={next}>
+          <button
+            type="button"
+            disabled={!cmd.cenaSeguinte.permitido}
+            title={cmd.cenaSeguinte.motivo ?? "Cena seguinte"}
+            onClick={next}
+          >
             Seguinte
           </button>
         </div>
-        <button type="button" className="player-exec-ops__finish" onClick={onFinishExecution}>
+        <button
+          type="button"
+          className="player-exec-ops__finish"
+          disabled={!cmd.concluirExecucao.permitido}
+          title={cmd.concluirExecucao.motivo ?? "Concluir execução do roteiro"}
+          onClick={() => comandos.concluir_execucao()}
+        >
           Concluir execução
         </button>
       </aside>

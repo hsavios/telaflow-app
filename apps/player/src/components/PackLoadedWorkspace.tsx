@@ -2,18 +2,16 @@
 import { open } from "@tauri-apps/plugin-dialog";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { buildPackSummary } from "../pack/packSummary.js";
-import type { PackLoaderSuccess } from "../pack/validateLoadedPack.js";
-import type { PlayerOperationalKind } from "../runtime/operationalState.js";
+import { isActiveSession } from "../pack/playerPackState.js";
 import { describeOperationalKindPt } from "../runtime/operationalState.js";
+import { useRuntimeSession } from "../runtime/RuntimeSessionContext.js";
 import {
   createEmptyBindingsFile,
   MediaBindingsFileSchema,
   serializeBindingsFile,
 } from "../media/mediaBindingsFile.js";
 import { ExecutionLogPanel } from "../execution/ExecutionLogPanel.js";
-import type { ExecutionLogEntry, ExecutionLogLevel } from "../execution/executionLog.js";
 import { runPreflightMvp } from "../preflight/runPreflight.js";
-import type { PreflightResult } from "../preflight/types.js";
 import { ExecutingRuntimeView } from "../runtime/ExecutingRuntimeView.js";
 
 type StatusMidia = "nao_vinculado" | "vinculado" | "ausente";
@@ -33,46 +31,22 @@ function statusMidia(
   return "nao_vinculado";
 }
 
-type Props = {
-  runtimeKind: PlayerOperationalKind;
-  packRoot: string;
-  packData: PackLoaderSuccess;
-  workspaceRoot: string | null;
-  bindings: Record<string, string>;
-  lastPreflight: PreflightResult | null;
-  sceneIndex: number;
-  executionLog: ExecutionLogEntry[];
-  onWorkspaceChange: (root: string | null, bindings: Record<string, string>) => void;
-  onBindingsChange: (next: Record<string, string>) => void;
-  onPreflightComplete: (r: PreflightResult) => void;
-  onStartExecution: () => void;
-  onSceneIndexChange: (index: number) => void;
-  onFinishExecution: () => void;
-  /** Apenas em `executing`: anexa eventos ao registro JSONL (ex.: playback). */
-  onAppendExecutionLog?: (entry: {
-    level: ExecutionLogLevel;
-    code: string;
-    message: string;
-  }) => void;
-};
+export function PackLoadedWorkspace() {
+  const { estado, acoes, comandos, seletores } = useRuntimeSession();
+  const cmdIniciarExecucao = seletores.comandos.iniciarExecucao;
+  const s = estado.appState;
+  if (!isActiveSession(s)) {
+    return null;
+  }
 
-export function PackLoadedWorkspace({
-  runtimeKind,
-  packRoot,
-  packData,
-  workspaceRoot,
-  bindings,
-  lastPreflight,
-  sceneIndex,
-  executionLog,
-  onWorkspaceChange,
-  onBindingsChange,
-  onPreflightComplete,
-  onStartExecution,
-  onSceneIndexChange,
-  onFinishExecution,
-  onAppendExecutionLog,
-}: Props) {
+  const runtimeKind = s.kind;
+  const packRoot = s.packRoot;
+  const packData = s.packData;
+  const workspaceRoot = s.workspaceRoot;
+  const bindings = s.bindings;
+  const lastPreflight = s.lastPreflight;
+  const executionLog = s.executionLog;
+
   const resumo = useMemo(() => buildPackSummary(packRoot, packData), [packRoot, packData]);
   const [existeCache, setExisteCache] = useState<Map<string, boolean>>(new Map());
   const [preflightBusy, setPreflightBusy] = useState(false);
@@ -138,11 +112,11 @@ export function PackLoadedWorkspace({
           /* arquivo inválido — inicia vazio */
         }
       }
-      onWorkspaceChange(sel, nextBindings);
+      acoes.atualizarWorkspace(sel, nextBindings);
     } finally {
       setBinderBusy(false);
     }
-  }, [onWorkspaceChange, packData.manifest.event_id, packData.manifest.export_id]);
+  }, [acoes, packData.manifest.event_id, packData.manifest.export_id]);
 
   const salvarBindings = useCallback(
     async (root: string, next: Record<string, string>) => {
@@ -177,7 +151,7 @@ export function PackLoadedWorkspace({
         });
         const next = { ...bindings, [mediaId]: rel };
         await salvarBindings(workspaceRoot, next);
-        onBindingsChange(next);
+        acoes.atualizarBindings(next);
         await refreshExistencia();
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -186,7 +160,7 @@ export function PackLoadedWorkspace({
         setBinderBusy(false);
       }
     },
-    [workspaceRoot, bindings, onBindingsChange, salvarBindings, refreshExistencia],
+    [workspaceRoot, bindings, acoes, salvarBindings, refreshExistencia],
   );
 
   const limparVinculo = useCallback(
@@ -195,10 +169,10 @@ export function PackLoadedWorkspace({
       const next = { ...bindings };
       delete next[mediaId];
       await salvarBindings(workspaceRoot, next);
-      onBindingsChange(next);
+      acoes.atualizarBindings(next);
       await refreshExistencia();
     },
-    [workspaceRoot, bindings, onBindingsChange, salvarBindings, refreshExistencia],
+    [workspaceRoot, bindings, acoes, salvarBindings, refreshExistencia],
   );
 
   useEffect(() => {
@@ -213,11 +187,11 @@ export function PackLoadedWorkspace({
         workspaceRoot,
         bindings,
       });
-      onPreflightComplete(r);
+      acoes.aplicarResultadoPreflight(r);
     } finally {
       setPreflightBusy(false);
     }
-  }, [packData, workspaceRoot, bindings, onPreflightComplete]);
+  }, [packData, workspaceRoot, bindings, acoes]);
 
   const linhasMidia = packData.mediaManifest.requirements.map((req) => {
     const st = statusMidia(workspaceRoot, bindings, req.media_id, existeCache);
@@ -233,16 +207,7 @@ export function PackLoadedWorkspace({
       <h2>Sessão com pack</h2>
       {execPrimary && (
         <section className="player-section player-section--exec-focus" aria-label="Runtime visual MVP">
-          <ExecutingRuntimeView
-            packData={packData}
-            sceneIndex={sceneIndex}
-            workspaceRoot={workspaceRoot}
-            bindings={bindings}
-            fileExistsCache={existeCache}
-            onSceneIndexChange={onSceneIndexChange}
-            onFinishExecution={onFinishExecution}
-            onPlaybackLog={(entry) => onAppendExecutionLog?.(entry)}
-          />
+          <ExecutingRuntimeView fileExistsCache={existeCache} />
         </section>
       )}
       <dl className="player-summary">
@@ -290,7 +255,12 @@ export function PackLoadedWorkspace({
         {runtimeKind === "executing" ? (
           <p className="player-hint">Execução ativa — a navegação e o botão Concluir execução estão no painel lateral de operação.</p>
         ) : (
-          <button type="button" disabled={runtimeKind !== "ready"} onClick={onStartExecution}>
+          <button
+            type="button"
+            disabled={!cmdIniciarExecucao.permitido}
+            title={cmdIniciarExecucao.permitido ? undefined : cmdIniciarExecucao.motivo}
+            onClick={() => comandos.iniciar_execucao()}
+          >
             Iniciar roteiro (MVP)
           </button>
         )}

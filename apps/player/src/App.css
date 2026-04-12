@@ -241,6 +241,35 @@
   align-items: center;
 }
 
+/* Aviso quando um comando operacional é rejeitado (guard / política de estado). */
+.player-op-command-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.65rem 1rem;
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #c4a000;
+  background: #fffbeb;
+  color: #422006;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.player-op-command-alert__text {
+  margin: 0;
+  flex: 1;
+  min-width: 12rem;
+}
+
+.player-op-command-alert__dismiss {
+  flex-shrink: 0;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  box-shadow: none;
+}
+
 /* Execução: saída pública (MVP) empilhada acima do painel do operador — preparação para dual-screen. */
 .player-exec-split-root {
   display: flex;
@@ -264,6 +293,90 @@
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: #94a3b8;
+}
+
+.player-exec-public-shell__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.player-exec-public-shell__toolbar .player-exec-public-shell__label {
+  margin: 0;
+  flex: 1;
+  min-width: 12rem;
+}
+
+.player-exec-public-shell__open-btn {
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(30, 41, 59, 0.9);
+  color: #e2e8f0;
+  cursor: pointer;
+}
+
+.player-exec-public-shell__open-btn:hover:not(:disabled) {
+  border-color: #60a5fa;
+  color: #fff;
+}
+
+.player-exec-public-shell__open-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+/* Janela Tauri dedicada (`public-panel.html`) */
+.public-window-root {
+  min-height: 100vh;
+  margin: 0;
+  padding: 1rem 1.25rem 1.5rem;
+  box-sizing: border-box;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.public-window-root--waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.75rem;
+}
+
+.public-window-root__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.public-window-root__hint {
+  margin: 0;
+  max-width: 28rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #94a3b8;
+}
+
+.public-window-root__meta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.public-window-root__event-name {
+  margin: 0 0 0.65rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-align: center;
 }
 
 .public-scene-view {
@@ -699,6 +812,11 @@
   padding: 0.45rem 0.75rem;
 }
 
+.draw-scene-panel__primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .draw-scene-panel__result-block {
   margin-top: 0.5rem;
   padding: 0.65rem 0.75rem;
@@ -930,6 +1048,12 @@
 
   .player-license-ok {
     color: #6ee7b7;
+  }
+
+  .player-op-command-alert {
+    border-color: #a16207;
+    background: #422006;
+    color: #fef3c7;
   }
 
   .player-scene-list-item.is-current {

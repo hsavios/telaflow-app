@@ -1,10 +1,11 @@
 ﻿{
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the main window",
-  "windows": ["main"],
+  "description": "Janela do operador e janela pública (dual-screen MVP)",
+  "windows": ["main", "public"],
   "permissions": [
     "core:default",
+    "core:event:default",
     "dialog:default"
   ]
 }

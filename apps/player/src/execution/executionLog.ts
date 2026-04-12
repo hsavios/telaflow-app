@@ -15,6 +15,8 @@ export const EXECUTION_LOG_CODES = {
   DRAW_RESULT_GENERATED: "draw_result_generated",
   DRAW_RESULT_CONFIRMED: "draw_result_confirmed",
   DRAW_FAILED: "draw_failed",
+  /** Comando operacional rejeitado pela política de estado (MVP). */
+  COMMAND_BLOCKED: "command_blocked",
 } as const;
 
 export type ExecutionLogEntry = {

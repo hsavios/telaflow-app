@@ -39,7 +39,7 @@ Conforme `PLAYER_RUNTIME_FEATURE_SPEC` / `ARCHITECTURE_SPEC` (subconjunto MVP):
 | **`pack_loaded`** | Pack + licença OK; workspace/bindings a configurar; pre-flight ainda não passou ou foi invalidado. |
 | **`preflight_failed`** | Último pre-flight com bloqueantes (detalhe em `lastPreflight`). |
 | **`ready`** | Último pre-flight **sem** bloqueantes — **gate** para iniciar roteiro. |
-| **`executing`** | Roteiro com **Runtime Visual MVP**, **Playback MVP**, **Draw Engine MVP** (`number_range`) e **pré-visualização da saída pública MVP** (mesmo tela; sem dual-screen físico), sem Cloud. |
+| **`executing`** | Roteiro com **Runtime Visual MVP**, **Playback MVP**, **Draw Engine MVP** (`number_range`) e **saída pública** (pré-visualização na janela do operador e, opcionalmente, **janela pública dedicada** via Tauri — dual-screen real MVP), sem Cloud. |
 
 Fluxo típico: `idle` → (abrir pack) → `pack_loaded` → (pre-flight) → `preflight_failed` **ou** `ready` → (**Iniciar roteiro**) → `executing` → (**Concluir execução**) → `ready`. Alterar workspace/bindings repõe `pack_loaded`.
 
@@ -48,7 +48,7 @@ Implementação: `src/pack/playerPackState.ts` + `src/App.tsx`.
 ## Scene Runtime (MVP)
 
 - Fonte: `event.json` via `packData.event.scenes` — só cenas **`enabled`**, ordenadas por `sort_order` e `scene_id` (`enabledScenesSorted` em `src/runtime/sceneOrder.ts`).
-- Em **`executing`**: **saída pública MVP** (bloco escuro no topo) com **`PublicSceneView`** — só título, tipo amigável, mídia e espelho do sorteio; abaixo, a **visão do operador** em três zonas (`OperatorExecutingLayout`): **roteiro**, **ScenePresenter**, **painel Operação**. Código: `ExecutingRuntimeView.tsx` + `drawRuntimeContext.tsx` (estado do draw compartilhado).
+- Em **`executing`**: **saída pública MVP** na janela principal (bloco escuro no topo) com **`PublicSceneView`** — só título, tipo amigável, mídia e espelho do sorteio; abaixo, a **visão do operador** em três zonas (`OperatorExecutingLayout`): **roteiro**, **ScenePresenter**, **painel Operação**. Código: `ExecutingRuntimeView.tsx` + `drawRuntimeContext.tsx` (estado do draw compartilhado na mesma webview). Para **segunda janela** (telão), ver secção **Dual-screen real (MVP)** abaixo.
 
 ## Runtime Visual MVP
 
@@ -76,11 +76,19 @@ Implementação: `src/pack/playerPackState.ts` + `src/App.tsx`.
 
 ## Saída pública (MVP)
 
-- **Objetivo:** simular o “telão” no **mesmo** tela que o operador, sem multi-monitor nem segunda janela.
+- **Objetivo (janela principal):** pré-visualização do “telão” no **mesmo** ecrã que o operador; opcionalmente, abrir **janela pública dedicada** (Tauri) para o telão num segundo ecrã ou projector (sem escolha de monitor nem APIs avançadas).
 - **`PublicSceneView`**: tipos de cena suportados (`opening`, `institutional`, `sponsor`, `draw`, `break`, `closing`) — título, rótulo amigável e bloco de mídia (sem detalhes técnicos quando `presentation="public"`).
 - **Sorteio:** espelho do runtime (`ready` → “Pronto para sortear”; `drawing` → “Sorteando...”; resultado em destaque; “Sorteio confirmado” após confirmação do operador).
 - **Operador:** `OperatorExecutingLayout` mantém roteiro, `ScenePresenter` e controles; a FSM de topo (`executing`, etc.) **não** muda.
-- **Nota (MVP):** mídia com playback pode estar montada **duas vezes** (público + operador); evolução futura pode usar uma única instância compartilhada.
+- **Nota (MVP):** mídia com playback pode estar montada **duas vezes** (pré-visualização + janela pública, ou operador + público); evolução futura pode usar uma única instância compartilhada.
+
+## Dual-screen real (MVP)
+
+- **Janelas Tauri:** a janela principal tem etiqueta **`main`** (operador). O comando Rust **`public_window_open`** cria ou mostra a webview **`public`**, que carrega **`public-panel.html`** (entrada Vite separada de `index.html`).
+- **Controlo:** em execução, o operador usa **“Abrir janela pública”** (`invoke("public_window_open")`). Navegação do roteiro, sorteio e execução permanecem **só** na janela principal.
+- **Sincronização:** o componente **`PublicWindowSyncEmitter`** (dentro de `DrawRuntimeProvider`) emite o estado serializado para a janela `public` via **`emitTo("public", …)`** com o nome de evento **`telaflow-public-state`** (`PUBLIC_WINDOW_STATE_EVENT` em `publicWindowPayload.ts`). O payload inclui **cena ativa**, **estado derivado da mídia** e **snapshot do draw runtime** (`PublicWindowStatePayload`).
+- **Janela pública:** `src/publicMain.tsx` escuta o evento, guarda o último payload e renderiza **`PublicSceneView`** com **`drawMirrorMode="remote"`** e **`remoteDrawSnapshot`** — apenas reflexo (sem roteiro nem botões de operação).
+- **Limitações explícitas (MVP):** sem atribuição de monitor externo, sem multi-monitor avançado, sem motor de playback separado para o telão, sem Cloud em runtime. Permissões em `src-tauri/capabilities/default.json`: janelas **`main`** e **`public`**, mais **`core:event:default`** para o evento entre webviews.
 
 ## Logging de playback e sorteio
 
@@ -109,9 +117,9 @@ Textos para operador: `describeSceneMediaDerivedStatePt`.
 
 ## Fora de escopo
 
-- **Sorteio visual** avançado (animações, telão dedicado, modos múltiplos além do MVP `number_range`).
-- **Dual-screen real** (segunda janela física ou extensão de tela dedicada) — existe apenas **pré-visualização** da saída pública no mesmo tela.
-- **Multi-monitor** / projeção estendida (além do dual-screen acima).
+- **Sorteio visual** avançado (animações elaboradas, modos múltiplos além do MVP `number_range`).
+- **Dual-screen avançado:** escolha explícita de monitor, fullscreen dedicado por ecrã, ou uma única instância de mídia partilhada entre operador e telão (o MVP oferece **segunda janela** + evento de estado, sem essas otimizações).
+- **Multi-monitor** / APIs de projeção além de abrir a janela `public` manualmente e arrastá-la para outro ecrã.
 - **Transições** avançadas entre cenas ou efeitos no telão.
 - **Cloud** em runtime (o pack é local).
 - **Assinatura criptográfica** da licença (validação estrutural/janela apenas).

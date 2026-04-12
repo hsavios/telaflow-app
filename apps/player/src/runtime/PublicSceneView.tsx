@@ -1,6 +1,8 @@
 ﻿/**
- * Visão pública MVP: só o conteúdo da cena ativa (título, tipo amigável, mídia e espelho do sorteio).
- * Sem roteiro, logs ou controles — preparação para dual-screen (hoje ainda num único tela).
+ * Visão pública: só o conteúdo da cena ativa (título, tipo amigável, mídia e espelho do sorteio).
+ * Sem roteiro, logs ou controles.
+ * - Na janela do operador: lê o slice de sorteio do `RuntimeSessionStore` via `useDrawRuntime`.
+ * - Na janela pública Tauri: passe `remoteDrawSnapshot` vindo do `emitTo`.
  */
 
 import type {
@@ -11,7 +13,9 @@ import type {
 } from "@telaflow/shared-contracts";
 import { SceneMediaRenderer } from "./SceneMediaRenderer.js";
 import type { SceneMediaDerivedState } from "./sceneMediaResolution.js";
+import type { DrawPanelState } from "./drawRuntimeContext.js";
 import { useDrawRuntime } from "./drawRuntimeContext.js";
+import type { PublicWindowDrawSnapshot } from "./publicWindowBridge.js";
 
 const TYPE_LABELS_PUBLIC: Record<SceneType, string> = {
   opening: "Abertura",
@@ -35,20 +39,22 @@ type Props = {
   workspaceRoot: string | null;
   bindings: Record<string, string>;
   mediaRequirement: MediaRequirementContract | null;
+  /** `remote`: snapshot vindo da janela do operador (Tauri). Omitir: lê o store na mesma webview. */
+  drawMirrorMode?: "context" | "remote";
+  /** Obrigatório quando `drawMirrorMode === "remote"` e a cena é `draw`. */
+  remoteDrawSnapshot?: PublicWindowDrawSnapshot | null;
 };
 
 /** Sem logs de execução a partir da janela pública (operador mantém o registro JSONL). */
 function noopPlaybackLog(_entry: PlaybackLogPayload) {}
 
-function PublicDrawMirror({
-  scene,
-  drawConfig,
-}: {
-  scene: SceneContract;
-  drawConfig: DrawConfigContract | null;
-}) {
-  const { panelState, winnerValue, errorMessage } = useDrawRuntime();
-
+function drawMirrorBody(
+  scene: SceneContract,
+  drawConfig: DrawConfigContract | null,
+  panelState: DrawPanelState,
+  winnerValue: number | null,
+  errorMessage: string | null,
+) {
   if (panelState === "error" && errorMessage) {
     return (
       <div className="public-scene-view__draw public-scene-view__draw--error" role="alert">
@@ -114,6 +120,39 @@ function PublicDrawMirror({
   return null;
 }
 
+function PublicDrawMirrorFromContext({
+  scene,
+  drawConfig,
+}: {
+  scene: SceneContract;
+  drawConfig: DrawConfigContract | null;
+}) {
+  const { panelState, winnerValue, errorMessage } = useDrawRuntime();
+  return <>{drawMirrorBody(scene, drawConfig, panelState, winnerValue, errorMessage)}</>;
+}
+
+function PublicDrawMirrorRemote({
+  scene,
+  drawConfig,
+  snapshot,
+}: {
+  scene: SceneContract;
+  drawConfig: DrawConfigContract | null;
+  snapshot: PublicWindowDrawSnapshot;
+}) {
+  return (
+    <>
+      {drawMirrorBody(
+        scene,
+        drawConfig,
+        snapshot.panelState,
+        snapshot.winnerValue,
+        snapshot.errorMessage,
+      )}
+    </>
+  );
+}
+
 export function PublicSceneView({
   scene,
   mediaState,
@@ -121,6 +160,8 @@ export function PublicSceneView({
   workspaceRoot,
   bindings,
   mediaRequirement,
+  drawMirrorMode = "context",
+  remoteDrawSnapshot,
 }: Props) {
   const typeLabel = TYPE_LABELS_PUBLIC[scene.type] ?? scene.type;
 
@@ -132,7 +173,22 @@ export function PublicSceneView({
       </header>
 
       {scene.type === "draw" ? (
-        <PublicDrawMirror scene={scene} drawConfig={drawConfig} />
+        drawMirrorMode === "remote" ? (
+          <PublicDrawMirrorRemote
+            scene={scene}
+            drawConfig={drawConfig}
+            snapshot={
+              remoteDrawSnapshot ?? {
+                resetKey: "",
+                panelState: "idle",
+                winnerValue: null,
+                errorMessage: null,
+              }
+            }
+          />
+        ) : (
+          <PublicDrawMirrorFromContext scene={scene} drawConfig={drawConfig} />
+        )
       ) : null}
 
       <div className="public-scene-view__media">

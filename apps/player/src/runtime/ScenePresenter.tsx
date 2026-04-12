@@ -34,6 +34,8 @@ type Props = {
   workspaceRoot: string | null;
   bindings: Record<string, string>;
   mediaRequirement: MediaRequirementContract | null;
+  /** Alinhado ao store — callbacks de mídia ignoram respostas de tentativas antigas. */
+  mediaPlaybackId?: number;
   onPlaybackLog: (entry: PlaybackLogPayload) => void;
 };
 
@@ -46,6 +48,7 @@ export function ScenePresenter({
   workspaceRoot,
   bindings,
   mediaRequirement,
+  mediaPlaybackId,
   onPlaybackLog,
 }: Props) {
   const typeLabel = TYPE_LABELS[scene.type] ?? scene.type;
@@ -95,6 +98,7 @@ export function ScenePresenter({
         workspaceRoot={workspaceRoot}
         bindings={bindings}
         mediaRequirement={mediaRequirement}
+        mediaPlaybackId={mediaPlaybackId}
         onPlaybackLog={onPlaybackLog}
       />
     </div>

@@ -21,6 +21,11 @@ type Props = {
   bindings: Record<string, string>;
   /** Linha do manifest para `scene.media_id`, se existir. */
   mediaRequirement: MediaRequirementContract | null;
+  /**
+   * Quando definido (operador em execução), resolve e logs de playback só aplicam
+   * se ainda coincidir com a ativação de mídia atual (evita corrida entre cenas).
+   */
+  mediaPlaybackId?: number;
   onPlaybackLog: (entry: PlaybackLogPayload) => void;
   /**
    * `public`: textos neutros para audiência (sem códigos técnicos) e sem eventos no callback de log.
@@ -44,12 +49,16 @@ export function SceneMediaRenderer({
   workspaceRoot,
   bindings,
   mediaRequirement,
+  mediaPlaybackId,
   onPlaybackLog,
   presentation = "operator",
 }: Props) {
   const isPublic = presentation === "public";
   const mediaId = scene.media_id ?? null;
   const mediaKind: MediaKind | null = mediaRequirement?.media_type ?? null;
+
+  const playbackIdRef = useRef(mediaPlaybackId);
+  playbackIdRef.current = mediaPlaybackId;
 
   const [assetSrc, setAssetSrc] = useState<string | null>(null);
   const [resolveError, setResolveError] = useState(false);
@@ -113,6 +122,8 @@ export function SceneMediaRenderer({
       };
     }
 
+    const idAoIniciar = mediaPlaybackId;
+
     void (async () => {
       try {
         const abs = await invoke<string>("resolve_workspace_file_path", {
@@ -120,9 +131,11 @@ export function SceneMediaRenderer({
           relative: rel,
         });
         if (cancelled) return;
+        if (idAoIniciar !== undefined && playbackIdRef.current !== idAoIniciar) return;
         setAssetSrc(convertFileSrc(abs));
       } catch {
         if (!cancelled) {
+          if (idAoIniciar !== undefined && playbackIdRef.current !== idAoIniciar) return;
           setResolveError(true);
           if (!isPublic) {
             logMedia(
@@ -139,11 +152,12 @@ export function SceneMediaRenderer({
     return () => {
       cancelled = true;
     };
-  }, [bindings, isPublic, mediaId, mediaKind, mediaState, onPlaybackLog, scene.scene_id, workspaceRoot]);
+  }, [bindings, isPublic, mediaId, mediaKind, mediaPlaybackId, mediaState, onPlaybackLog, scene.scene_id, workspaceRoot]);
 
   const onMediaStarted = useCallback(
-    (kind: "image" | "video", srcKey: string) => {
+    (kind: "image" | "video", srcKey: string, playbackSnapshot: number | undefined) => {
       if (isPublic) return;
+      if (playbackSnapshot !== undefined && playbackIdRef.current !== playbackSnapshot) return;
       if (loggedStartedForSrc.current === srcKey) return;
       loggedStartedForSrc.current = srcKey;
       logMedia(
@@ -157,8 +171,9 @@ export function SceneMediaRenderer({
   );
 
   const onMediaDecodeFailed = useCallback(
-    (srcKey: string) => {
+    (srcKey: string, playbackSnapshot: number | undefined) => {
       if (isPublic) return;
+      if (playbackSnapshot !== undefined && playbackIdRef.current !== playbackSnapshot) return;
       if (loggedDecodeFailForSrc.current === srcKey) return;
       loggedDecodeFailForSrc.current = srcKey;
       logMedia(
@@ -254,20 +269,22 @@ export function SceneMediaRenderer({
   }
 
   if (mediaState === "media_bound" && mediaKind === "image" && assetSrc) {
+    const pb = mediaPlaybackId;
     return (
       <section className={`scene-media scene-media--playback${pubClass}`} aria-label="Mídia da cena">
         <img
           src={assetSrc}
           alt={mediaRequirement?.label ?? scene.name}
           className="scene-media__img"
-          onLoad={() => onMediaStarted("image", assetSrc)}
-          onError={() => onMediaDecodeFailed(assetSrc)}
+          onLoad={() => onMediaStarted("image", assetSrc, pb)}
+          onError={() => onMediaDecodeFailed(assetSrc, pb)}
         />
       </section>
     );
   }
 
   if (mediaState === "media_bound" && mediaKind === "video" && assetSrc) {
+    const pb = mediaPlaybackId;
     return (
       <section className={`scene-media scene-media--playback${pubClass}`} aria-label="Mídia da cena">
         <video
@@ -277,8 +294,8 @@ export function SceneMediaRenderer({
           muted
           autoPlay
           playsInline
-          onLoadedData={() => onMediaStarted("video", assetSrc)}
-          onError={() => onMediaDecodeFailed(assetSrc)}
+          onLoadedData={() => onMediaStarted("video", assetSrc, pb)}
+          onError={() => onMediaDecodeFailed(assetSrc, pb)}
         />
       </section>
     );
