@@ -11,7 +11,7 @@ import {
 import type { PackLoaderSuccess } from "../pack/validateLoadedPack.js";
 import type { PreflightItem, PreflightResult } from "./types.js";
 
-async function existeFicheiro(workspace: string, relativo: string): Promise<boolean> {
+async function existeArquivo(workspace: string, relativo: string): Promise<boolean> {
   try {
     return await invoke<boolean>("file_exists_under_workspace", {
       workspacePath: workspace,
@@ -123,7 +123,7 @@ export async function runPreflightMvp(input: {
           group: "G3",
           severity: "bloqueante",
           fatality: "recuperavel",
-          message: `Mídia obrigatória «${label}» (${req.media_id}) não vinculada a um ficheiro.`,
+          message: `Mídia obrigatória "${label}" (${req.media_id}) não vinculada a um arquivo.`,
           code: "MEDIA_REQUIRED_UNBOUND",
         });
       } else {
@@ -131,20 +131,20 @@ export async function runPreflightMvp(input: {
           check_id: "media.optional.unbound",
           group: "G3",
           severity: "aviso",
-          message: `Mídia opcional «${label}» (${req.media_id}) não vinculada.`,
+          message: `Mídia opcional "${label}" (${req.media_id}) não vinculada.`,
           code: "MEDIA_OPTIONAL_UNBOUND",
         });
       }
       continue;
     }
-    const okFile = await existeFicheiro(ws, rel);
+    const okFile = await existeArquivo(ws, rel);
     if (!okFile) {
       push(items, {
         check_id: "media.file.missing",
         group: "G3",
         severity: req.required ? "bloqueante" : "aviso",
         fatality: req.required ? "recuperavel" : null,
-        message: `Ficheiro em falta para «${label}» (${req.media_id}): ${rel}`,
+        message: `Arquivo ausente para "${label}" (${req.media_id}): ${rel}`,
         code: "MEDIA_FILE_MISSING",
       });
     } else {
@@ -152,7 +152,7 @@ export async function runPreflightMvp(input: {
         check_id: "media.file.present",
         group: "G3",
         severity: "ok",
-        message: `Mídia «${label}» resolvida: ${rel}`,
+        message: `Mídia "${label}" resolvida: ${rel}`,
         code: "MEDIA_FILE_OK",
       });
     }
@@ -168,7 +168,7 @@ export async function runPreflightMvp(input: {
         group: "G4",
         severity: "bloqueante",
         fatality: "recuperavel",
-        message: `Scene «${scene.name}» do tipo draw sem draw_config_id.`,
+        message: `Scene "${scene.name}" do tipo draw sem draw_config_id.`,
         code: "SCENE_DRAW_MISSING_CONFIG",
       });
     }
@@ -179,7 +179,7 @@ export async function runPreflightMvp(input: {
         group: "G4",
         severity: "bloqueante",
         fatality: "recuperavel",
-        message: `Scene «${scene.name}» referencia media_id ausente no manifesto: ${mid}`,
+        message: `Scene "${scene.name}" referencia media_id ausente no manifesto: ${mid}`,
         code: "SCENE_MEDIA_UNKNOWN",
       });
     }
@@ -190,7 +190,7 @@ export async function runPreflightMvp(input: {
         group: "G4",
         severity: "bloqueante",
         fatality: "recuperavel",
-        message: `Scene «${scene.name}» referencia draw_config_id ausente no pack: ${did}`,
+        message: `Scene "${scene.name}" referencia draw_config_id ausente no pack: ${did}`,
         code: "SCENE_DRAW_UNKNOWN",
       });
     }

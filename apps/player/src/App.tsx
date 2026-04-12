@@ -288,7 +288,7 @@ export default function App() {
         <h1>TelaFlow Player</h1>
         <p className="player-tagline">
           FSM operacional, pre-flight, runtime visual, playback MVP (imagem/vídeo via bindings) e
-          registo JSONL — sem Cloud em runtime, sem sorteio visual real e sem multi-monitor.
+          registro JSONL — sem Cloud em runtime, sem sorteio visual real e sem multi-monitor.
         </p>
       </header>
 
@@ -333,7 +333,7 @@ export default function App() {
         {estado.kind === "idle" && !carregando && (
           <p className="player-hint">
             Exporte um pack na TelaFlow Cloud e selecione a pasta do export (subpasta
-            nomeada pelo <code>export_id</code>) que contém os seis ficheiros JSON.
+            nomeada pelo <code>export_id</code>) que contém os seis arquivos JSON.
           </p>
         )}
       </section>

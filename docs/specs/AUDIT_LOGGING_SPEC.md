@@ -1,4 +1,4 @@
-# TelaFlow — Especificação Funcional de Auditoria e Logging (AUDIT_LOGGING_SPEC)
+﻿# TelaFlow — Especificação Funcional de Auditoria e Logging (AUDIT_LOGGING_SPEC)
 
 **Versão:** 1.0.1  
 **Status:** Documento normativo — referência para logs na Cloud, logs locais no Player, auditoria, correlação de eventos, cadeia causal opcional, severidades, retenção conceitual e relação com UI e suporte  
@@ -6,7 +6,7 @@
 
 **Hierarquia normativa:** Este documento é derivado e subordinado a, **nesta ordem**: [PRODUCT_SPEC.md](./PRODUCT_SPEC.md), [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md), [UI_SPEC.md](./UI_SPEC.md), [EVENT_EDITOR_FEATURE_SPEC.md](./EVENT_EDITOR_FEATURE_SPEC.md), [PRE_FLIGHT_FEATURE_SPEC.md](./PRE_FLIGHT_FEATURE_SPEC.md), [PACK_EXPORT_FEATURE_SPEC.md](./PACK_EXPORT_FEATURE_SPEC.md), [PLAYER_RUNTIME_FEATURE_SPEC.md](./PLAYER_RUNTIME_FEATURE_SPEC.md), [LICENSING_FEATURE_SPEC.md](./LICENSING_FEATURE_SPEC.md). Em caso de ambiguidade ou conflito aparente, prevalece o documento mais acima na lista; a estratégia de auditoria e logging deve ser ajustada (via revisão deste arquivo e ADR quando couber) para restabelecer alinhamento.
 
-**Escopo:** comportamento funcional e contrato do que é registado, onde, com que severidade e para que fins — sem código, sem formato de ficheiro byte-a-byte, sem políticas de retenção numérica obrigatórias (estas ficam em produto, compliance ou spec derivada). Pipelines tipo SIEM/ELK ficam fora desta spec salvo menção em evolução.
+**Escopo:** comportamento funcional e contrato do que é registado, onde, com que severidade e para que fins — sem código, sem formato de arquivo byte-a-byte, sem políticas de retenção numérica obrigatórias (estas ficam em produto, compliance ou spec derivada). Pipelines tipo SIEM/ELK ficam fora desta spec salvo menção em evolução.
 
 ---
 
@@ -35,7 +35,7 @@ Debug serve a equipa interna em desenvolvimento. O logging normativo TelaFlow se
 | **Reconstruir narrativa operacional** | Responder em ordem: carregou Pack → passou pre-flight? → entrou em execução? → que Scenes? → encerrou ou bloqueou? |
 | **Suportar troubleshooting** | Reduzir tempo até causa provável com correlação (§10) e códigos de evento. |
 | **Sustentar auditoria comercial** | Quem exportou o quê e quando na Cloud; ligação a `export_id` / `license_id`. |
-| **Rastrear export e execução** | Ligação explícita entre linha de auditoria Cloud e logs locais do Player via ids partilhados. |
+| **Rastrear export e execução** | Ligação explícita entre linha de auditoria Cloud e logs locais do Player via ids compartilhados. |
 
 ---
 
@@ -55,7 +55,7 @@ Debug serve a equipa interna em desenvolvimento. O logging normativo TelaFlow se
 | Domínio | Onde vive | Finalidade principal |
 |---------|-----------|----------------------|
 | **Cloud audit** | Infraestrutura da TelaFlow Cloud (servidor, base de auditoria) | Governança, exportações, emissões de licença, ações administrativas relevantes. |
-| **Player local log** | Máquina do operador (ficheiros locais — MVP: JSON / JSONL conforme [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §15.2) | Diagnóstico de palco, pre-flight, runtime, falhas sem depender de rede. |
+| **Player local log** | Máquina do operador (arquivos locais — MVP: JSON / JSONL conforme [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §15.2) | Diagnóstico de palco, pre-flight, runtime, falhas sem depender de rede. |
 
 **Regra:** não fundir mentalmente os dois num único “log global” sem correlação explícita (§10). Sincronização opcional para nuvem é evolução (§20).
 
@@ -68,9 +68,9 @@ Eventos mínimos normativos (a lista pode crescer por ADR; não encolher sem rev
 | Evento | Conteúdo mínimo conceitual |
 |--------|------------------------------|
 | **Login relevante** | Sucesso e falha de autenticação (com moderação de PII — [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §17.1). |
-| **Export bem-sucedido** | `export_id`, `event_id`, `organization_id`, utilizador, timestamp, referência a `pack_version`. |
+| **Export bem-sucedido** | `export_id`, `event_id`, `organization_id`, usuário, timestamp, referência a `pack_version`. |
 | **Emissão / selagem de licença** | `license_id`, `export_id`, vínculo a evento/org ([LICENSING_FEATURE_SPEC.md](./LICENSING_FEATURE_SPEC.md) §16). |
-| **Falha de export** | Motivo estável (código), evento afetado, utilizador, timestamp. |
+| **Falha de export** | Motivo estável (código), evento afetado, usuário, timestamp. |
 | **Mudança estrutural relevante** | Ex.: role alterada, membro adicionado — [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §17.1 / módulo audit_logs. |
 
 ---
@@ -104,13 +104,13 @@ Cada execução completa (ou ciclo definido em [PRE_FLIGHT_FEATURE_SPEC.md](./PR
 
 Para cada grupo G1…G5 ([PRE_FLIGHT_FEATURE_SPEC.md](./PRE_FLIGHT_FEATURE_SPEC.md) §6): registar conclusão e duração ou timestamps conforme §13.5 daquela spec; contagens por severidade no grupo ou agregado exportável.
 
-## 7.3 Severidades no registo
+## 7.3 Severidades no registro
 
 Eco da taxonomia do pre-flight: itens bloqueantes, avisos e OK com `check_id` e `code` nos bloqueantes (amostra ou completo conforme [PRE_FLIGHT_FEATURE_SPEC.md](./PRE_FLIGHT_FEATURE_SPEC.md) §19.1).
 
 ## 7.4 Resultado final
 
-Um registo sintético por run: destino FSM `ready` / `preflight_failed` / `blocked`, contagens globais, `export_id`, `pack_version`, timestamp global de fim de run.
+Um registro sintético por run: destino FSM `ready` / `preflight_failed` / `blocked`, contagens globais, `export_id`, `pack_version`, timestamp global de fim de run.
 
 ---
 
@@ -121,7 +121,7 @@ Um registo sintético por run: destino FSM `ready` / `preflight_failed` / `block
 | **Scene activation** | `scene_id`, índice no roteiro, timestamp, origem (manual ou política). |
 | **Scene completion** | Idem mais causa ([PLAYER_RUNTIME_FEATURE_SPEC.md](./PLAYER_RUNTIME_FEATURE_SPEC.md) §9.4). |
 | **Operator actions** | Avançar, pausar, encerrar, disparar sorteio — sem dados desnecessários do operador. |
-| **Falhas em execução** | Código estável, `media_id` se aplicável, sem conteúdo de ficheiro ([PLAYER_RUNTIME_FEATURE_SPEC.md](./PLAYER_RUNTIME_FEATURE_SPEC.md) §17). |
+| **Falhas em execução** | Código estável, `media_id` se aplicável, sem conteúdo de arquivo ([PLAYER_RUNTIME_FEATURE_SPEC.md](./PLAYER_RUNTIME_FEATURE_SPEC.md) §17). |
 
 ---
 
@@ -130,7 +130,7 @@ Um registo sintético por run: destino FSM `ready` / `preflight_failed` / `block
 | Momento | Conteúdo |
 |---------|----------|
 | **Validação bem-sucedida** | Confirmação de vigência e correspondência de ids (sem repetir claims inteiros se redundante). |
-| **Falha** | Código canónico `LICENSE_*` ou equivalente, razão (assinatura, expiração, mismatch, ausente) — [LICENSING_FEATURE_SPEC.md](./LICENSING_FEATURE_SPEC.md) §13. |
+| **Falha** | Código canônico `LICENSE_*` ou equivalente, razão (assinatura, expiração, mismatch, ausente) — [LICENSING_FEATURE_SPEC.md](./LICENSING_FEATURE_SPEC.md) §13. |
 | **Expiração detetada** | Instante e contexto `ready` vs `executing` (incl. grace §8.4 da spec de licenciamento — sessão a concluir). |
 
 ---
@@ -175,7 +175,7 @@ Correlação por ids (§10) não substitui, por si só, a pergunta “**porque**
 
 **Nota:** alinhar linguagem à UI (bloqueante / aviso) sem confundir severidade de log com severidade de check do pre-flight — mapeamento em spec de implementação.
 
-## 11.1 Controlo de ruído em `critical`
+## 11.1 Controle de ruído em `critical`
 
 `critical` não deve gerar **avalanche repetitiva** (centenas ou milhares de linhas idênticas ou equivalentes): isso anula o suporte e mascara o sinal.
 
@@ -187,7 +187,7 @@ Detalhes de janela de agregação e formato ficam em spec técnica; o requisito 
 
 # 12. O que NÃO logar
 
-1. Mídia binária ou trechos de ficheiros do cliente.  
+1. Mídia binária ou trechos de arquivos do cliente.  
 2. Segredos: tokens de sessão, passwords, chaves privadas.  
 3. Paths absolutos excessivos ou inventário completo de disco — preferir `media_id` e path relativo à workspace quando necessário.  
 4. Dados pessoais além do mínimo (participantes de sorteio, etc.).  
@@ -195,7 +195,7 @@ Detalhes de janela de agregação e formato ficam em spec técnica; o requisito 
 
 ---
 
-# 13. Estrutura conceitual mínima de um registo
+# 13. Estrutura conceitual mínima de um registro
 
 ## 13.1 Campos mínimos
 
@@ -216,7 +216,7 @@ No Player, o **timestamp** reflete o relógio local do sistema (NTP desalinhado,
 **Política:** aceita-se o clock do sistema como etiqueta temporal; a **ordem lógica** dos acontecimentos não pode depender só de `timestamp` para ordenação quando houver suspeita de skew. A ordem **causal** deve ser preservada por:
 
 - **sequência de append** no destino persistido (primeira linha escrita = primeiro evento registado nesse fluxo), e/ou  
-- um **contador monotónico** por fluxo de log (ex.: `sequence` estritamente crescente por ficheiro ou sessão), definido em implementação.
+- um **contador monotónico** por fluxo de log (ex.: `sequence` estritamente crescente por arquivo ou sessão), definido em implementação.
 
 Consumidores de log devem poder reconstruir a narrativa por **causa e sequência**, não apenas por ordenação lexicográfica de `timestamp`.
 
@@ -231,7 +231,7 @@ Novos comportamentos **preferem** novos códigos a sobrecarregar semântica de c
 # 14. Logs locais do Player
 
 - **Append-only conceitual:** novas linhas acrescentadas sem reescrever histórico de execução passada (rotação ou truncagem por política — spec derivada).  
-- **Persistência mínima** conforme [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §15.2 (nomes de ficheiro em spec técnica).  
+- **Persistência mínima** conforme [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §15.2 (nomes de arquivo em spec técnica).  
 - Buffer em memória com flush para não perder eventos críticos em crash — detalhe de implementação.
 
 ## 14.1 Exportação mínima para suporte (sob demanda)
@@ -268,22 +268,22 @@ Um pedido de suporte deve poder ser atendido com: `export_id` + versão do Playe
 
 - A UI não é terminal de log bruto em `executing` ([UI_SPEC.md](./UI_SPEC.md) §17.4).  
 - Mensagens ao operador são derivadas de estado e códigos — microcopy das specs de Pre-flight, licenciamento e runtime.  
-- Ecrãs de suporte ou “copiar diagnóstico” podem expor JSON resumido — com confirmação e sem dados proibidos (§12); o conteúdo deve respeitar a política de extrato (§14.1).
+- Telas de suporte ou “copiar diagnóstico” podem expor JSON resumido — com confirmação e sem dados proibidos (§12); o conteúdo deve respeitar a política de extrato (§14.1).
 
 ---
 
 # 18. Retenção conceitual
 
 - **Proporcional** ao valor e ao risco: logs de execução longos exigem política de rotação — não crescimento indefinido sem limite documentado.  
-- Cloud e Player podem diferir: auditoria comercial pode reter mais que ficheiro local — desde que compliance e custo estejam alinhados.  
+- Cloud e Player podem diferir: auditoria comercial pode reter mais que arquivo local — desde que compliance e custo estejam alinhados.  
 - Números exatos (dias, GB) ficam fora desta spec até definição de produto ou ADR.
 
 ---
 
 # 19. Anti-padrões do logging
 
-1. Logar só em consola sem persistência no Player para eventos críticos.  
-2. Duplicar estado canónico no log como fonte de verdade (§3).  
+1. Logar só no console sem persistência no Player para eventos críticos.  
+2. Duplicar estado canônico no log como fonte de verdade (§3).  
 3. Um único nível de severidade para tudo.  
 4. IDs opacos sem correlação (§10).  
 5. Exportar logs com PII sem consentimento ou política.  

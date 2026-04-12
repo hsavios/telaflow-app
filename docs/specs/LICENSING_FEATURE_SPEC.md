@@ -1,4 +1,4 @@
-# TelaFlow — Especificação Funcional do Licenciamento (LICENSING_FEATURE_SPEC)
+﻿# TelaFlow — Especificação Funcional do Licenciamento (LICENSING_FEATURE_SPEC)
 
 **Versão:** 1.0.1  
 **Status:** Documento normativo — referência para **emissão**, **vínculo ao Pack e export**, **validade**, **validação offline**, **comportamento no Player**, **falhas**, **UX** e **auditoria** do licenciamento no ecossistema TelaFlow  
@@ -7,7 +7,7 @@
 
 **Hierarquia normativa:** Este documento é **derivado e subordinado** a, **nesta ordem**: [PRODUCT_SPEC.md](./PRODUCT_SPEC.md), [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md), [UI_SPEC.md](./UI_SPEC.md), [EVENT_EDITOR_FEATURE_SPEC.md](./EVENT_EDITOR_FEATURE_SPEC.md), [PRE_FLIGHT_FEATURE_SPEC.md](./PRE_FLIGHT_FEATURE_SPEC.md), [PACK_EXPORT_FEATURE_SPEC.md](./PACK_EXPORT_FEATURE_SPEC.md), [PLAYER_RUNTIME_FEATURE_SPEC.md](./PLAYER_RUNTIME_FEATURE_SPEC.md). Em caso de ambiguidade ou conflito aparente, **prevalece** o documento mais acima na lista; o módulo de licenciamento deve ser ajustado (via revisão deste arquivo e **ADR** quando couber) para restabelecer alinhamento.
 
-**Escopo:** comportamento funcional e contrato do licenciamento — **sem código**, **sem DDL**, **sem detalhes criptográficos de implementação**. Formatos de ficheiro, curvas e rotação de chaves pertencem a especificações derivadas e `shared-contracts`, desde que obedeçam a este documento e à **ARCHITECTURE_SPEC** §10.
+**Escopo:** comportamento funcional e contrato do licenciamento — **sem código**, **sem DDL**, **sem detalhes criptográficos de implementação**. Formatos de arquivo, curvas e rotação de chaves pertencem a especificações derivadas e `shared-contracts`, desde que obedeçam a este documento e à **ARCHITECTURE_SPEC** §10.
 
 ---
 
@@ -21,7 +21,7 @@ No TelaFlow, a licença não é um adereço comercial opcional: é parte do **co
 
 ## 1.1 Por que a licença é parte do produto
 
-Sem um artefato de **direito de uso** ligado ao Pack fechado, o TelaFlow não fecha o ciclo comercial + operacional: qualquer cópia de ficheiros poderia ser apresentada como “o evento”, sem âncora entre contrato, organização e instante de exportação. A licença materializa esse vínculo **dentro** do mesmo handoff que o operador leva ao palco.
+Sem um artefato de **direito de uso** ligado ao Pack fechado, o TelaFlow não fecha o ciclo comercial + operacional: qualquer cópia de arquivos poderia ser apresentada como “o evento”, sem âncora entre contrato, organização e instante de exportação. A licença materializa esse vínculo **dentro** do mesmo handoff que o operador leva ao palco.
 
 ## 1.2 Por que não é “só trava comercial”
 
@@ -69,7 +69,7 @@ O operador associa bloqueio a frustração no minuto crítico. A UX de licença 
 
 # 5. Estrutura conceitual mínima da licença
 
-Campos conceituais mínimos (nomes exatos no schema canónico):
+Campos conceituais mínimos (nomes exatos no schema canônico):
 
 | Campo | Função |
 |-------|--------|
@@ -93,7 +93,7 @@ Campos conceituais mínimos (nomes exatos no schema canónico):
 | **`organization_id`** | **Fixo** enquanto o direito se refere **àquela** organização contratual; **não** “renumera” entre emissões — **é** o tenant **do** Pack **exportado**. |
 | **`event_id`** | Identifica o evento **daquele** snapshot; novo export após alteração material → novo `event_id` **se** o modelo de dados assim evoluir, **mas** **sempre** coerente com `event.json`. |
 
-**Motivo:** suporte, auditoria e engine **fecham** uma **única** interpretação: **duas** linhas de licença **não** partilham `license_id`; **dois** exports **não** partilham `export_id`; **mistura** de org **não** é **“meio** **válida”**.
+**Motivo:** suporte, auditoria e engine **fecham** uma **única** interpretação: **duas** linhas de licença **não** compartilham `license_id`; **dois** exports **não** compartilham `export_id`; **mistura** de org **não** é **“meio** **válida”**.
 
 ## 5.2 Evolução reservada do `scope` (não MVP obrigatório)
 
@@ -192,7 +192,7 @@ Alinhado ao [PRE_FLIGHT_FEATURE_SPEC.md](./PRE_FLIGHT_FEATURE_SPEC.md) §8 (grup
 
 ## 11.2 Severidades
 
-- **Bloqueante (recuperável ou fatal):** ausência de ficheiro esperado, assinatura inválida, expiração, mismatch de ids — conforme matriz do Pre-flight (fatalidade `recuperável` só se houver ação real no local; caso contrário fatal `blocked`).  
+- **Bloqueante (recuperável ou fatal):** ausência de arquivo esperado, assinatura inválida, expiração, mismatch de ids — conforme matriz do Pre-flight (fatalidade `recuperável` só se houver ação real no local; caso contrário fatal `blocked`).  
 - **Aviso:** tipicamente relógio suspeito ou campo opcional de política — sem impedir `ready` se o produto assim definir explicitamente (alinhar Pre-flight e esta spec).
 
 ---
@@ -214,7 +214,7 @@ O runtime não revalida a Cloud; pode assumir licença já aceite no último pre
 
 | Situação | Descrição |
 |----------|-----------|
-| **Licença ausente** | Ficheiro esperado não lido no Pack. |
+| **Licença ausente** | Arquivo esperado não lido no Pack. |
 | **Licença inválida** | Formato ilegível, claims incoerentes com schema, ou dados corrompidos. |
 | **Licença expirada** | Fora da janela `valid_from`–`valid_until` após comparação normalizada (§8.1); durante `executing` ver §8.4. |
 | **Assinatura inválida** | Falha criptográfica na verificação dos claims ou desalinhamento com `signature.sig`. |
@@ -231,7 +231,7 @@ Qualquer dessincronização entre claims da licença e `pack.json` / `event.json
 | Classificação | Quando |
 |---------------|--------|
 | **Fatal `blocked`** | Assinatura inválida, Pack adulterado em cadeia, `pack_version` incompatível combinado com licença — sem remediar sem novo Pack ou atualização do Player (Pre-flight §13; [PLAYER_RUNTIME_FEATURE_SPEC.md](./PLAYER_RUNTIME_FEATURE_SPEC.md) `blocked`). |
-| **Recuperável** | Cenários em que existe ação local clara (ex.: operador substitui ficheiro de Pack por versão íntegra nova) — ainda assim bloqueiam `ready` até resolvidos. |
+| **Recuperável** | Cenários em que existe ação local clara (ex.: operador substitui arquivo de Pack por versão íntegra nova) — ainda assim bloqueiam `ready` até resolvidos. |
 
 **Nota:** “Recuperável” não significa “aviso” — significa que existe caminho operacional sem mudar a lei do produto.
 
@@ -257,9 +257,9 @@ Qualquer dessincronização entre claims da licença e `pack.json` / `event.json
 
 ## 14.4 Visibilidade de `valid_until` (e janela de validade)
 
-O operador não deve descobrir a expiração só quando o sistema bloqueia. `valid_until` (e, quando útil, `valid_from`) deve estar visível em pelo menos um destes contextos: resumo ao carregar Pack / pré-execução, painel de estado pré-`ready`, ou secção acessível a partir do fluxo de pre-flight (alinhado ao [UI_SPEC.md](./UI_SPEC.md) — densidade calma, não alarme). Formato legível: data/hora em UTC com rótulo, ou hora local com indicação explícita do fuso — decisão de produto, desde que não haja ambiguidade.
+O operador não deve descobrir a expiração só quando o sistema bloqueia. `valid_until` (e, quando útil, `valid_from`) deve estar visível em pelo menos um destes contextos: resumo ao carregar Pack / pré-execução, painel de estado pré-`ready`, ou seção acessível a partir do fluxo de pre-flight (alinhado ao [UI_SPEC.md](./UI_SPEC.md) — densidade calma, não alarme). Formato legível: data/hora em UTC com rótulo, ou hora local com indicação explícita do fuso — decisão de produto, desde que não haja ambiguidade.
 
-**Proibição:** omitir intencionalmente a data limite na UI do Player para forçar contacto com suporte sem necessidade operacional.
+**Proibição:** omitir intencionalmente a data limite na UI do Player para forçar contato com suporte sem necessidade operacional.
 
 ---
 
@@ -303,7 +303,7 @@ Novo export → novo `export_id` → nova licença ligada àquele snapshot ([PAC
 **Não obrigatório no MVP** — evolução por ADR:
 
 - Refinar a grace operacional (§8.4): margem após `valid_until`, avisos antecipados, política para eventos multi-dia — sem contradizer a regra base de permitir concluir sessão em `executing`.  
-- Revalidação online opcional antes do show (renovação sem novo ficheiro físico — se algum dia existir, não pode tornar-se obrigatória para o núcleo offline).  
+- Revalidação online opcional antes do show (renovação sem novo arquivo físico — se algum dia existir, não pode tornar-se obrigatória para o núcleo offline).  
 - Revogação remota de licenças (lista de revogação opcional no Player — com cuidado de não introduzir dependência de rede no instante do show sem decisão explícita).
 
 ---

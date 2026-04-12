@@ -48,7 +48,7 @@ type Props = {
   onStartExecution: () => void;
   onSceneIndexChange: (index: number) => void;
   onFinishExecution: () => void;
-  /** Apenas em `executing`: anexa eventos ao registo JSONL (ex.: playback). */
+  /** Apenas em `executing`: anexa eventos ao registro JSONL (ex.: playback). */
   onAppendExecutionLog?: (entry: {
     level: ExecutionLogLevel;
     code: string;
@@ -135,7 +135,7 @@ export function PackLoadedWorkspace({
             nextBindings = { ...doc.data.bindings };
           }
         } catch {
-          /* ficheiro inválido — inicia vazio */
+          /* arquivo inválido — inicia vazio */
         }
       }
       onWorkspaceChange(sel, nextBindings);
@@ -144,7 +144,7 @@ export function PackLoadedWorkspace({
     }
   }, [onWorkspaceChange, packData.manifest.event_id, packData.manifest.export_id]);
 
-  const gravarBindings = useCallback(
+  const salvarBindings = useCallback(
     async (root: string, next: Record<string, string>) => {
       const doc = createEmptyBindingsFile(
         packData.manifest.event_id,
@@ -160,13 +160,13 @@ export function PackLoadedWorkspace({
     [packData.manifest.event_id, packData.manifest.export_id],
   );
 
-  const vincularFicheiro = useCallback(
+  const vincularArquivo = useCallback(
     async (mediaId: string) => {
       if (!workspaceRoot) return;
       const sel = await open({
         directory: false,
         multiple: false,
-        title: `Ficheiro para ${mediaId}`,
+        title: `Arquivo para ${mediaId}`,
       });
       if (sel === null || Array.isArray(sel)) return;
       setBinderBusy(true);
@@ -176,7 +176,7 @@ export function PackLoadedWorkspace({
           absoluteFile: sel,
         });
         const next = { ...bindings, [mediaId]: rel };
-        await gravarBindings(workspaceRoot, next);
+        await salvarBindings(workspaceRoot, next);
         onBindingsChange(next);
         await refreshExistencia();
       } catch (e) {
@@ -186,7 +186,7 @@ export function PackLoadedWorkspace({
         setBinderBusy(false);
       }
     },
-    [workspaceRoot, bindings, onBindingsChange, gravarBindings, refreshExistencia],
+    [workspaceRoot, bindings, onBindingsChange, salvarBindings, refreshExistencia],
   );
 
   const limparVinculo = useCallback(
@@ -194,11 +194,11 @@ export function PackLoadedWorkspace({
       if (!workspaceRoot) return;
       const next = { ...bindings };
       delete next[mediaId];
-      await gravarBindings(workspaceRoot, next);
+      await salvarBindings(workspaceRoot, next);
       onBindingsChange(next);
       await refreshExistencia();
     },
-    [workspaceRoot, bindings, onBindingsChange, gravarBindings, refreshExistencia],
+    [workspaceRoot, bindings, onBindingsChange, salvarBindings, refreshExistencia],
   );
 
   useEffect(() => {
@@ -288,7 +288,7 @@ export function PackLoadedWorkspace({
           para navegar e concluir; volta a <code>ready</code> mantendo o último pre-flight válido.
         </p>
         {runtimeKind === "executing" ? (
-          <p className="player-hint">Execução ativa — navegação e «Concluir execução» estão no painel lateral de operação.</p>
+          <p className="player-hint">Execução ativa — a navegação e o botão Concluir execução estão no painel lateral de operação.</p>
         ) : (
           <button type="button" disabled={runtimeKind !== "ready"} onClick={onStartExecution}>
             Iniciar roteiro (MVP)
@@ -299,9 +299,9 @@ export function PackLoadedWorkspace({
       <section className="player-section">
         <h3>Workspace local</h3>
         <p className="player-hint">
-          Escolha a pasta raiz onde estão (ou estarão) os ficheiros de mídia. Os bindings
+          Escolha a pasta raiz onde estão (ou estarão) os arquivos de mídia. Os bindings
           gravam-se em <code>.telaflow/media-bindings.json</code> com caminhos relativos a
-          essa raiz. O registo de execução JSONL usa <code>.telaflow/execution-log.jsonl</code>{" "}
+          essa raiz. O registro de execução JSONL usa <code>.telaflow/execution-log.jsonl</code>{" "}
           (workspace se existir; senão pasta do pack).
         </p>
         <button type="button" disabled={binderBusy} onClick={escolherWorkspace}>
@@ -313,7 +313,7 @@ export function PackLoadedWorkspace({
           </p>
         )}
         <button type="button" disabled={!workspaceRoot || binderBusy} onClick={refreshExistencia}>
-          Atualizar estado dos ficheiros
+          Atualizar estado dos arquivos
         </button>
       </section>
 
@@ -348,9 +348,9 @@ export function PackLoadedWorkspace({
                   <button
                     type="button"
                     disabled={!workspaceRoot || binderBusy}
-                    onClick={() => void vincularFicheiro(req.media_id)}
+                    onClick={() => void vincularArquivo(req.media_id)}
                   >
-                    Escolher ficheiro…
+                    Escolher arquivo…
                   </button>{" "}
                   <button
                     type="button"
@@ -377,7 +377,7 @@ export function PackLoadedWorkspace({
           disabled={preflightBusy || !podeCorrerPreflight}
           onClick={() => void executarPreflight()}
         >
-          {preflightBusy ? "A executar…" : "Executar checagens"}
+          {preflightBusy ? "Executando…" : "Executar checagens"}
         </button>
         {lastPreflight && (
           <div className="player-preflight-report">
@@ -404,15 +404,15 @@ export function PackLoadedWorkspace({
       </section>
 
       <section className="player-section">
-        <h3>Registo de execução (MVP)</h3>
+        <h3>Registro de execução (MVP)</h3>
         {runtimeKind === "executing" ? (
           <details className="player-exec-details">
-            <summary>Mostrar registo JSONL (sessão atual)</summary>
+            <summary>Mostrar registro JSONL (sessão atual)</summary>
             <ExecutionLogPanel entries={executionLog} />
           </details>
         ) : (
           <p className="player-hint">
-            O ficheiro <code>.telaflow/execution-log.jsonl</code> regista{" "}
+            O arquivo <code>.telaflow/execution-log.jsonl</code> regista{" "}
             <code>execution_started</code>, <code>scene_activated</code> e{" "}
             <code>execution_finished</code> após iniciar o roteiro.
           </p>

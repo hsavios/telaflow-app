@@ -1,4 +1,4 @@
-# TelaFlow — Especificação do Modelo de Deployment (DEPLOYMENT_MODEL_SPEC)
+﻿# TelaFlow — Especificação do Modelo de Deployment (DEPLOYMENT_MODEL_SPEC)
 
 **Versão:** 1.0.1  
 **Status:** Documento normativo — referência para **implantação da Cloud**, **distribuição e atualização do Player**, **artefato de release**, **naming**, **rollback local**, **backups (BD + Packs)**, **renovação TLS**, **ambientes**, **compatibilidade Pack ↔ Player** e **evolução infraestrutural**  
@@ -22,7 +22,7 @@ Este documento fixa **estratégias distintas** para Cloud e Player, **desacoplam
 
 ## 1.1 Por que deployment é parte do produto
 
-Sem um modelo de deployment **explícito**, a equipa tende a **três** falhas que quebram a categoria de produto: (1) Cloud e Player **acoplados** por conveniência (o palco depende de API ao vivo); (2) **Pack** tratado como ficheiro qualquer (sem rastreio de `pack_version` nem canal oficial de Player); (3) **cliente sem TI** deixado com instaladores opacos ou atualizações que **invalidam** o evento sem narrativa. O deployment **traduz** [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §3 em **realidade operacional**: onde corre o SaaS, como chega o binário, como se **atualiza** sem violar **Cloud → Pack → Player**.
+Sem um modelo de deployment **explícito**, a equipa tende a **três** falhas que quebram a categoria de produto: (1) Cloud e Player **acoplados** por conveniência (o palco depende de API ao vivo); (2) **Pack** tratado como arquivo qualquer (sem rastreio de `pack_version` nem canal oficial de Player); (3) **cliente sem TI** deixado com instaladores opacos ou atualizações que **invalidam** o evento sem narrativa. O deployment **traduz** [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §3 em **realidade operacional**: onde corre o SaaS, como chega o binário, como se **atualiza** sem violar **Cloud → Pack → Player**.
 
 ## 1.2 Por que Cloud e Player exigem estratégias diferentes
 
@@ -46,7 +46,7 @@ A **Cloud** é **serviço contínuo**: deploy em servidor controlado pela equipa
 ## 3.1 Infraestrutura inicial
 
 - **VPS** (máquina virtual dedicada ou equivalente simples) como **alojamento inicial** de produção — suficiente para Next.js, FastAPI e PostgreSQL em topologia coerente com §4, **sem** exigir orquestração distribuída no MVP.  
-- **Domínio principal da aplicação:** **app.telaflow.ia.br** — único **canónico** para o SaaS de autoria e export ([PACK_EXPORT_FEATURE_SPEC.md](./PACK_EXPORT_FEATURE_SPEC.md) cabeçalho; [UI_SPEC.md](./UI_SPEC.md) cabeçalho).  
+- **Domínio principal da aplicação:** **app.telaflow.ia.br** — único **canônico** para o SaaS de autoria e export ([PACK_EXPORT_FEATURE_SPEC.md](./PACK_EXPORT_FEATURE_SPEC.md) cabeçalho; [UI_SPEC.md](./UI_SPEC.md) cabeçalho).  
 - **Produção:** ambiente **nomeado** e **isolado** de credenciais e dados reais de clientes; deploy **controlado** (§10).  
 - **Staging mínimo:** **recomendado** — réplica **funcional** (não necessariamente escala idêntica) para validar export, auth e regressões **antes** de promover a produção; se **ausente** por restrição temporária, o risco deve ser **consciente** e **mitigado** por checklist de release (fora do âmbito normativo detalhado aqui).
 
@@ -75,7 +75,7 @@ Conceitualmente, a Cloud **MVP** organiza-se em camadas **lógicas** (implementa
 # 5. Papel do domínio oficial
 
 - **app.telaflow.ia.br** — **único** domínio normativo do **SaaS** TelaFlow Cloud no MVP: autenticação, API pública estável, downloads **oficiais** do Player quando expostos por essa origem (§7).  
-- **Landing institucional** — **separada** do app (outro host ou subdomínio de marketing): comunicação, SEO, contacto; **não** confundir com o painel de evento. Redirecionamentos e cookies devem respeitar **política de segurança** (sem partilhar sessão de app com site público de forma negligente).  
+- **Landing institucional** — **separada** do app (outro host ou subdomínio de marketing): comunicação, SEO, contato; **não** confundir com o painel de evento. Redirecionamentos e cookies devem respeitar **política de segurança** (sem compartilhar sessão de app com site público de forma negligente).  
 - **Clareza para o cliente:** documentação e suporte referem **explicitamente** o domínio de **trabalho** (app) vs **marketing** (landing).
 
 ---
@@ -114,7 +114,7 @@ A **primeira entrega oficial** do Player ao cliente **deve** adotar **um** dos f
 
 ## 7.1 Convenção oficial de naming dos artefatos do Player
 
-Cada ficheiro publicado no canal oficial **deve** seguir padrão **estável** para suporte, tickets e scripts internos:
+Cada arquivo publicado no canal oficial **deve** seguir padrão **estável** para suporte, tickets e scripts internos:
 
 **Padrão normativo:** `telaflow-player-{semver}-{os}-{arch}.{ext}`
 
@@ -129,7 +129,7 @@ Cada ficheiro publicado no canal oficial **deve** seguir padrão **estável** pa
 - `{semver}` alinhado à versão em “Sobre” no Player e ao changelog (§7).  
 - `{os}` e `{arch}` em **minúsculas** e vocabulário **fixo** (`win`, `macos`, `linux`; `x64`, `aarch64`, …) — lista fechada definida em documentação operacional derivada.  
 - **Extensão** `.ext` reflete o artefato real (instalador vs zip oficial §6.3).  
-- **Não** reutilizar o **mesmo** nome de ficheiro para duas builds **diferentes** (evita cache CDN/browser e confusão forense).
+- **Não** reutilizar o **mesmo** nome de arquivo para duas builds **diferentes** (evita cache CDN/browser e confusão forense).
 
 ---
 
@@ -192,7 +192,7 @@ Isto aplica-se **em especial** enquanto o update for **manual** (§9.1); permane
 | Componente | Pode evoluir como | Limite |
 |-------------|-------------------|--------|
 | **Cloud** | Deploy frequente de UI e API | **Não** reescreve Packs antigos; novos exports obedecem a `pack_version` e política de licença. |
-| **Pack** | **Imutável** após geração; nova revisão = novo `export_id` ([PACK_EXPORT_FEATURE_SPEC.md](./PACK_EXPORT_FEATURE_SPEC.md)) | Contrato **congelado** no ficheiro. |
+| **Pack** | **Imutável** após geração; nova revisão = novo `export_id` ([PACK_EXPORT_FEATURE_SPEC.md](./PACK_EXPORT_FEATURE_SPEC.md)) | Contrato **congelado** no arquivo. |
 | **Player** | Releases menos frequentes; matriz explícita `pack_version` ↔ build | **Deve** recusar o que não entende; **deve** declarar versão visível ao suporte ([AUDIT_LOGGING_SPEC.md](./AUDIT_LOGGING_SPEC.md) §16). |
 
 **Regra:** a **verdade** do que vai ao palco está no **Pack** + **Player** instalado + **workspace** local; a Cloud **não** participa da decisão frame a frame.
@@ -250,16 +250,16 @@ O produto **começa** em **VPS simples** — alinhado a [MVP_IMPLEMENTATION_PLAN
 ## 15.2 Backups da base de dados (PostgreSQL)
 
 - Cadência e retenção **definidas** (fora de números nesta spec); **teste de restauro** periódico como obrigação **conceitual**.  
-- Conteúdo inclui metadados de eventos, **registos de export** (`export_id`, atores, ligações a licença — [AUDIT_LOGGING_SPEC.md](./AUDIT_LOGGING_SPEC.md), [PACK_EXPORT_FEATURE_SPEC.md](./PACK_EXPORT_FEATURE_SPEC.md)).
+- Conteúdo inclui metadados de eventos, **registros de export** (`export_id`, atores, ligações a licença — [AUDIT_LOGGING_SPEC.md](./AUDIT_LOGGING_SPEC.md), [PACK_EXPORT_FEATURE_SPEC.md](./PACK_EXPORT_FEATURE_SPEC.md)).
 
 ## 15.3 Artefatos de export (Pack) na Cloud
 
-A Cloud **não** armazena **mídia binária** do cliente no MVP ([ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §3.1); o **artefato Pack** (ficheiro exportado — tipicamente arquivo com JSON, manifesto, assinatura) **é** entretanto **ativo operacional e comercial** distinto da mídia do show.
+A Cloud **não** armazena **mídia binária** do cliente no MVP ([ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §3.1); o **artefato Pack** (arquivo exportado — tipicamente arquivo com JSON, manifesto, assinatura) **é** entretanto **ativo operacional e comercial** distinto da mídia do show.
 
 **Política mínima:**
 
 - **Rastreio** de cada export emitido na BD e logs de auditoria — **obrigatório** (já normativo nas specs de export e logging).  
-- **Retenção do ficheiro Pack** gerado pela operação de export: a Cloud **deve** poder **recuperar** o artefato exportado por um período **definido** (produto/compliance) — disco gerido no VPS, object storage, ou política equivalente — para **suporte** (“reenviar o mesmo `export_id`”), **disputas** e **reprodução** de incidentes **sem** exigir que o cliente seja a única cópia.  
+- **Retenção do arquivo Pack** gerado pela operação de export: a Cloud **deve** poder **recuperar** o artefato exportado por um período **definido** (produto/compliance) — disco gerido no VPS, object storage, ou política equivalente — para **suporte** (“reenviar o mesmo `export_id`”), **disputas** e **reprodução** de incidentes **sem** exigir que o cliente seja a única cópia.  
 - **Não** substitui o Pack na mão do operador no palco; **complementa** a governança na origem.
 
 Prazos e custo de armazenamento ficam fora desta spec; a **obrigação conceitual** é: **BD sozinha não basta** se o suporte não conseguir aceder ao **blob** do export dentro da política acordada.
@@ -292,7 +292,7 @@ Assinatura de binário **quando** plataforma o permitir; política de **workspac
 6. **Certificados** inválidos ou misturar **cookies** de sessão entre domínios de marketing e app sem política.  
 7. **Packs** servidos por **canal paralelo** (email de JSON “extra”) como substituto do export governado ([PACK_EXPORT_FEATURE_SPEC.md](./PACK_EXPORT_FEATURE_SPEC.md) §3).  
 8. **Kubernetes** ou multi-região **antes** de VPS simples justificar limites.  
-9. **Apenas backup de BD** sem política de **retenção do artefato Pack** exportado quando o suporte precisa do ficheiro (§15.3).  
+9. **Apenas backup de BD** sem política de **retenção do artefato Pack** exportado quando o suporte precisa do arquivo (§15.3).  
 10. **Renovação TLS** confiada a lembrete humano **sem** monitorização nem automatismo (§15.1).  
 11. **Remover** releases antigas do Player do canal oficial de forma que **rollback** (§9.3) seja impossível sem pedido manual à engenharia.
 

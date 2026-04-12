@@ -1,4 +1,4 @@
-# TelaFlow — Especificação Funcional do Event Editor (EVENT_EDITOR_FEATURE_SPEC)
+﻿# TelaFlow — Especificação Funcional do Event Editor (EVENT_EDITOR_FEATURE_SPEC)
 
 **Versão:** 1.1  
 **Status:** Documento normativo — referência para frontend, backend, modelo de interação, validações, estados e persistência do **módulo Event Editor** na TelaFlow Cloud  
@@ -61,7 +61,7 @@ Disciplina **reduz** três riscos simultâneos: (1) **deriva** para canvas ou ti
 
 ## 4.1 Scene como unidade mínima de trabalho
 
-Dentro do Event Editor, a **Scene** é a **unidade central de trabalho** do utilizador: pensa-se o palco **passo a passo**, não “o evento” como blob. O **Evento** permanece unidade de **negócio** e de **export** (PRODUCT_SPEC §5.4); a **Scene** é a unidade em que **autoria e revisão** são **acionáveis**.
+Dentro do Event Editor, a **Scene** é a **unidade central de trabalho** do usuário: pensa-se o palco **passo a passo**, não “o evento” como blob. O **Evento** permanece unidade de **negócio** e de **export** (PRODUCT_SPEC §5.4); a **Scene** é a unidade em que **autoria e revisão** são **acionáveis**.
 
 ## 4.2 O que é Scene
 
@@ -73,7 +73,7 @@ Apenas o que o **schema** de Scene permitir: referência a **mídia principal** 
 
 ## 4.4 O que Scene não contém
 
-- Ficheiros binários de mídia do cliente.  
+- Arquivos binários de mídia do cliente.  
 - Regras completas de sorteio **duplicadas** (a verdade é **DrawConfig**).  
 - Layout pixel a pixel, animação keyframe livre ou árvore de nós arbitrária.  
 - Caminhos absolutos de disco (ARCHITECTURE_SPEC — mídia na workspace no Player).
@@ -92,44 +92,44 @@ Campos **conceituais** mínimos; nomes técnicos exatos podem variar na implemen
 |-------|-------------|-----------|
 | **Nome** | Sim | Identificação humana na lista e no suporte (“Intervalo — patrocinador X”). |
 | **Ordem** | Sim | Posição no roteiro; determina sequência no Pack e no Player. |
-| **Tipo** | Sim | Enum de tipo de Scene (secção 6); restringe campos e preview **e** guia validação. |
+| **Tipo** | Sim | Enum de tipo de Scene (seção 6); restringe campos e preview **e** guia validação. |
 | **Mídia principal (opcional)** | Não | Referência a **zero ou um** `MediaRequirement` / slot adequado ao tipo; ausência pode ser válida conforme tipo. |
 | **Sponsor slots (opcionais)** | Não | Referências a slots de patrocinador **previstos** pelo tipo/produto; **não** CRM. |
 | **Trigger de sorteio (opcional)** | Não | Referência a **um** `DrawConfig` do mesmo Evento; ausente = Scene não dispara sorteio. |
 | **Observações internas (opcional)** | Não | Texto **só** para equipa (notas de produção); **não** exportado para texto público no telão salvo decisão futura explícita no PRODUCT_SPEC. |
 
-**Regras:** combinações **tipo × campos** inválidas entram na matriz de validação (secção 16); o backend **rejeita** persistência incoerente (ARCHITECTURE_SPEC — validação server-side).
+**Regras:** combinações **tipo × campos** inválidas entram na matriz de validação (seção 16); o backend **rejeita** persistência incoerente (ARCHITECTURE_SPEC — validação server-side).
 
 ## 5.1 Ordem persistida e renormalização
 
-A **ordem** no roteiro **não** é apenas derivada da posição em memória de um array na sessão: **deve** existir um campo **persistido** por Scene (ex.: `sort_order` — inteiro) que define a **sequência canónica** exportada para o Pack e consumida pelo Player.
+A **ordem** no roteiro **não** é apenas derivada da posição em memória de um array na sessão: **deve** existir um campo **persistido** por Scene (ex.: `sort_order` — inteiro) que define a **sequência canônica** exportada para o Pack e consumida pelo Player.
 
 | Regra | Conteúdo |
 |-------|-----------|
 | **Fonte de verdade** | O valor **persistido** `sort_order` (ou equivalente) é o que o **export** e o **backend** usam; a UI **reflete** esse valor. |
 | **Reorder** | Após drag-and-drop ou ação “mover para cima/baixo”, o cliente **persiste** a nova ordenação; **não** confiar só em ordem transitória na lista sem save. |
 | **Renormalização controlada** | Após reordenar, o sistema **pode** reatribuir inteiros **contíguos** (1…N) ou com **gaps** (0, 10, 20…) para reduzir reescritas — decisão de implementação, mas **deve** ser **determinística** e **documentada** (uma política por produto, não ad hoc por tela). |
-| **Concorrência** | Duas sessões **não** devem corromper ordem sem estratégia de versão/lock (secção 18.4). |
+| **Concorrência** | Duas sessões **não** devem corromper ordem sem estratégia de versão/lock (seção 18.4). |
 | **Invariante** | Para um dado Evento, `sort_order` **único** por Scene (sem empates persistidos); empate é **bug** de export. |
 
 **Motivo:** evita “fantasmas” de ordem entre refresh, falha de rede a meio do DnD e bugs de **lista visual ≠ Pack**.
 
 ## 5.2 Lifecycle derivado da Scene (estado normativo)
 
-O **estado de lifecycle** da Scene **não** é campo editável pelo utilizador: é **sempre derivado** das **regras de validação** (secção 16) e dos **pré-requisitos mínimos** abaixo. O mesmo valor **deve** ser computável no **backend** e **espelhado** na UI (lista, inspector, export-readiness). Isto **uniformiza** lista visual, gate de export, UX e **debug** (logs e suporte falam a mesma língua).
+O **estado de lifecycle** da Scene **não** é campo editável pelo usuário: é **sempre derivado** das **regras de validação** (seção 16) e dos **pré-requisitos mínimos** abaixo. O mesmo valor **deve** ser computável no **backend** e **espelhado** na UI (lista, inspector, export-readiness). Isto **uniformiza** lista visual, gate de export, UX e **debug** (logs e suporte falam a mesma língua).
 
 **Estados formais (exclusivos por Scene):**
 
 | Estado | Definição normativa | Implicação na lista / export |
 |--------|---------------------|------------------------------|
-| **`draft`** | Scene **ainda não** atinge o **mínimo editorial** para avaliação completa de negócio: em geral **nome** em falta ou inválido (vazio/só espaços), ou **tipo** não definido, ou registo recém-criado **antes** do primeiro commit válido desses campos. | Indicador “Rascunho”; **export** do evento **bloqueado** enquanto existir Scene em `draft` (tratada como bloqueante agregada). |
-| **`blocked`** | Mínimo editorial OK, mas existe **pelo menos uma** regra **bloqueante** **a nível desta Scene** (secção 16 — ex.: tipo `draw` sem trigger, referência a `DrawConfig` ou `MediaRequirement` inexistente, combinação tipo × campo proibida). | Chip/ícone **bloqueante**; export **impossível** até resolver. |
-| **`warning`** | **Nenhuma** regra bloqueante nesta Scene, mas **pelo menos um** **aviso** (secção 16 — ex.: tipo `sponsor` sem slots, política de “slot obrigatório global não referenciado” se for aviso). | Lista mostra aviso; export pode ser **permitido** ou **negado** conforme **política global do módulo export** — o estado da Scene comunica **risco local** de forma estável. |
+| **`draft`** | Scene **ainda não** atinge o **mínimo editorial** para avaliação completa de negócio: em geral **nome** ausente ou inválido (vazio/só espaços), ou **tipo** não definido, ou registro recém-criado **antes** do primeiro commit válido desses campos. | Indicador “Rascunho”; **export** do evento **bloqueado** enquanto existir Scene em `draft` (tratada como bloqueante agregada). |
+| **`blocked`** | Mínimo editorial OK, mas existe **pelo menos uma** regra **bloqueante** **a nível desta Scene** (seção 16 — ex.: tipo `draw` sem trigger, referência a `DrawConfig` ou `MediaRequirement` inexistente, combinação tipo × campo proibida). | Chip/ícone **bloqueante**; export **impossível** até resolver. |
+| **`warning`** | **Nenhuma** regra bloqueante nesta Scene, mas **pelo menos um** **aviso** (seção 16 — ex.: tipo `sponsor` sem slots, política de “slot obrigatório global não referenciado” se for aviso). | Lista mostra aviso; export pode ser **permitido** ou **negado** conforme **política global do módulo export** — o estado da Scene comunica **risco local** de forma estável. |
 | **`ready`** | **Nenhum** bloqueante e **nenhum** aviso aplicável a esta Scene. | Chip “Pronta”; contribui para evento **pronto para export** (outras áreas do evento podem ainda bloquear). |
 
 **Prioridade de cálculo (de cima para baixo):** se aplicável `draft` → senão se aplicável `blocked` → senão se aplicável `warning` → senão `ready`.
 
-**Nota:** o **lifecycle da Scene** é **ortogonal** à máquina de estados do **Player** (ARCHITECTURE_SPEC §14.0), mas a **semântica** “bloqueante / aviso / pronto” **deve** alinhar-se à linguagem do **pre-flight** e da **UI_SPEC** para o utilizador não aprender dois vocabulários.
+**Nota:** o **lifecycle da Scene** é **ortogonal** à máquina de estados do **Player** (ARCHITECTURE_SPEC §14.0), mas a **semântica** “bloqueante / aviso / pronto” **deve** alinhar-se à linguagem do **pre-flight** e da **UI_SPEC** para o usuário não aprender dois vocabulários.
 
 ---
 
@@ -150,7 +150,7 @@ Os valores **no contrato** (`shared-contracts`, JSON exportado) são **em inglê
 
 ## 6.2 Por que tipos controlados
 
-- **UX:** o utilizador **escolhe intenção**, não monta estrutura do zero — menos decisões vazias.  
+- **UX:** o usuário **escolhe intenção**, não monta estrutura do zero — menos decisões vazias.  
 - **Export:** cada tipo **mapeia** para expectativas claras no `event.json` e no runtime.  
 - **Validação:** regras **por tipo** (ex.: `draw` sem trigger = incoerência).  
 - **Produto:** evita **categoria errada** (mini PowerPoint) e **saco de JSON** (ARCHITECTURE_SPEC §6.7).
@@ -163,20 +163,20 @@ Novos tipos **exigem** revisão desta spec + **PRODUCT_SPEC** se impactarem prom
 
 # 7. Fluxo de trabalho dentro do editor
 
-Fluxo **operacional** ideal (não wizard obrigatório — o utilizador pode saltar entre secções da subnave, mas **este** é o caminho mental recomendado):
+Fluxo **operacional** ideal (não wizard obrigatório — o usuário pode saltar entre seções da subnave, mas **este** é o caminho mental recomendado):
 
 1. **Criar evento** (metadados mínimos fora ou no topo do editor — nome, datas, org).  
 2. **Associar BrandTheme** ao evento (ou confirmar padrão da org).  
-3. **Criar primeira Scene** — preferencialmente via **criação rápida** (secção 7.1): **tipo** obrigatório imediato, **nome** sugerido, **foco** no campo certo; posição inicial conforme `sort_order` persistido (secção 5.1).  
-4. **Ordenar Scenes** — arrastar para refletir o roteiro real; persistir `sort_order` com **renormalização controlada** (secção 5.1).  
+3. **Criar primeira Scene** — preferencialmente via **criação rápida** (seção 7.1): **tipo** obrigatório imediato, **nome** sugerido, **foco** no campo certo; posição inicial conforme `sort_order` persistido (seção 5.1).  
+4. **Ordenar Scenes** — arrastar para refletir o roteiro real; persistir `sort_order` com **renormalização controlada** (seção 5.1).  
 5. **Editar cada Scene** — mídia principal, slots, trigger, conforme tipo.  
-6. **Declarar MediaRequirements** (vista global ou por Scene) — slots com `media_id`, obrigatoriedade, tipo de ficheiro.  
+6. **Declarar MediaRequirements** (vista global ou por Scene) — slots com `media_id`, obrigatoriedade, tipo de arquivo.  
 7. **Configurar DrawConfigs** no módulo de sorteios; **ligar** triggers nas Scenes adequadas.  
 8. **Rever sequência** — percorrer lista como “storyboard lógico” (sem ser vídeo).  
-9. **Validar consistência** — indicadores de completude (secção 17); corrigir **avisos** e **bloqueantes** de export.  
+9. **Validar consistência** — indicadores de completude (seção 17); corrigir **avisos** e **bloqueantes** de export.  
 10. **Exportar Pack** — ação **fora** do núcleo do editor mas **dependente** do estado que o editor **mantém** coerente.
 
-O editor **deve** permitir **saltos** (ex.: definir mídia global antes de fechar todas as Scenes), mas **não** **esconder** dependências (secção 10).
+O editor **deve** permitir **saltos** (ex.: definir mídia global antes de fechar todas as Scenes), mas **não** **esconder** dependências (seção 10).
 
 ## 7.1 Criação rápida de Scene (“Nova Scene”)
 
@@ -184,11 +184,11 @@ Regra **normativa** de UX: adicionar Scene **não** pode ser um clique que deixa
 
 | Requisito | Comportamento |
 |-----------|----------------|
-| **Tipo obrigatório imediato** | Ao “Nova Scene”, o utilizador **deve** escolher o **tipo** **antes** ou **no mesmo passo** de criação (modal compacto, step inline ou picker lateral). **Proibido** criar Scene **sem** tipo persistido. |
+| **Tipo obrigatório imediato** | Ao “Nova Scene”, o usuário **deve** escolher o **tipo** **antes** ou **no mesmo passo** de criação (modal compacto, step inline ou picker lateral). **Proibido** criar Scene **sem** tipo persistido. |
 | **Nome sugerido** | Preencher **automaticamente** um nome editável, ex.: `{Tipo} {n+1}` (“Intervalo 3”, “Institucional 2”) com base na contagem **por tipo** ou global — política **uma** por produto, documentada. |
 | **Foco automático** | Após criar, foco no **nome** (para renomear rápido) **ou** no primeiro campo incomum obrigatório do tipo — preferência MVP: **foco no nome**. |
 | **Ordem** | Nova Scene recebe `sort_order` **explícito** (ex.: após a selecionada ou no fim da lista) e **persistido** na mesma ação. |
-| **Estado inicial** | Tipicamente **`draft`** até nome válido + consistência mínima; depois o derivado atualiza (secção 5.2). |
+| **Estado inicial** | Tipicamente **`draft`** até nome válido + consistência mínima; depois o derivado atualiza (seção 5.2). |
 
 Atalhos futuros (“duplicar última estrutura”) **exigem** ADR se alterarem esta regra.
 
@@ -203,7 +203,7 @@ Conforme **UI_SPEC** §15 e §9.5 — aqui **fixado** como layout **normativo** 
 | Zona | Papel | Peso visual |
 |------|--------|-------------|
 | **Coluna de Scenes** | Lista mestra ordenável; **seleção** única (salvo modo especial futuro). | **Alta** — sempre visível em desktop; âncora do contexto. |
-| **Painel principal** | Edição da Scene selecionada + preview interpretativo (secção 15). | **Máxima** — foco cognitivo. |
+| **Painel principal** | Edição da Scene selecionada + preview interpretativo (seção 15). | **Máxima** — foco cognitivo. |
 | **Inspector lateral (opcional)** | Metadados densos, atalhos, lista de dependências, validação resumida. | **Média** — secundário ao painel; colapsável **se** UI_SPEC permitir em breakpoints. |
 
 ## 8.2 Cabeçalho do editor
@@ -213,7 +213,7 @@ Fixo: **nome do evento**, estado de rastro (guardado / a guardar), **atalho Expo
 ## 8.3 Prioridade de leitura
 
 1. Nome da Scene atual + tipo.  
-2. Campos **obrigatórios** ou **em falta** para export.  
+2. Campos **obrigatórios** ou **ausentes** para export.  
 3. Preview.  
 4. Detalhe fino no inspector.
 
@@ -228,9 +228,9 @@ Fixo: **nome do evento**, estado de rastro (guardado / a guardar), **atalho Expo
 
 ## 9.1 Ordenação
 
-- **Ordem** = ordem de execução no Player = campo **`sort_order` persistido** (secção **5.1**), **não** só ordem transitória na vista.  
-- Mudança de ordem **persiste** imediatamente após gesto (sujeito a política de save — secção 18), com **renormalização** conforme política fixada.  
-- **Índice visível** opcional (“3 de 12”) para orientação — o índice reflete a **ordem canónica**, não uma ordenação local de UI.
+- **Ordem** = ordem de execução no Player = campo **`sort_order` persistido** (seção **5.1**), **não** só ordem transitória na vista.  
+- Mudança de ordem **persiste** imediatamente após gesto (sujeito a política de save — seção 18), com **renormalização** conforme política fixada.  
+- **Índice visível** opcional (“3 de 12”) para orientação — o índice reflete a **ordem canônica**, não uma ordenação local de UI.
 
 ## 9.2 Seleção
 
@@ -247,24 +247,24 @@ Duplicar cria uma **nova** Scene (novo `scene_id`) **abaixo** da original (ou po
 
 | Elemento | Política no MVP |
 |----------|-----------------|
-| **Referências a mídia principal** (`media_id` / `MediaRequirement`) | **Copiar** — a nova Scene aponta para os **mesmos** slots que a original. **Motivo:** reutilização intencional (mesma vinheta, etc.). O utilizador **pode** alterar depois. |
+| **Referências a mídia principal** (`media_id` / `MediaRequirement`) | **Copiar** — a nova Scene aponta para os **mesmos** slots que a original. **Motivo:** reutilização intencional (mesma vinheta, etc.). O usuário **pode** alterar depois. |
 | **Sponsor slots** | **Copiar** — mesmas referências a slots de patrocinador. |
 | **Overlays tipados** (se existirem no MVP) | **Copiar** a **configuração declarativa** (mesmos tipos/parâmetros permitidos), **não** criar novas entidades de overlay fora do modelo. |
-| **Trigger de sorteio** (`DrawConfig`) | **Não** duplicar a entidade **DrawConfig** (essa continua **uma** por id no Evento). **Por defeito:** **copiar a referência** (mesmo `draw_config_id`) **somente** após **confirmação explícita** na UI (modal ou passo de duplicação): explicar que **duas Scenes** passarão a **partilhar** o mesmo sorteio no roteiro e que o operador no palco **deve** saber **qual** momento dispara. **Alternativa** oferecida ao utilizador: **“Duplicar sem gatilho”** (referência **limpa** na cópia). **Proibido** copiar trigger **sem** o utilizador ver o aviso — evita erro silencioso em eventos com múltiplas Scenes `draw`. |
+| **Trigger de sorteio** (`DrawConfig`) | **Não** duplicar a entidade **DrawConfig** (essa continua **uma** por id no Evento). **Por padrão:** **copiar a referência** (mesmo `draw_config_id`) **somente** após **confirmação explícita** na UI (modal ou passo de duplicação): explicar que **duas Scenes** passarão a **compartilhar** o mesmo sorteio no roteiro e que o operador no palco **deve** saber **qual** momento dispara. **Alternativa** oferecida ao usuário: **“Duplicar sem gatilho”** (referência **limpa** na cópia). **Proibido** copiar trigger **sem** o usuário ver o aviso — evita erro silencioso em eventos com múltiplas Scenes `draw`. |
 | **Notas internas** | **Copiar** texto **ou** limpar — política **uma**; recomendado MVP: **copiar** para contexto de produção. |
 
 **Cena tipo `draw` duplicada com trigger mantido:** cumpre a tabela acima (aviso **obrigatório** se mantiver referência).
 
 ## 9.5 Exclusão — sem cascata em entidades donas
 
-- **Excluir Scene** remove **apenas** o registo da Scene e os **vínculos** dessa Scene (referências a mídia, patrocínio, trigger).  
+- **Excluir Scene** remove **apenas** o registro da Scene e os **vínculos** dessa Scene (referências a mídia, patrocínio, trigger).  
 - **Nunca**, no MVP, **excluir automaticamente** **DrawConfig** nem **MediaRequirement** por cascata a partir da exclusão de Scene. Essas entidades pertencem ao **Evento** ou ao catálogo de slots do evento; outras Scenes ou o manifesto global **podem** ainda precisar delas.  
 - **Efeito:** pode ficar **DrawConfig** “órfão” de uso no roteiro (aceitável — limpeza **manual** ou política futura de “sorteios não referenciados” como **aviso** na vista de sorteios). **Nunca** apagar silenciosamente sorteio ou slot de mídia.  
 - **Confirmação** na UI se a Scene tiver trigger ou slots preenchidos; microcopy **operacional** (UI_SPEC §14), listando o que **não** será apagado (DrawConfig / slots permanecem).
 
 ## 9.6 Estados visuais por linha (lifecycle derivado)
 
-A lista **deve** exibir o **lifecycle** da secção **5.2**, **não** apenas “completo/incompleto” genérico:
+A lista **deve** exibir o **lifecycle** da seção **5.2**, **não** apenas “completo/incompleto” genérico:
 
 | Lifecycle | Tratamento visual (UI_SPEC alinhado) |
 |-----------|--------------------------------------|
@@ -306,7 +306,7 @@ Exibir **em blocos** (fieldsets semânticos — UI_SPEC §8.5):
 ## 10.3 Dependências
 
 - Se um slot de mídia **ainda não** existe na lista global de `MediaRequirements`, **mostrar** call-to-action **“Criar slot”** ou link para vista de mídia — **não** falhar em silêncio.  
-- Se `DrawConfig` referenciado **for removido**, Scene entra em estado **incoerente** — **bloqueante** ou **aviso** forte (secção 16).
+- Se `DrawConfig` referenciado **for removido**, Scene entra em estado **incoerente** — **bloqueante** ou **aviso** forte (seção 16).
 
 ---
 
@@ -324,7 +324,7 @@ Exibir **em blocos** (fieldsets semânticos — UI_SPEC §8.5):
 ## 11.3 Que informação vai no inspector
 
 - **IDs** legíveis (`scene_id` interno, `media_id` ligados).  
-- **Resumo de validação** e **lifecycle** derivado (`draft` / `blocked` / `warning` / `ready` — secção 5.2).  
+- **Resumo de validação** e **lifecycle** derivado (`draft` / `blocked` / `warning` / `ready` — seção 5.2).  
 - **Atalhos:** “Ir para mídia”, “Ir para sorteio”.  
 - **Histórico** de alterações **não** obrigatório no MVP — se existir, spec separada.
 
@@ -352,7 +352,7 @@ O **Evento** referencia **BrandTheme** (snapshot no export — ARCHITECTURE_SPEC
 
 # 13. Relação entre Scene e mídia
 
-## 13.1 Scene não guarda ficheiro
+## 13.1 Scene não guarda arquivo
 
 A Cloud **não** armazena blobs de mídia do cliente no MVP (ARCHITECTURE_SPEC §8). A Scene **nunca** contém binário.
 
@@ -362,7 +362,7 @@ A mídia “desta Scene” é **sempre** uma **referência** a um **slot** decla
 
 ## 13.3 Scene declara necessidade
 
-Ao escolher “mídia principal”, o utilizador **escolhe** um requisito **já** definido **ou** é guiado a **criar** requisito — a Scene **declara** **uso**, não **inventa** ficheiro. **Vários** tipos de Scene podem **partilhar** o mesmo `media_id` (ex.: vinheta repetida) — **consciente** e visível na lista global de mídia.
+Ao escolher “mídia principal”, o usuário **escolhe** um requisito **já** definido **ou** é guiado a **criar** requisito — a Scene **declara** **uso**, não **inventa** arquivo. **Vários** tipos de Scene podem **compartilhar** o mesmo `media_id` (ex.: vinheta repetida) — **consciente** e visível na lista global de mídia.
 
 ---
 
@@ -381,7 +381,7 @@ Ao escolher “mídia principal”, o utilizador **escolhe** um requisito **já*
 ## 14.3 Evitar acoplamento confuso
 
 - **Não** editar regras de pool, pesos ou participantes **dentro** do painel da Scene — só **ligação**.  
-- Tipo **sorteio** **sem** trigger = **incoerência** tratada na validação (secção 16).
+- Tipo **sorteio** **sem** trigger = **incoerência** tratada na validação (seção 16).
 
 ---
 
@@ -407,7 +407,7 @@ Comunica **hierarquia** (mídia principal vs overlay), **presença** de patrocin
 
 # 16. Validações do editor
 
-Validações **no cliente** para UX; **no servidor** para verdade (ARCHITECTURE_SPEC). Severidade alinhada a **export** e PRODUCT_SPEC. Cada regra **alimenta** o **lifecycle derivado** da Scene (secção **5.2**): bloqueantes → `blocked` (quando mínimo editorial satisfeito); avisos sem bloqueantes → `warning`; limpeza total → `ready`; mínimo não satisfeito → `draft`.
+Validações **no cliente** para UX; **no servidor** para verdade (ARCHITECTURE_SPEC). Severidade alinhada a **export** e PRODUCT_SPEC. Cada regra **alimenta** o **lifecycle derivado** da Scene (seção **5.2**): bloqueantes → `blocked` (quando mínimo editorial satisfeito); avisos sem bloqueantes → `warning`; limpeza total → `ready`; mínimo não satisfeito → `draft`.
 
 ## 16.1 Lista de regras (exemplos normativos)
 
@@ -426,7 +426,7 @@ Validações **no cliente** para UX; **no servidor** para verdade (ARCHITECTURE_
 
 ## 16.2 Aviso vs bloqueante
 
-- **Aviso:** permite **guardar** e **continuar** edição; **export** pode ou não ser permitido — **regra de negócio** unificada com módulo **export** (secção 19). Contribui para lifecycle **`warning`** quando não há bloqueantes na Scene.  
+- **Aviso:** permite **guardar** e **continuar** edição; **export** pode ou não ser permitido — **regra de negócio** unificada com módulo **export** (seção 19). Contribui para lifecycle **`warning`** quando não há bloqueantes na Scene.  
 - **Bloqueante:** **impede export** até resolução; UI **deve** mostrar **contagem** e **lista** (UI_SPEC — nunca só toast). Contribui para lifecycle **`blocked`** (ou evento agregado bloqueado se existir `draft`).  
 - **Pré-requisitos mínimos** (nome/tipo): contribuem para **`draft`** até cumpridos.
 
@@ -462,7 +462,7 @@ O comprador **vê** disciplina; o editor **não** esconde que o evento **não** 
 
 ## 18.1 Auto-save vs explícito
 
-**Norma MVP:** **auto-save** com **debounce** após alterações + indicador **“Guardado” / “A guardar…”** no cabeçalho (UI_SPEC — feedback explícito). **Botão “Guardar”** explícito **opcional** como **reassurance** e para utilizadores com rede instável — **não** substitui persistência automática se auto-save for adotado.
+**Norma MVP:** **auto-save** com **debounce** após alterações + indicador **“Guardado” / “Salvando…”** no cabeçalho (UI_SPEC — feedback explícito). **Botão “Guardar”** explícito **opcional** como **reassurance** e para usuários com rede instável — **não** substitui persistência automática se auto-save for adotado.
 
 ## 18.2 Quando persistir
 
@@ -490,9 +490,9 @@ O aggregate do Evento (Scenes ordenadas, referências, BrandTheme resolvido, Dra
 
 ## 19.2 O que o export exige do editor
 
-- **Zero** bloqueantes da matriz acordada (secção 16 + regras do módulo export).  
+- **Zero** bloqueantes da matriz acordada (seção 16 + regras do módulo export).  
 - **Identificadores** estáveis (`scene_id`, `media_id`, `draw_config_id`) **gerados** na Cloud **antes** ou no momento da criação da entidade — **não** reescrever ids ao exportar salvo migração versionada.  
-- **Ordem** de Scenes **explícita** via `sort_order` persistido (secção 5.1), **não** inferida só pela sessão.  
+- **Ordem** de Scenes **explícita** via `sort_order` persistido (seção 5.1), **não** inferida só pela sessão.  
 - **Snapshot** de branding **coerente** com PRODUCT_SPEC.
 
 ## 19.3 O que o editor não faz
@@ -511,12 +511,12 @@ O aggregate do Evento (Scenes ordenadas, referências, BrandTheme resolvido, Dra
 6. **Toast** como único feedback de **bloqueante** de export.  
 7. Permitir export **silencioso** com Scenes **vazias** de significado.  
 8. **Reordenar** sem persistir ou sem feedback.  
-9. **Duplicar** Scene com **partilha de trigger** de sorteio **sem** aviso explícito na UI nem opção **“Duplicar sem gatilho”** (viola secção 9.4).  
+9. **Duplicar** Scene com **compartilhamento do trigger** de sorteio **sem** aviso explícito na UI nem opção **“Duplicar sem gatilho”** (viola seção 9.4).  
 10. Ignorar validação **server-side** porque “o cliente já validou no browser”.  
-11. Ordenar Scenes **só** por posição em memória **sem** campo **`sort_order` persistido** e política de **renormalização** (viola secção 5.1).  
-12. **Excluir Scene** com **cascata** automática sobre **DrawConfig** ou **MediaRequirement** (viola secção 9.5).  
-13. Expor campo editável pelo utilizador para **“estado da Scene”** em desacordo com o **lifecycle derivado** (viola secção 5.2).  
-14. **“Nova Scene”** sem **tipo** obrigatório no momento da criação (viola secção 7.1).
+11. Ordenar Scenes **só** por posição em memória **sem** campo **`sort_order` persistido** e política de **renormalização** (viola seção 5.1).  
+12. **Excluir Scene** com **cascata** automática sobre **DrawConfig** ou **MediaRequirement** (viola seção 9.5).  
+13. Expor campo editável pelo usuário para **“estado da Scene”** em desacordo com o **lifecycle derivado** (viola seção 5.2).  
+14. **“Nova Scene”** sem **tipo** obrigatório no momento da criação (viola seção 7.1).
 
 ---
 

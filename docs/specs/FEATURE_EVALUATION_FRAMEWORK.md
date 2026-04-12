@@ -132,13 +132,13 @@ Toda feature deve gerar **pelo menos um sinal ou artefacto útil** — não nece
 
 Pergunta obrigatória:
 
-## Que dado ou registo nasce automaticamente disso?
+## Que dado ou registro nasce automaticamente disso?
 
 **Exemplos válidos (negócio / engagement):** taxa de participação, tempo de resposta, picos de uso declarados, distribuição por rodada — quando a feature for de interação mensurável.
 
 **Exemplos válidos (operacional / auditoria — TelaFlow):** resultado de pre-flight, transição de FSM registada, `export_id` / `run_id` correlacionáveis, linha de auditoria Cloud ([AUDIT_LOGGING_SPEC.md](./AUDIT_LOGGING_SPEC.md)) — quando a feature for de **confiabilidade** ou **governança**.
 
-Se **não** gera dado, registo ou estado auditável que justifique manutenção e suporte: **avaliar** se ainda justifica existir; forte candidato a **adiar** ou fundir noutra feature.
+Se **não** gera dado, registro ou estado auditável que justifique manutenção e suporte: **avaliar** se ainda justifica existir; forte candidato a **adiar** ou fundir noutra feature.
 
 ---
 

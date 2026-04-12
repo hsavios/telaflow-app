@@ -2,7 +2,7 @@
 
 **Estado:** pendente de redação  
 
-Este ficheiro será preenchido com fases de produto, marcos e relação com o MVP definido no [PRODUCT_SPEC](../specs/PRODUCT_SPEC.md).
+Este arquivo será preenchido com fases de produto, marcos e relação com o MVP definido no [PRODUCT_SPEC](../specs/PRODUCT_SPEC.md).
 
 ---
 

@@ -1,4 +1,4 @@
-# TelaFlow
+﻿# TelaFlow
 
 Monorepo da plataforma TelaFlow (Cloud web, API, Player desktop e contratos compartilhados).
 

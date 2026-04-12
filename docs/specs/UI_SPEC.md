@@ -1,4 +1,4 @@
-# TelaFlow — Especificação de Interface e Experiência (UI_SPEC)
+﻿# TelaFlow — Especificação de Interface e Experiência (UI_SPEC)
 
 **Versão:** 1.0  
 **Status:** Documento normativo — referência para design, UX, frontend visual e consistência entre Cloud e Player  
@@ -34,7 +34,7 @@ Interface genérica de “SaaS dashboard” **colide** com o PRODUCT_SPEC: o Tel
 
 - **Confiabilidade** aparece como **estados explícitos**, **mensagens acionáveis** e **ausência de surpresa** (nada “funciona até falhar” sem aviso).  
 - **Clareza** aparece como **hierarquia editorial** — um foco principal por visão, não dez pesos iguais.  
-- **Premium** aparece como **sobriedade disciplinada**, **ritmo** e **precisão**, não como brilho ou animação excessiva (secção 4).
+- **Premium** aparece como **sobriedade disciplinada**, **ritmo** e **precisão**, não como brilho ou animação excessiva (seção 4).
 
 ## 1.4 Redução de risco operacional
 
@@ -70,7 +70,7 @@ A interface **comunica** disciplina de produto: templates, tokens, manifesto —
 
 ### 2.7 Consistência entre Cloud e Player
 
-**Mesma semântica** para: bloqueante vs. aviso, “pronto para executar”, identidade do evento/Pack, códigos de erro de alto nível. **Mesma família tipográfica e lógica de cor semântica** (com adaptação de densidade — secção 18).
+**Mesma semântica** para: bloqueante vs. aviso, “pronto para executar”, identidade do evento/Pack, códigos de erro de alto nível. **Mesma família tipográfica e lógica de cor semântica** (com adaptação de densidade — seção 18).
 
 ### 2.8 Informação certa na hora certa
 
@@ -178,7 +178,7 @@ Cada área abaixo **deve** mapear para navegação e prioridade visual **coerent
 
 ### 5.4 Editor do evento
 
-- **Objetivo:** configurar **todo** o evento antes do Pack — coração do Cloud (secção 15 desta spec).  
+- **Objetivo:** configurar **todo** o evento antes do Pack — coração do Cloud (seção 15 desta spec).  
 - **Frequência:** muito alta para editors.  
 - **Prioridade:** **máxima**; layout de workspace com subnavegação clara.  
 - **Evitar:** timeline confusa ou canvas livre (PRODUCT_SPEC §14.3).
@@ -271,7 +271,7 @@ Cada área abaixo **deve** mapear para navegação e prioridade visual **coerent
 
 ### 6.4 Pre-flight
 
-- **Objetivo:** consolidar bloqueantes e avisos antes de `ready` (secção 16).  
+- **Objetivo:** consolidar bloqueantes e avisos antes de `ready` (seção 16).  
 - **Urgência:** muito alta.  
 - **Feedback:** grupos de checagens, contagens, **CTA** para corrigir ou revalidar.  
 - **Visível:** resumo executivo no topo; lista detalhada abaixo.  
@@ -288,7 +288,7 @@ Cada área abaixo **deve** mapear para navegação e prioridade visual **coerent
 ### 6.6 Modo execução (`executing`)
 
 - **Objetivo:** operar **Scene** ativa e ações permitidas (sorteio, avançar).  
-- **Urgência:** **máxima** — baixa carga cognitiva (secção 2.2, 17).  
+- **Urgência:** **máxima** — baixa carga cognitiva (seção 2.2, 17).  
 - **Feedback:** estado ao vivo **constante**; erros de mídia **visíveis** sem cobrir controles críticos.  
 - **Visível:** cena atual, próxima ação sugerida, indicador “ao vivo” discreto.  
 - **Oculto:** configuração profunda, lista completa de cenas salvo comando explícito.
@@ -328,7 +328,7 @@ Cada área abaixo **deve** mapear para navegação e prioridade visual **coerent
 - **Topbar** — contexto da **organização** ativa, usuário, ambiente (se staging), busca de evento **se** existir.  
 - **Navegação contextual:** ao entrar no **editor do evento**, **subnav horizontal ou vertical secundária** fixa: Visão geral | Cenas | Sorteios | Mídia | Branding | Patrocinadores | Exportar (ou ordem lógica de trabalho).  
 - **Breadcrumbs:** recomendados para profundidade >2 (Org → Eventos → Evento X → Export).  
-- **Evitar:** sidebar com **dezenas** de itens (anti-padrão secção 20).
+- **Evitar:** sidebar com **dezenas** de itens (anti-padrão seção 20).
 
 ## 7.2 TelaFlow Player
 
@@ -436,7 +436,7 @@ Uma família **sans** de alta qualidade, **neutra** mas **caracterizada** — le
 
 ## 10.6 Status e legendas
 
-- Legendas **pequenas** mas **legíveis** — mínimo recomendado alinhado à acessibilidade (secção 19).  
+- Legendas **pequenas** mas **legíveis** — mínimo recomendado alinhado à acessibilidade (seção 19).  
 - **Badges** de status com **texto**, não só cor.
 
 ## 10.7 Cadência
@@ -474,7 +474,7 @@ Destaque = **menos** áreas destacadas. Se tudo chama atenção, nada chama.
 
 ## 11.5 Pre-flight e Player
 
-- **Bloqueante** e **aviso** **devem** diferir por **forma** (ícone, borda, rótulo) **e** cor — **nunca** só cor (secção 19).  
+- **Bloqueante** e **aviso** **devem** diferir por **forma** (ícone, borda, rótulo) **e** cor — **nunca** só cor (seção 19).  
 - Contagem **“N bloqueantes”** **sempre** visível no resumo do pre-flight.
 
 ---
@@ -495,7 +495,7 @@ Para cada um: **quando usar / não usar**, **peso**, **comportamento**, **erro c
 - **Usar:** mídia, auditoria, listas longas com colunas comparáveis.  
 - **Não usar:** 2 colunas e 3 linhas — preferir lista simples.  
 - **Peso:** zebra opcional; cabeçalho fixo em scroll.  
-- **Erro:** tabela sem estado vazio definido (secção 13).
+- **Erro:** tabela sem estado vazio definido (seção 13).
 
 ### 12.3 Listas
 
@@ -643,7 +643,7 @@ Label = nome do campo no domínio (org, evento, slot, cena). Ajuda = **uma** fra
 ## 15.1 Estrutura da tela
 
 - **Cabeçalho fixo:** nome do evento, estado (rascunho), atalho **Exportar**.  
-- **Subnav** do editor (secção 7.1).  
+- **Subnav** do editor (seção 7.1).  
 - **Corpo:** mestre-detalhe — **lista de Scenes** + **inspector** da Scene.  
 - **Rodapé opcional:** resumo de completude (slots obrigatórios não satisfeitos na Cloud = checklist conceitual, não binding de arquivo).
 
@@ -804,11 +804,11 @@ Respeitar **prefers-reduced-motion** para animações não essenciais.
 
 Uma nova tela ou componente **só** é adotado se:
 
-1. **Respeita** os princípios da secção 2 e o PRODUCT_SPEC / ARCHITECTURE_SPEC.  
+1. **Respeita** os princípios da seção 2 e o PRODUCT_SPEC / ARCHITECTURE_SPEC.  
 2. **Reduz** ou **mantém** carga cognitiva no contexto de uso (palco vs escritório).  
 3. **Mantém** hierarquia e **não** fragmenta o fluxo Cloud → Pack → Player.  
-4. **Não** parece template genérico de marketplace de UI (ver secção 4).  
-5. **Não degrada** identidade premium (secção 3).  
+4. **Não** parece template genérico de marketplace de UI (ver seção 4).  
+5. **Não degrada** identidade premium (seção 3).  
 6. Para o Player: **compatível** com estados formais da FSM — **não** introduzir “modo oculto” sem estado.
 
 ---

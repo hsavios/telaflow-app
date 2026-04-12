@@ -18,7 +18,7 @@ function hasMediaId(scene: SceneContract): boolean {
 }
 
 /**
- * Resolve o estado a partir de `media_id`, vínculos e cache de existência de ficheiro
+ * Resolve o estado a partir de `media_id`, vínculos e cache de existência de arquivo
  * (`file_exists_under_workspace`), alinhado ao painel de vínculos.
  */
 export function resolveSceneMediaState(
@@ -47,9 +47,9 @@ export function resolveSceneMediaState(
 export function describeSceneMediaDerivedStatePt(s: SceneMediaDerivedState): string {
   const m: Record<SceneMediaDerivedState, string> = {
     no_media_required: "Sem mídia obrigatória nesta cena",
-    media_bound: "Mídia vinculada — ficheiro encontrado no workspace",
-    media_missing_binding: "Mídia referenciada — falta vínculo a um ficheiro",
-    media_file_missing: "Vínculo definido — ficheiro em falta ou workspace indisponível",
+    media_bound: "Mídia vinculada — arquivo encontrado no workspace",
+    media_missing_binding: "Mídia referenciada — falta vínculo a um arquivo",
+    media_file_missing: "Vínculo definido — arquivo ausente ou workspace indisponível",
   };
   return m[s];
 }

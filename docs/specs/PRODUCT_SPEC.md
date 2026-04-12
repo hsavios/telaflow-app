@@ -53,7 +53,7 @@ O TelaFlow posiciona-se como **software de direção visual e operação de palc
 - Integrações profundas com ecossistemas de terceiros além do necessário para **exportar Pack**, **autenticar Cloud** e **atualizar licença**.  
 - Marketplaces de templates de terceiros como prioridade.  
 - Modo “qualquer um monta em 30 segundos sem treinamento” que **sacrifique** checklist, versionamento e responsabilidade operacional.  
-- Funcionalidades cuja única justificativa seja “concorrente X tem” sem aderência aos princípios da secção 11 nem às premissas operacionais da secção 14.
+- Funcionalidades cuja única justificativa seja “concorrente X tem” sem aderência aos princípios da seção 11 nem às premissas operacionais da seção 14.
 
 ## 2.3 O que não deve contaminar a proposta
 
@@ -120,7 +120,7 @@ O produto deve satisfazer **operador** no dia do evento e **comprador** na renov
 
 ## 5.4 Unidade central: o Evento
 
-O **Evento** é a **unidade principal de negócio** e a **âncora de produto** do TelaFlow. Quase tudo que o cliente configura, exporta, licencia e executa **deriva do Evento**: branding aplicado àquele show, requisitos de mídia, cenas e roteiro de palco, sorteios, **exportação de Pack**, **validade e escopo de licença** vinculados à exportação, e **execução** no Player. A **Organização** agrupa eventos, usuários e contrato; o **Pack** é snapshot de **um** evento (e metadados de exportação); o **Player** interpreta **um** Pack. Esta hierarquia **deve** orientar modelagem de dados, UX e modelo comercial — evitando entidades “órfãs” ou CRUD genérico desconectado de um evento concreto. Detalhamento de **customização** e **modelo comercial** está na **secção 14**.
+O **Evento** é a **unidade principal de negócio** e a **âncora de produto** do TelaFlow. Quase tudo que o cliente configura, exporta, licencia e executa **deriva do Evento**: branding aplicado àquele show, requisitos de mídia, cenas e roteiro de palco, sorteios, **exportação de Pack**, **validade e escopo de licença** vinculados à exportação, e **execução** no Player. A **Organização** agrupa eventos, usuários e contrato; o **Pack** é snapshot de **um** evento (e metadados de exportação); o **Player** interpreta **um** Pack. Esta hierarquia **deve** orientar modelagem de dados, UX e modelo comercial — evitando entidades “órfãs” ou CRUD genérico desconectado de um evento concreto. Detalhamento de **customização** e **modelo comercial** está na **seção 14**.
 
 ---
 
@@ -152,7 +152,7 @@ O MVP deve permitir, de ponta a ponta (com qualidade utilizável em evento real)
 - **Confiabilidade:** comportamento previsível em falha parcial (mensagens claras, sem silêncio visual no telão sem intenção).  
 - **Observabilidade mínima:** **logs e trilhas de auditoria** como parte do produto, não opcional — na Cloud, registro de **exportação de Pack** (quem, quando, qual evento/export); no Player, registro de **abertura de Pack**, resultado de **validação de mídia / pre-flight** e marcos de **execução** (transições relevantes, erros recuperáveis ou não), com escopo e retenção definidos na [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md), sem violar privacidade. Valor **operacional** (suporte, pós-mortem) e **comercial** (governança, prova de uso).
 
-Detalhamento técnico de APIs, stack e UX fica fora deste documento, mas **deve obedecer** aos princípios, às **premissas operacionais (secção 14)** e ao MVP aqui delimitado.
+Detalhamento técnico de APIs, stack e UX fica fora deste documento, mas **deve obedecer** aos princípios, às **premissas operacionais (seção 14)** e ao MVP aqui delimitado.
 
 ---
 
@@ -196,7 +196,7 @@ Sem exclusão de roadmap permanente — apenas **não obrigatório** na primeira
 3. **Visual com propósito** — Cada escolha de UI de palco tem **função** (leitura, marca, tempo).  
 4. **Operação offline como valor** — Conectividade é **otimização**, não **dependência** para o núcleo.  
 5. **Clareza acima de excesso** — Menos features mal integradas; mais fluxo **inteiro** confiável.  
-6. **Composição controlada, não liberdade criativa irrestrita** — O TelaFlow **prioriza** montar o palco a partir de **templates, tokens e regras** definidos pelo produto, **não** um estúdio gráfico aberto. Liberdade excessiva (canvas livre, animação arbitrária, layout pixel a pixel) **desvia** a categoria do produto, **explode** complexidade de UX, dados e QA, e tende a reproduzir “Canva + evento + player” — **explicitamente fora** do que se pretende construir (alinhar com secções 2, 8 e 14.3).
+6. **Composição controlada, não liberdade criativa irrestrita** — O TelaFlow **prioriza** montar o palco a partir de **templates, tokens e regras** definidos pelo produto, **não** um estúdio gráfico aberto. Liberdade excessiva (canvas livre, animação arbitrária, layout pixel a pixel) **desvia** a categoria do produto, **explode** complexidade de UX, dados e QA, e tende a reproduzir “Canva + evento + player” — **explicitamente fora** do que se pretende construir (alinhar com seções 2, 8 e 14.3).
 
 ---
 
@@ -204,14 +204,14 @@ Sem exclusão de roadmap permanente — apenas **não obrigatório** na primeira
 
 | Risco | Mitigação orientadora |
 |-------|------------------------|
-| **Escopo do MVP inchado** | Gate formal contra secção 8; ADR para qualquer expansão. |
+| **Escopo do MVP inchado** | Gate formal contra seção 8; ADR para qualquer expansão. |
 | **Player instável em hardware heterogêneo** | Pre-flight rigoroso; matriz de suporte explícita ao cliente. |
 | **Pack corrompido ou adulterado** | Integridade criptográfica ou validação forte (definir em spec técnica derivada). |
 | **Expectativa de “zero treinamento”** | Comunicação honesta; materiais de onboarding mínimos premium. |
 | **Concorrência por preço em sorteio isolado** | Manter narrativa **sistema**, não **feature única**. |
 | **Dependência excessiva de internet na Cloud** | Aceitável para authoring; **nunca** como desculpa para falha no Player em modo offline prometido. |
-| **Modelo comercial indefinido** | Precificação pode variar; **unidade econômica e vínculo licença ↔ evento/org** devem estar claros (secção 14) antes de comprometer arquitetura. |
-| **Customização sem teto** | Secção 14.3 como gate; ADR para ampliar o que é “permitido” além de templates e tokens. |
+| **Modelo comercial indefinido** | Precificação pode variar; **unidade econômica e vínculo licença ↔ evento/org** devem estar claros (seção 14) antes de comprometer arquitetura. |
+| **Customização sem teto** | Seção 14.3 como gate; ADR para ampliar o que é “permitido” além de templates e tokens. |
 
 ---
 
@@ -219,11 +219,11 @@ Sem exclusão de roadmap permanente — apenas **não obrigatório** na primeira
 
 Uma feature ou epic entra no roadmap prioritário somente se:
 
-1. **Reforça** pelo menos um dos princípios da secção 11 **sem** violar outro de forma grave **e** **respeita** as **premissas operacionais** da secção 14.  
-2. **Serve** um segmento da secção 3 ou abre segmento **adjacente** com mesmo perfil de seriedade operacional.  
-3. **Encaixa** na arquitetura conceitual (secção 5) — se exigir quarto “produto”, exige **revisão deste PRODUCT_SPEC**.  
+1. **Reforça** pelo menos um dos princípios da seção 11 **sem** violar outro de forma grave **e** **respeita** as **premissas operacionais** da seção 14.  
+2. **Serve** um segmento da seção 3 ou abre segmento **adjacente** com mesmo perfil de seriedade operacional.  
+3. **Encaixa** na arquitetura conceitual (seção 5) — se exigir quarto “produto”, exige **revisão deste PRODUCT_SPEC**.  
 4. Possui **critério de sucesso mensurável** (ex.: redução de incidente, tempo de pre-flight, NPS operacional).  
-5. **Não** reclassifica o TelaFlow como algo da secção 2 sem decisão explícita de reposicionamento.
+5. **Não** reclassifica o TelaFlow como algo da seção 2 sem decisão explícita de reposicionamento.
 
 Features que falhem em (1)–(3) ficam em **backlog de exploração** ou são recusadas.
 
@@ -231,7 +231,7 @@ Features que falhem em (1)–(3) ficam em **backlog de exploração** ou são re
 
 # 14. Premissas operacionais do produto
 
-Esta secção fixa **decisões de produto** que **orientam** modelo de dados, UX, licenciamento e arquitetura (vide [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md)). **Prevalecem** sobre interpretações soltas de outras secções em caso de dúvida comercial ou de escopo de customização.
+Esta seção fixa **decisões de produto** que **orientam** modelo de dados, UX, licenciamento e arquitetura (vide [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md)). **Prevalecem** sobre interpretações soltas de outras seções em caso de dúvida comercial ou de escopo de customização.
 
 ## 14.1 Evento como unidade central de negócio e de operação
 
@@ -256,7 +256,7 @@ O TelaFlow **vende** capacidade de **autorar na Cloud**, **exportar Packs licenc
 
 ## 14.3 Nível de customização permitido
 
-Sem este teto, o editor torna-se **infinito** e o produto **deriva** para software criativo genérico. **No MVP e na linha base do produto**, vigoram os limites abaixo; **ampliar** qualquer linha exige **ADR** e revisão desta secção.
+Sem este teto, o editor torna-se **infinito** e o produto **deriva** para software criativo genérico. **No MVP e na linha base do produto**, vigoram os limites abaixo; **ampliar** qualquer linha exige **ADR** e revisão desta seção.
 
 | Área | O que o cliente **pode** fazer | O que **não** é permitido como núcleo do MVP |
 |------|--------------------------------|---------------------------------------------|
@@ -295,7 +295,7 @@ Sem este teto, o editor torna-se **infinito** e o produto **deriva** para softwa
 
 ## Encerramento
 
-O TelaFlow é definido como **plataforma visual inteligente para eventos ao vivo**, entregue como **Cloud + Pack + Player**, com **MVP** focado em **fluxo completo**, **offline no palco**, **postura premium**, **unidade econômica e de modelagem claras (Evento)** e **premissas operacionais** da secção **14**. Este documento permanece a **fonte normativa** até nova versão numerada e aprovada.
+O TelaFlow é definido como **plataforma visual inteligente para eventos ao vivo**, entregue como **Cloud + Pack + Player**, com **MVP** focado em **fluxo completo**, **offline no palco**, **postura premium**, **unidade econômica e de modelagem claras (Evento)** e **premissas operacionais** da seção **14**. Este documento permanece a **fonte normativa** até nova versão numerada e aprovada.
 
 ---
 

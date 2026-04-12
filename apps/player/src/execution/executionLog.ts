@@ -1,5 +1,5 @@
 ﻿/**
- * Registo de execução (MVP) — eventos em memória + persistência JSONL (sem Cloud).
+ * Registro de execução (MVP) — eventos em memória + persistência JSONL (sem Cloud).
  */
 
 export type ExecutionLogLevel = "info" | "warn" | "error";

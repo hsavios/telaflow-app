@@ -1,5 +1,5 @@
 ﻿/**
- * Persistência local de bindings mídia → ficheiro (caminhos relativos ao workspace).
+ * Persistência local de bindings mídia → arquivo (caminhos relativos ao workspace).
  */
 
 import { z } from "zod";

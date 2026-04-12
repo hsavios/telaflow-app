@@ -1,4 +1,4 @@
-# TelaFlow — Especificação de Arquitetura (ARCHITECTURE_SPEC)
+﻿# TelaFlow — Especificação de Arquitetura (ARCHITECTURE_SPEC)
 
 **Versão:** 1.1  
 **Status:** Documento normativo — referência para implementação, modularização, contratos, persistência, segurança e governança técnica  
@@ -39,16 +39,16 @@ A arquitetura existe para **materializar** o fluxo normativo **Cloud → Pack �
 
 - **Duas stacks conscientes:** Cloud (Next.js App Router + FastAPI + PostgreSQL) e Player (Tauri 2 + React + Vite + estado local leve no MVP). O custo de manutenção é aceito em troca de **adequação** (web rica para autoria; runtime local enxuto para palco).  
 - **Sem armazenamento de mídia do usuário na Cloud no MVP** — Reduz superfície de custo, compliance e complexidade; transfere responsabilidade clara para **workspace local controlada** no Player.  
-- **Simplicidade local primeiro:** JSON, manifestos e logs no MVP; **SQLite local apenas se** surgir necessidade comprovada (secção 15).  
+- **Simplicidade local primeiro:** JSON, manifestos e logs no MVP; **SQLite local apenas se** surgir necessidade comprovada (seção 15).  
 - **Explicitude sobre “mágica”** — Menos automação opaca; mais validação listável e mensagens acionáveis.
 
 ## 1.4 Como protege contra improviso técnico e “vibe coding”
 
-- **Contratos explícitos** entre Cloud, Pack e Player (secção 4): o que é permitido e proibido não fica implícito.  
-- **Evento como unidade central** (secção 5): evita CRUD genérico sem domínio.  
-- **Pre-flight obrigatório como conceito** (secção 11): não se “assume” que o telão está pronto.  
-- **Anti-padrões nomeados** (secção 19): decisões ruins ficam documentadas como **não fazer**.  
-- **ADR para mudanças relevantes** (secção 22): arquitetura evolui por decisão registrada, não por acréscimo acumulado sem narrativa.
+- **Contratos explícitos** entre Cloud, Pack e Player (seção 4): o que é permitido e proibido não fica implícito.  
+- **Evento como unidade central** (seção 5): evita CRUD genérico sem domínio.  
+- **Pre-flight obrigatório como conceito** (seção 11): não se “assume” que o telão está pronto.  
+- **Anti-padrões nomeados** (seção 19): decisões ruins ficam documentadas como **não fazer**.  
+- **ADR para mudanças relevantes** (seção 22): arquitetura evolui por decisão registrada, não por acréscimo acumulado sem narrativa.
 
 ---
 
@@ -66,7 +66,7 @@ A Cloud **possui** identidades, organizações, eventos em edição, histórico 
 
 ### 2.3 Pack como contrato operacional
 
-O Pack **congela** um snapshot coerente: configuração do evento, branding aplicável ao Player, manifesto de mídia, metadados de versão e **licença** (ou referência + assinatura conforme secção 9–10). É o **único** canal suportado de informação da Cloud para o Player no MVP (salvo fluxos explícitos futuros documentados em ADR).
+O Pack **congela** um snapshot coerente: configuração do evento, branding aplicável ao Player, manifesto de mídia, metadados de versão e **licença** (ou referência + assinatura conforme seção 9–10). É o **único** canal suportado de informação da Cloud para o Player no MVP (salvo fluxos explícitos futuros documentados em ADR).
 
 ### 2.4 Player como ambiente confiável de execução
 
@@ -82,7 +82,7 @@ O sistema **declara** requisitos de mídia (papéis, obrigatoriedade, formatos e
 
 ### 2.7 Pre-flight como controle de qualidade
 
-Pre-flight é **componente arquitetural**, não tela secundária. Ele agrega **integridade do Pack**, **licença**, **presença e forma** da mídia e **consistência mínima** do roteiro. Distingue **bloqueante** vs. **aviso** de forma **estável e documentada** (secção 11).
+Pre-flight é **componente arquitetural**, não tela secundária. Ele agrega **integridade do Pack**, **licença**, **presença e forma** da mídia e **consistência mínima** do roteiro. Distingue **bloqueante** vs. **aviso** de forma **estável e documentada** (seção 11).
 
 ### 2.8 Explicitude acima de automação mágica
 
@@ -94,7 +94,7 @@ Logs **não** são adorno: são **superfície de suporte**, **rastreabilidade de
 
 ### 2.10 Modularidade sem fragmentação excessiva
 
-Módulos (secções 13–14) devem ter **fronteiras claras** e **dependências acíclicas** onde possível. Evita-se tanto o **monólito informe** quanto a **pulverização** em dezenas de microserviços **no MVP**; a Cloud pode ser **monólito modular** (FastAPI com pacotes internos) com evolução futura guiada por ADR.
+Módulos (seções 13–14) devem ter **fronteiras claras** e **dependências acíclicas** onde possível. Evita-se tanto o **monólito informe** quanto a **pulverização** em dezenas de microserviços **no MVP**; a Cloud pode ser **monólito modular** (FastAPI com pacotes internos) com evolução futura guiada por ADR.
 
 ---
 
@@ -148,7 +148,7 @@ Módulos (secções 13–14) devem ter **fronteiras claras** e **dependências a
 
 **Dependências**
 
-- Definição de **esquema** e **política de versionamento** (secção 9).  
+- Definição de **esquema** e **política de versionamento** (seção 9).  
 - Serviço de export na Cloud que **valida** consistência mínima antes de assinar/empacotar.
 
 **O que sabe**
@@ -200,12 +200,12 @@ Módulos (secções 13–14) devem ter **fronteiras claras** e **dependências a
 
 - O backend agrega entidades do **evento** e dependentes em um **modelo de exportação** (visão somente leitura para serialização).  
 - Valida **regras de exportabilidade** (ex.: evento mínimo coerente, licença emitível).  
-- Produz arquivos do Pack + **assinatura** ou pacote contendo assinatura (secção 9).
+- Produz arquivos do Pack + **assinatura** ou pacote contendo assinatura (seção 9).
 
 **O que é permitido**
 
 - Incluir apenas dados **pertencentes à organização** e ao **evento** exportado.  
-- Incluir **hashes** de arquivos esperados no manifesto **se** a Cloud os tiver recebido como metadado (ex.: operador colou hash); no MVP típico, hash pode ser **opcional** ou preenchido por ferramenta auxiliar — decisão de produto deve manter **simplicidade** (secção 18).
+- Incluir **hashes** de arquivos esperados no manifesto **se** a Cloud os tiver recebido como metadado (ex.: operador colou hash); no MVP típico, hash pode ser **opcional** ou preenchido por ferramenta auxiliar — decisão de produto deve manter **simplicidade** (seção 18).
 
 **O que é proibido**
 
@@ -218,7 +218,7 @@ Módulos (secções 13–14) devem ter **fronteiras claras** e **dependências a
 **Como o Player consome**
 
 - **Pack loader** lê o diretório/arquivo do Pack, verifica **formato** e **integridade**.  
-- **License validator** aplica política de licença (secção 10).  
+- **License validator** aplica política de licença (seção 10).  
 - **Media binder** resolve slots usando **paths relativos à workspace** e/ou mapa persistido localmente.  
 - **Preflight engine** consolida tudo antes de liberar execução plena.
 
@@ -338,7 +338,7 @@ Abaixo: entidades principais, **propósito**, **escopo**, **relações** e **ní
 
 ### 6.7 Scene
 
-- **Propósito:** **unidade mínima de execução visível** no telão — um **estado executável** do roteiro (ver secção **5.5**). Nome operacional (abertura, intervalo, premiação) é metadado; o que importa arquiteturalmente é que o Player **ativa** uma Scene de cada vez (salvo políticas futuras documentadas).  
+- **Propósito:** **unidade mínima de execução visível** no telão — um **estado executável** do roteiro (ver seção **5.5**). Nome operacional (abertura, intervalo, premiação) é metadado; o que importa arquiteturalmente é que o Player **ativa** uma Scene de cada vez (salvo políticas futuras documentadas).  
 - **Escopo:** sempre pertence a um **Event**; ordenada em relação às demais Scenes do mesmo evento.  
 - **Conteúdo permitido (composição tipada, não canvas):** referência a **mídia principal** (slots); **overlays** de tipos **fechados** pelo produto; **slots de patrocinador** previstos; **gatilho opcional** de sorteio (**referência** a `DrawConfig`, sem duplicar regras de sorteio dentro da Scene).  
 - **Relações:** referencia **MediaRequirements** / `media_id`; referencia **DrawConfig** quando houver disparo naquele momento; associação a **Sponsor** via slots previstos.  
@@ -368,7 +368,7 @@ Abaixo: entidades principais, **propósito**, **escopo**, **relações** e **ní
 
 ### 6.11 License
 
-- **Propósito:** direito de uso do Player para **escopo** definido (organização, evento, janela temporal — ver secção 10).  
+- **Propósito:** direito de uso do Player para **escopo** definido (organização, evento, janela temporal — ver seção 10).  
 - **Escopo:** emitido **no contexto** comercial; armazenado na Cloud para **auditoria** e embutido ou referenciado no Pack.  
 - **Relações:** **Organization**; opcionalmente amarrado a **Event** ou **ExportPackage**.  
 - **Nível:** sistema + org (política); conteúdo visível ao Player via Pack.
@@ -379,7 +379,7 @@ Abaixo: entidades principais, **propósito**, **escopo**, **relações** e **ní
 
 ## 7.1 LocalEventSession
 
-- **Propósito:** estado da sessão corrente: Pack carregado, identificadores de versão, workspace associada, e **fase** alinhada à **máquina de estados do runtime** (secção **14.0**), persistida de forma mínima quando útil.  
+- **Propósito:** estado da sessão corrente: Pack carregado, identificadores de versão, workspace associada, e **fase** alinhada à **máquina de estados do runtime** (seção **14.0**), persistida de forma mínima quando útil.  
 - **Persistência MVP:** preferencialmente **sim** (JSON) para recuperação após reinício **durante montagem**; durante show, política pode ser **não sobrescrever** automaticamente estados críticos sem confirmação.  
 - **Memória vs. disco:** hot state em memória; **checkpoint** mínimo em disco.
 
@@ -521,7 +521,7 @@ Os artefatos JSON do Pack (`event.json`, `media-manifest.json`, `branding.json`,
 | **Mudança compatível (additive)** | Novos campos **opcionais**, sem quebrar leitura de Packs antigos: **ADR** recomendado; `schema_version` ou política de **forward compatibility** documentada; Players antigos **ignoram** o que não entendem **somente se** o PRODUCT_SPEC/ADR assim permitir. |
 | **Mudança breaking** | **Obrigatório:** **ADR**; incremento de **`pack_version`**; atualização da **matriz mínima de compatibilidade** **Player ↔ Pack** (quais versões de app leem quais `pack_version`). |
 | **Quem valida** | **Cloud (export):** validação contra schema **antes** de assinar o Pack. **Player (load):** validação na importação; rejeição clara se incompatível. |
-| **OpenAPI** | Contrato das **APIs** da Cloud (serviço HTTP), **não** substitui JSON Schema do Pack — ver secção **21.3**. |
+| **OpenAPI** | Contrato das **APIs** da Cloud (serviço HTTP), **não** substitui JSON Schema do Pack — ver seção **21.3**. |
 
 Sem este processo, evolução do formato vira **compatibilidade implícita** e **bugs de palco** em escala.
 
@@ -586,7 +586,7 @@ O PRODUCT_SPEC exige pre-flight **explícito** e comportamento previsível em fa
 
 ## 11.4 Influência na execução
 
-- Transição para o estado formal **`executing`** da máquina de estados do Player (secção **14.0**) **só** ocorre com último pre-flight **sem bloqueantes** e licença/integridade válidas.  
+- Transição para o estado formal **`executing`** da máquina de estados do Player (seção **14.0**) **só** ocorre com último pre-flight **sem bloqueantes** e licença/integridade válidas.  
 - Rebinding após mudança de arquivo: **reexecutar** pre-flight ou subconjunto **validado** (decisão: mudança de mídia exige **revalidação**); estado pode regressar a `binding_pending` ou `preflight_failed` conforme resultado.
 
 ## 11.5 Redução de risco operacional
@@ -659,7 +659,7 @@ O runtime de palco **deve** implementar uma **máquina de estados explícita** �
 | **`binding_pending`** | Pack válido, mas **mídia obrigatória** ainda não totalmente vinculada na workspace. |
 | **`preflight_failed`** | Última execução do pre-flight retornou **bloqueantes**; execução pública **não** permitida até correção ou novo ciclo. |
 | **`ready`** | Pre-flight **sem** bloqueantes; licença e integridade OK; operador pode iniciar **execução** do roteiro. |
-| **`executing`** | Telão sob controle do roteiro; **Scenes** ativadas conforme Pack (secção 5.5). |
+| **`executing`** | Telão sob controle do roteiro; **Scenes** ativadas conforme Pack (seção 5.5). |
 | **`paused`** | Execução **suspensa** explicitamente pelo operador (reservado; pode ser opcional no MVP, mas o **estado** existe no modelo para não improvisar depois). |
 | **`finished`** | Evento **encerrado** pelo fluxo operador ou término explícito do roteiro. |
 | **`blocked`** | **Impasse fatal** até ação corretiva: licença inválida/expirada, assinatura quebrada, `pack_version` incompatível, ou erro irrecuperável definido pelo produto. Distinto de `preflight_failed` quando o bloqueio **não** se resolve só com binding (ex.: Pack inválido). |
@@ -667,7 +667,7 @@ O runtime de palco **deve** implementar uma **máquina de estados explícita** �
 **Regras:**
 
 - Transições **só** por eventos nomeados (carregar pack, binding atualizado, pre-flight concluído, operador inicia/pausa/encerra, erro fatal).  
-- Toda mudança de estado **relevante** para operação **deve** ser **logada** (secção 17).  
+- Toda mudança de estado **relevante** para operação **deve** ser **logada** (seção 17).  
 - O módulo **execution_runtime** **implementa** esta máquina; UI e **local_state** **refletem** o mesmo enum — **proibido** duplicar “estado fantasma” só no React sem alinhar ao núcleo.
 
 ## 14.1 Módulos
@@ -678,8 +678,8 @@ O runtime de palco **deve** implementar uma **máquina de estados explícita** �
 | **license_validator** | Cripto + claims + **relógio local** (com consciência do risco 16.4). | pack_loader |
 | **preflight_engine** | Orquestra checks; produz PreflightResult; **alimenta** transições para `ready` / `preflight_failed`. | pack_loader, license_validator, media_binder |
 | **media_binder** | UI + persistência de LocalMediaBinding; import para workspace; transições para/do `binding_pending`. | filesystem, local_state |
-| **execution_runtime** | **Máquina de estados** da secção 14.0; ativação de **Scene**; playback; displays. | preflight_engine |
-| **local_state** | Leitura/gravação JSON (MVP); persistência de fase atual coerente com 14.0; futura migração SQLite. | filesystem |
+| **execution_runtime** | **Máquina de estados** da seção 14.0; ativação de **Scene**; playback; displays. | preflight_engine |
+| **local_state** | Leitura e escrita JSON (MVP); persistência de fase atual coerente com 14.0; futura migração SQLite. | filesystem |
 | **logging** | ExecutionLog, mudanças de estado do runtime, níveis, rotação, correlação com `export_id`. | local_state |
 
 **Ordem de inicialização sugerida:** `idle` → loader → `pack_loaded` ou `blocked` → license → binder → `binding_pending` conforme gaps → preflight → `ready` ou `preflight_failed` → operador → `executing` / `paused` / `finished`.
@@ -747,7 +747,7 @@ Postura **pragmática**, alinhada a SaaS B2B sério — sem paranoia performáti
 - **Leitura controlada:** APIs de filesystem apenas nos módulos **pack_loader** e **media_binder**.  
 - **Validação de integridade** antes de confiar no conteúdo.  
 - **Execução imprópria:** não carregar Pack de fontes arbitrárias sem confirmação do operador; **não** executar scripts embutidos não previstos no spec (Pack **não** contém lógica Turing-completa arbitrária no MVP).  
-- **Licença inválida:** negar execução; mensagem e log claros; transição para estado **`blocked`** (secção 14.0).
+- **Licença inválida:** negar execução; mensagem e log claros; transição para estado **`blocked`** (seção 14.0).
 
 ## 16.4 Relógio local como risco operacional (licença e validade)
 
@@ -756,7 +756,7 @@ O Player **offline** (ou mesmo online sem relógio confiável) **depende** do **
 - **Relógio adulterado ou errado** pode fazer licença **parecer** válida quando não deveria, ou **inválida** quando o contrato ainda vigora — impacto direto em **suporte** e **disputa comercial**.  
 - **Não** é obrigatório no MVP implementar NTP forçado, hardware attestation ou rede de confiança — mas a arquitetura **deve:** (1) **documentar** a dependência do relógio local em mensagens internas/playbook de suporte; (2) **preferir** comportamento **conservador** (ex.: recusar com mensagem clara em caso de inconsistência detectável, como validade “impossível”); (3) permitir **evolução** futura (janela de tolerância, verificação opcional online **antes** do show) via **ADR**, **sem** quebrar o núcleo offline.
 
-Este item **complementa** a secção 10; não substitui política comercial de tolerância de relógio, que deve ser **explícita** no produto quando necessário.
+Este item **complementa** a seção 10; não substitui política comercial de tolerância de relógio, que deve ser **explícita** no produto quando necessário.
 
 ---
 
@@ -772,7 +772,7 @@ Este item **complementa** a secção 10; não substitui política comercial de t
 ## 17.2 Player — o que logar
 
 - Carregamento de Pack, resultado de integridade e licença.  
-- **Transições da máquina de estados do runtime** (secção 14.0), no mínimo quando sair de `idle` / entrar em `blocked` / `ready` / `executing` / `finished`.  
+- **Transições da máquina de estados do runtime** (seção 14.0), no mínimo quando sair de `idle` / entrar em `blocked` / `ready` / `executing` / `finished`.  
 - Cada pre-flight com resumo de contagem bloqueante/aviso.  
 - Ativação de **Scene** e ações de sorteio (nível de detalhe conforme privacidade).  
 - Erros de mídia (arquivo sumiu, decode falhou).
@@ -794,7 +794,7 @@ Este item **complementa** a secção 10; não substitui política comercial de t
 | Simplificação | Por que é aceitável | Como evoluir |
 |---------------|---------------------|--------------|
 | Sem upload de mídia na Cloud | Reduz escopo e custo; manifesto cobre o handoff | CDN/objeto com ADR + opcionalidade |
-| Sem SQLite local | Menos superfície no Player inicial | ADR ao atingir sinais da secção 15.5 |
+| Sem SQLite local | Menos superfície no Player inicial | ADR ao atingir sinais da seção 15.5 |
 | Sem white-label complexo | PRODUCT_SPEC exclui para MVP | Temas adicionais e custom domains |
 | Sem editor visual irrestrito | Evita virar produto errado (PRODUCT_SPEC §2) | Templates controlados crescentes |
 | Licença simples por claims | Desbloqueia comercialização | Entitlements ricos, offline grace policy documentada |
@@ -818,9 +818,9 @@ Cada evolução **preserva** o fluxo Cloud → Pack → Player salvo revisão do
 10. **Executar mídia de fora da workspace** sem trilha e sem revalidação.  
 11. **Múltiplas verdades** — editar evento na Cloud e no Player concorrentemente.  
 12. **Feature solta** sem atravessar export e pre-flight.  
-13. **Scene como “saco de coisas”** sem schema — viola secção 5.5.  
+13. **Scene como “saco de coisas”** sem schema — viola seção 5.5.  
 14. **Runtime de palco sem máquina de estados explícita** — flags booleanas esparsas no lugar do modelo 14.0.  
-15. **Regras de negócio pesadas em `shared-contracts`** — viola secção 21.4.  
+15. **Regras de negócio pesadas em `shared-contracts`** — viola seção 21.4.  
 16. **Alterar schema do Pack** sem ADR, sem incremento de `pack_version` e sem matriz Player ↔ Pack.
 
 ---
@@ -829,8 +829,8 @@ Cada evolução **preserva** o fluxo Cloud → Pack → Player salvo revisão do
 
 Uma feature só é aceita se:
 
-1. **Respeita** princípios das secções 2 e o PRODUCT_SPEC.  
-2. **Encaixa** nas fronteiras da secção 4 — se cruzar Cloud↔Player em tempo real, exige **ADR** e atualização desta spec.  
+1. **Respeita** princípios das seções 2 e o PRODUCT_SPEC.  
+2. **Encaixa** nas fronteiras da seção 4 — se cruzar Cloud↔Player em tempo real, exige **ADR** e atualização desta spec.  
 3. **Não corrói** o fluxo Cloud → Pack → Player como narrativa principal.  
 4. **Impacto arquitetural** documentado (dados novos, novos módulos, migrações).  
 5. **Não reclassifica** o TelaFlow como item excluído no PRODUCT_SPEC §2 sem decisão de produto explícita.
@@ -908,11 +908,11 @@ Esta **ARCHITECTURE_SPEC** é **normativa** para implementação do TelaFlow. C�
 
 Resumo **operacional** para **congelamento** de versão e alinhamento produto–engenharia:
 
-1. **Scene** é a **unidade mínima executável** no telão — estado visível tipado; **não** canvas livre nem recipiente genérico (secção **5.5**).  
-2. O **Player** opera com **máquina de estados explícita** (`idle` … `blocked`, secção **14.0**); transições e falhas **não** são improvisadas com flags soltas.  
-3. **`shared-contracts`** contém **schemas, enums, constantes e códigos** — **não** regras de negócio pesadas (secção **21.4**).  
-4. O **schema do Pack** é **governado centralmente**; toda mudança **breaking** exige **ADR**, **`pack_version`** e **matriz Player ↔ Pack** (secção **9.6**).  
-5. **JSON Schema** governa o **Pack**; **OpenAPI** governa as **APIs** da Cloud (secção **21.3**).  
+1. **Scene** é a **unidade mínima executável** no telão — estado visível tipado; **não** canvas livre nem recipiente genérico (seção **5.5**).  
+2. O **Player** opera com **máquina de estados explícita** (`idle` … `blocked`, seção **14.0**); transições e falhas **não** são improvisadas com flags soltas.  
+3. **`shared-contracts`** contém **schemas, enums, constantes e códigos** — **não** regras de negócio pesadas (seção **21.4**).  
+4. O **schema do Pack** é **governado centralmente**; toda mudança **breaking** exige **ADR**, **`pack_version`** e **matriz Player ↔ Pack** (seção **9.6**).  
+5. **JSON Schema** governa o **Pack**; **OpenAPI** governa as **APIs** da Cloud (seção **21.3**).  
 6. **Relógio local** é **dependência operacional conhecida** para licença e validade; risco documentado (**16.4**), comportamento conservador e evolução por ADR.
 
 ---

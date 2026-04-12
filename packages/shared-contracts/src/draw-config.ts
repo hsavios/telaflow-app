@@ -16,7 +16,7 @@ export type DrawType = z.infer<typeof DrawTypeSchema>;
 
 /**
  * DrawConfig owned by the event; scenes reference optionally (EVENT_EDITOR_FEATURE_SPEC).
- * `number_range` opcional: se ausente, o Player MVP pode usar intervalo por omissão (ver README Player).
+ * `number_range` opcional: se ausente, o Player MVP pode usar intervalo padrão (ver README do Player).
  */
 export const DrawConfigContractSchema = z
   .object({

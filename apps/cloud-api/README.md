@@ -37,7 +37,7 @@ FastAPI service — Fase 1 skeleton (`PHASE_1_EXECUTION_SPEC.md`). Requer Python
 | `routers/draw_configs.py` | DrawConfig |
 | `routers/media_requirements.py` | MediaRequirement |
 | `routers/export.py` | `export-readiness` + `POST …/export` |
-| `services/pack_export.py` | Montagem e gravação dos artefatos do pack MVP |
+| `services/pack_export.py` | Montagem e persistência dos artefatos do pack MVP |
 | `tests/` | Pytest — conformidade estrutural do pack vs schemas Zod (dist) |
 
 Variável de ambiente opcional: **`TELAFLOW_PACK_EXPORT_DIR`** — diretório absoluto onde cada `export_id` vira subpasta.
@@ -53,7 +53,7 @@ uvicorn telaflow_cloud_api.main:app --reload --host 127.0.0.1 --port 8000
 
 ## Testes (pytest)
 
-Conformidade do **pack exportado** com os JSON Schemas de `@telaflow/shared-contracts` (`tests/test_pack_export_schema_compliance.py`): chama `POST /export`, lê os seis ficheiros no disco e valida com **jsonschema**.
+Conformidade do **pack exportado** com os JSON Schemas de `@telaflow/shared-contracts` (`tests/test_pack_export_schema_compliance.py`): chama `POST /export`, lê os seis arquivos no disco e valida com **jsonschema**.
 
 **Pré-requisito:** gerar schemas na raiz do monorepo:
 

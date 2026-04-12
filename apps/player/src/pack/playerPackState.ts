@@ -7,7 +7,7 @@ import type { ExecutionLogEntry } from "../execution/executionLog.js";
 import type { PreflightResult } from "../preflight/types.js";
 import type { PackLoaderSuccess } from "./validateLoadedPack.js";
 
-/** Campos partilhados enquanto há sessão com pack válido em memória. */
+/** Campos compartilhados enquanto há sessão com pack válido em memória. */
 export type PlayerSessionCore = {
   packRoot: string;
   packData: PackLoaderSuccess;
@@ -15,7 +15,7 @@ export type PlayerSessionCore = {
   bindings: Record<string, string>;
   sceneIndex: number;
   /**
-   * Registo de execução: preenchido apenas em `executing` (inicia ao entrar neste estado).
+   * Registro de execução: preenchido apenas em `executing` (inicia ao entrar neste estado).
    */
   executionLog: ExecutionLogEntry[];
 };

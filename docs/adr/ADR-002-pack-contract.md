@@ -2,7 +2,7 @@
 
 **Estado:** pendente de redação  
 
-Este ficheiro será preenchido com decisões sobre formato do Pack, `pack_version`, assinatura, JSON Schema e matriz de compatibilidade Player ↔ Pack.
+Este arquivo será preenchido com decisões sobre formato do Pack, `pack_version`, assinatura, JSON Schema e matriz de compatibilidade Player ↔ Pack.
 
 ---
 

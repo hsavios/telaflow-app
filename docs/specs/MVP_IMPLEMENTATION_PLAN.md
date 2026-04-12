@@ -1,4 +1,4 @@
-# TelaFlow — Plano de Implementação do MVP (MVP_IMPLEMENTATION_PLAN)
+﻿# TelaFlow — Plano de Implementação do MVP (MVP_IMPLEMENTATION_PLAN)
 
 **Versão:** 1.0.4  
 **Status:** Documento normativo — referência para ordem de trabalho, dependências entre módulos, entregáveis, critérios de pronto, limites do MVP e disciplina de execução  
@@ -55,7 +55,7 @@ A ordem **normativa** do MVP é a seguinte. Fases posteriores **assumem** conclu
 | **3** | Pack real | Export, serialização, assinatura mínima, snapshot consistente e auditável. |
 | **4** | Player mínimo | Abrir Pack, ler manifesto, binding simples — **sem** runtime completo. |
 | **5** | Pre-flight real | Checks principais, severidades, resultado que alimenta FSM (`ready` / falha). |
-| **6** | Runtime executável | Cenas, transições, controlos do operador conforme FSM. |
+| **6** | Runtime executável | Cenas, transições, controles do operador conforme FSM. |
 | **7** | Licensing + Logging integrados | Licença operacional, logs úteis, auditoria mínima Cloud e local. |
 | **8** | Acabamento premium | UI_SPEC, microcopy, polish — **depois** do núcleo honesto. |
 
@@ -63,7 +63,7 @@ Esta ordem **não** é sugestão de sprint zero: é **sequência de dependência
 
 ## 3.1 Primeira vertical obrigatória do MVP
 
-Após esta ordem macro, a equipa precisa de **um** fluxo real **ponta a ponta** que prove o produto — não uma coleção de ecrãs isolados. A **primeira vertical obrigatória** do MVP é, em sequência:
+Após esta ordem macro, a equipa precisa de **um** fluxo real **ponta a ponta** que prove o produto — não uma coleção de telas isolados. A **primeira vertical obrigatória** do MVP é, em sequência:
 
 1. **Criar evento** na Cloud (persistido, com identidade/organização conforme fases cumpridas).  
 2. **Criar duas Scenes** mínimas (tipos e conteúdo conforme [EVENT_EDITOR_FEATURE_SPEC.md](./EVENT_EDITOR_FEATURE_SPEC.md) — o número **dois** força roteiro mínimo não trivial).  
@@ -71,7 +71,7 @@ Após esta ordem macro, a equipa precisa de **um** fluxo real **ponta a ponta** 
 4. **Abrir o Pack no Player** (offline para este núcleo).  
 5. **Binding** da mídia exigida pelo manifesto (workspace local, paths relativos conforme [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md)).  
 6. **Pre-flight** até resultado que permita **`ready`** (ou falha explícita e corrigível — [PRE_FLIGHT_FEATURE_SPEC.md](./PRE_FLIGHT_FEATURE_SPEC.md)).  
-7. **Executar duas Scenes** no runtime (transições e controlos conforme [PLAYER_RUNTIME_FEATURE_SPEC.md](./PLAYER_RUNTIME_FEATURE_SPEC.md)).
+7. **Executar duas Scenes** no runtime (transições e controles conforme [PLAYER_RUNTIME_FEATURE_SPEC.md](./PLAYER_RUNTIME_FEATURE_SPEC.md)).
 
 Esta vertical é o **primeiro produto vivo real**: demo interna, critério de integração e referência para testes (§16). **Licenciamento e logging** completos (§10) elevam o MVP a **auditável** e **suportável**; não substituem a obrigação de fechar a vertical de palco até ao passo 7 — o Pack exportado deve já cumprir o mínimo de licença/claims exigido pelas specs à data da fase, para o fluxo não ser teatro.
 
@@ -81,12 +81,12 @@ Esta vertical é o **primeiro produto vivo real**: demo interna, critério de in
 
 | Fase | Propriedade conceitual dominante |
 |------|----------------------------------|
-| **1** | Contratos partilhados, ids, modelo de domínio — **backend / schema** em conjunto com quem define o Pack legível. |
+| **1** | Contratos compartilhados, ids, modelo de domínio — **backend / schema** em conjunto com quem define o Pack legível. |
 | **2** | **Cloud** end-to-end mínima: FastAPI + PostgreSQL + auth; Next.js funcional sem polish. |
 | **3** | **Export** server-side, serialização, assinatura, auditoria de export — backend + contrato com front de disparo. |
 | **4** | **Player**: Tauri, leitura de Pack, manifesto, binding persistido — domínio local. |
 | **5** | **Player**: motor de pre-flight, FSM até `ready` / falhas — validação e narrativa operacional. |
-| **6** | **Player**: runtime, FSM de execução, controlos do operador. |
+| **6** | **Player**: runtime, FSM de execução, controles do operador. |
 | **7** | **Transversal**: licença (Cloud emissão + Player validação), logs e correlação ([AUDIT_LOGGING_SPEC.md](./AUDIT_LOGGING_SPEC.md)) — backend Cloud + Player. |
 | **8** | **UI/UX** e microcopy em Cloud e Player — sem alterar contratos congelados (§14.1). |
 
@@ -106,14 +106,14 @@ Estabelecer **linguagem comum imutável** entre Cloud e Player: o que é um `eve
 
 ## 4.2 Entregáveis conceituais
 
-- **Schemas ou contratos partilhados** (conceituais, documentados; implementação pode ser pacote comum, OpenAPI, JSON Schema — decisão técnica fora deste plano) alinhados ao export e ao runtime.  
+- **Schemas ou contratos compartilhados** (conceituais, documentados; implementação pode ser pacote comum, OpenAPI, JSON Schema — decisão técnica fora deste plano) alinhados ao export e ao runtime.  
 - **Política de ids**: o que é gerado na Cloud, o que é preservado no Pack, o que o Player deve tratar como opaco.  
 - **Modelo central de Evento / Cena / requisitos de mídia** coerente com o editor e com o manifesto — **sem** ainda exigir UI polida.  
 - **Leitura normativa** do **contrato Pack**: o que entra no snapshot, o que é assinável, o que é auditável ([PACK_EXPORT_FEATURE_SPEC.md](./PACK_EXPORT_FEATURE_SPEC.md) §20, [AUDIT_LOGGING_SPEC.md](./AUDIT_LOGGING_SPEC.md)).
 
 ## 4.3 Deliberadamente fora desta fase
 
-Interfaces de utilizador elaboradas, fluxo completo de autoria, Player além de stubs de leitura. O foco é **reduzir retrabalho** nas fases 2–4.
+Interfaces de usuário elaboradas, fluxo completo de autoria, Player além de stubs de leitura. O foco é **reduzir retrabalho** nas fases 2–4.
 
 **Execução detalhada:** [PHASE_1_EXECUTION_SPEC.md](./PHASE_1_EXECUTION_SPEC.md) — referência normativa para repositório, contratos, persistência, endpoints e vertical mínima desta fase.
 
@@ -150,11 +150,11 @@ Produzir **exportação real** que materialize o snapshot acordado nas specs: **
 - **Pipeline de export** desde o estado persistido até artefato empacotado (formato conforme spec de export — zip ou equivalente normativo).  
 - **Manifesto de mídia** coerente com o declarado no editor; **sem** armazenar blobs na Cloud — o manifesto descreve o que o Player deve **encontrar** localmente ([ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §2.6).  
 - **Assinatura mínima** e verificação de integridade alinhadas à spec de Pack (o MVP **não** dispensa integridade em nome de velocidade).  
-- **Registo de exportação** na Cloud: `export_id`, atores, ligação a evento/organização — base da auditoria comercial ([AUDIT_LOGGING_SPEC.md](./AUDIT_LOGGING_SPEC.md)).
+- **Registro de exportação** na Cloud: `export_id`, atores, ligação a evento/organização — base da auditoria comercial ([AUDIT_LOGGING_SPEC.md](./AUDIT_LOGGING_SPEC.md)).
 
 ## 6.3 Risco a evitar
 
-Export “que funciona na demo” mas **não** é determinístico ou **não** documenta ordem canónica de ficheiros para assinatura — [PACK_EXPORT_FEATURE_SPEC.md](./PACK_EXPORT_FEATURE_SPEC.md) deve ser respeitada, não reinterpretada em cada sprint.
+Export “que funciona na demo” mas **não** é determinístico ou **não** documenta ordem canônica de arquivos para assinatura — [PACK_EXPORT_FEATURE_SPEC.md](./PACK_EXPORT_FEATURE_SPEC.md) deve ser respeitada, não reinterpretada em cada sprint.
 
 ---
 
@@ -166,7 +166,7 @@ Aplicação **Tauri 2 + React + Vite** que **abra** o Pack, **leia** manifestos 
 
 ## 7.2 Entregáveis
 
-- Fluxo **abrir Pack** (ficheiro/workspace) e **validação superficial** de estrutura legível.  
+- Fluxo **abrir Pack** (arquivo/workspace) e **validação superficial** de estrutura legível.  
 - **Leitura de manifesto** e apresentação de lista de requisitos de mídia (o operador precisa **ver** o que falta antes do runtime).  
 - **Binding** persistente local — sem executar ainda o **roteiro completo** nem todas as transições da FSM.  
 - **Offline** no núcleo desta fase: sem dependência de Cloud para **ler** o Pack ([ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §2.5).
@@ -199,7 +199,7 @@ Pre-flight **não** é lista cosmética: se um check está na spec como bloquean
 
 ## 9.1 Objetivo
 
-Executar o roteiro **no telão** conforme **FSM** e regras de cena ([PLAYER_RUNTIME_FEATURE_SPEC.md](./PLAYER_RUNTIME_FEATURE_SPEC.md)): ativação e conclusão de cenas, transições atómicas, controlos do operador com debounce onde aplicável.
+Executar o roteiro **no telão** conforme **FSM** e regras de cena ([PLAYER_RUNTIME_FEATURE_SPEC.md](./PLAYER_RUNTIME_FEATURE_SPEC.md)): ativação e conclusão de cenas, transições atómicas, controles do operador com debounce onde aplicável.
 
 ## 9.2 Entregáveis
 
@@ -221,7 +221,7 @@ Fechar o **ciclo de confiança**: licença **validável** no Player, falhas **au
 
 ## 10.2 Entregáveis
 
-- **Licença real** no fluxo MVP: emissão ou ancoragem na Cloud, consumo no Player, validação e mensagens de falha com códigos canónicos; **grace** e **UTC** conforme spec de licenciamento.  
+- **Licença real** no fluxo MVP: emissão ou ancoragem na Cloud, consumo no Player, validação e mensagens de falha com códigos canônicos; **grace** e **UTC** conforme spec de licenciamento.  
 - **Logging Cloud**: export, licença, ações administrativas mínimas ([AUDIT_LOGGING_SPEC.md](./AUDIT_LOGGING_SPEC.md) §5, §15).  
 - **Logging Player**: eventos mínimos pack_load, preflight_run, fsm, execução, bloqueios — com **estrutura conceitual** e **opcional** `caused_by_event_code` onde fizer sentido ([AUDIT_LOGGING_SPEC.md](./AUDIT_LOGGING_SPEC.md) §6–§10).  
 - **Extrato exportável para suporte** (últimos N eventos sob demanda — política de N fora deste plano, requisito funcional presente).
@@ -241,7 +241,7 @@ Elevar a experiência à **postura premium** do TelaFlow ([PRODUCT_SPEC.md](./PR
 ## 11.2 Entregáveis
 
 - Ajustes de **UI_SPEC**: hierarquia, espaçamento, estados de loading/erro, modos de apresentação.  
-- **Microcopy** alinhado às specs de feature (pre-flight, licenciamento, runtime) — mensagens derivadas, não logs brutos no ecrã de execução ([AUDIT_LOGGING_SPEC.md](./AUDIT_LOGGING_SPEC.md) §17).  
+- **Microcopy** alinhado às specs de feature (pre-flight, licenciamento, runtime) — mensagens derivadas, não logs brutos no tela de execução ([AUDIT_LOGGING_SPEC.md](./AUDIT_LOGGING_SPEC.md) §17).  
 - **Polish** de fluxos críticos: primeiro abertura de Pack → pre-flight → ready → execução.
 
 ## 11.3 Guarda
@@ -308,11 +308,11 @@ Cada fase considera-se **fechada** apenas se:
 | Fase | Critérios de pronto (mínimos) |
 |------|-------------------------------|
 | **1** | Contratos documentados e **aceites** como base para desenvolvimento Cloud e Player; ids e versionamento **sem** ambiguidade conhecida bloqueante. |
-| **2** | Utilizador autenticado pode **criar/editar** evento e cenas **persistidos**; API **server-side** valida regras centrais; branding mínimo **persistente**. |
+| **2** | Usuário autenticado pode **criar/editar** evento e cenas **persistidos**; API **server-side** valida regras centrais; branding mínimo **persistente**. |
 | **3** | Export **reproduzível** gera Pack **aberto** pelo pipeline de validação interna; `export_id` e auditoria mínima **registados**; assinatura/integridade **verificáveis** conforme spec. |
 | **4** | Player **abre** Pack real, **lê** manifesto, **persiste** binding; **offline** para este núcleo. |
 | **5** | Pre-flight produz **`PreflightResult`** / narrativa operacional alinhada à spec; **`run_id`**; FSM **não** entra em `ready` com bloqueantes não resolvidos. |
-| **6** | Runtime percorre roteiro **conforme** FSM da spec; transições e controlos **testáveis** manualmente em cenário controlado. |
+| **6** | Runtime percorre roteiro **conforme** FSM da spec; transições e controles **testáveis** manualmente em cenário controlado. |
 | **7** | Licença **exercida** no fluxo feliz e em falhas representativas; logs Cloud e Player **correlacionáveis**; extrato para suporte **viável**. |
 | **8** | **UI_SPEC** e microcopy **revisados** nos fluxos críticos; sem regressão conhecida de contrato (Pack, licença, FSM). |
 
@@ -332,7 +332,7 @@ Política mínima para **execução real** (incl. assistência por IA) sem confu
 
 **Permitido:**
 
-- **TODOs locais pequenos** desde que **delimitados** (ficheiro/módulo), com **referência** a tarefa ou issue, e **sem** alterar o contrato público do módulo.  
+- **TODOs locais pequenos** desde que **delimitados** (arquivo/módulo), com **referência** a tarefa ou issue, e **sem** alterar o contrato público do módulo.  
 - Ajustes internos de implementação que **não** exportam tipos ou formatos “temporários” ao outro runtime.
 
 **Proibido:**
@@ -369,7 +369,7 @@ Ferramentas de IA aceleram **texto e código**, mas **não** substituem **ordem 
 
 - **Nenhuma** implementação assistida por IA deve **ignorar** a spec da fase ativa — se a spec for insuficiente, **atualizar a spec** (e ADR se necessário) **antes** de codificar à frente.  
 - **Proibido** “saltar” fases para gerar demo impressionante — o [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §1.4 já nomeia o risco de improviso; a IA amplifica-o se não houver **checkpoint** explícito por fase (§14).  
-- **Prompts** devem referenciar **ficheiro e secção** das specs (ex.: PRE_FLIGHT §6, PACK_EXPORT §20) para reduzir alucinação de requisito.  
+- **Prompts** devem referenciar **arquivo e seção** das specs (ex.: PRE_FLIGHT §6, PACK_EXPORT §20) para reduzir alucinação de requisito.  
 - Respeitar **§3.1** (vertical), **§14.1** (congelamento) e **§14.2** (nada de contrato provisório “só desta vez”).  
 - Propostas de **nova** funcionalidade: passar primeiro pelo [FEATURE_EVALUATION_FRAMEWORK.md](./FEATURE_EVALUATION_FRAMEWORK.md); **spec só depois** da avaliação.  
 - **Infraestrutura, distribuição do Player e ambientes:** obedecer ao [DEPLOYMENT_MODEL_SPEC.md](./DEPLOYMENT_MODEL_SPEC.md).

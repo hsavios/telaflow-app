@@ -1,4 +1,4 @@
-﻿//! Workspace local: ler/gravar bindings e verificar ficheiros sob a raiz.
+﻿//! Workspace local: ler e salvar bindings e verificar arquivos sob a raiz.
 //! Caminhos guardados são relativos; valida `..` e absolutos.
 
 use std::fs;
@@ -43,10 +43,10 @@ pub fn normalize_media_binding_relative(
         .map_err(|e| format!("workspace inválido ou inacessível: {e}"))?;
     let target = file
         .canonicalize()
-        .map_err(|e| format!("ficheiro selecionado inválido ou inacessível: {e}"))?;
+        .map_err(|e| format!("arquivo selecionado inválido ou inacessível: {e}"))?;
     let rel = target
         .strip_prefix(&base)
-        .map_err(|_| "o ficheiro selecionado não está dentro do workspace".to_string())?;
+        .map_err(|_| "o arquivo selecionado não está dentro do workspace".to_string())?;
     for c in rel.components() {
         match c {
             Component::ParentDir | Component::RootDir | Component::Prefix(_) => {
@@ -76,7 +76,7 @@ pub fn file_exists_under_workspace(
     Ok(full.is_file())
 }
 
-/// Caminho absoluto canónico de `relative` sob `workspace_path` (para `convertFileSrc` no frontend).
+/// Caminho absoluto canônico de `relative` sob `workspace_path` (para `convertFileSrc` no frontend).
 #[tauri::command]
 pub fn resolve_workspace_file_path(
     workspace_path: String,
@@ -90,9 +90,9 @@ pub fn resolve_workspace_file_path(
     let full = workspace.join(relative.trim());
     let canon = full
         .canonicalize()
-        .map_err(|e| format!("ficheiro inacessível ou inexistente: {e}"))?;
+        .map_err(|e| format!("arquivo inacessível ou inexistente: {e}"))?;
     if !canon.is_file() {
-        return Err("caminho não é um ficheiro".to_string());
+        return Err("caminho não é um arquivo".to_string());
     }
     Ok(canon.to_string_lossy().to_string())
 }
@@ -124,11 +124,11 @@ pub fn save_media_bindings_file(workspace_path: String, content: String) -> Resu
             )
         })?;
     }
-    fs::write(&p, content).map_err(|e| format!("falha ao gravar {}: {e}", p.display()))?;
+    fs::write(&p, content).map_err(|e| format!("falha ao salvar {}: {e}", p.display()))?;
     Ok(())
 }
 
-/// Anexa uma linha (JSON) ao ficheiro `.telaflow/execution-log.jsonl` sob `base_path`.
+/// Anexa uma linha (JSON) ao arquivo `.telaflow/execution-log.jsonl` sob `base_path`.
 #[tauri::command]
 pub fn append_execution_jsonl(base_path: String, line: String) -> Result<(), String> {
     let root = PathBuf::from(base_path.trim());

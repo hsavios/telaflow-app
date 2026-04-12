@@ -328,7 +328,7 @@ Toda referência abaixo vive em [`docs/specs/`](../specs/) salvo indicação em 
 * [EVENT_EDITOR_FEATURE_SPEC.md](../specs/EVENT_EDITOR_FEATURE_SPEC.md) — editor, Event/Scene, requisitos de mídia
 * [PRE_FLIGHT_FEATURE_SPEC.md](../specs/PRE_FLIGHT_FEATURE_SPEC.md) — pre-flight, grupos de checks, severidades
 * [PACK_EXPORT_FEATURE_SPEC.md](../specs/PACK_EXPORT_FEATURE_SPEC.md) — export, Pack, integridade, auditoria de export
-* [PLAYER_RUNTIME_FEATURE_SPEC.md](../specs/PLAYER_RUNTIME_FEATURE_SPEC.md) — FSM, runtime, cenas, controlos
+* [PLAYER_RUNTIME_FEATURE_SPEC.md](../specs/PLAYER_RUNTIME_FEATURE_SPEC.md) — FSM, runtime, cenas, controles
 * [LICENSING_FEATURE_SPEC.md](../specs/LICENSING_FEATURE_SPEC.md) — licença, validação, emissão e falhas auditáveis
 * [AUDIT_LOGGING_SPEC.md](../specs/AUDIT_LOGGING_SPEC.md) — logging Cloud e Player, correlação, severidades, suporte
 

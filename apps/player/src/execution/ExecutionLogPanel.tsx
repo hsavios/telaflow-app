@@ -6,7 +6,7 @@ type Props = {
 
 export function ExecutionLogPanel({ entries }: Props) {
   if (entries.length === 0) {
-    return <p className="player-hint">Sem entradas no registo ainda.</p>;
+    return <p className="player-hint">Sem entradas no registro ainda.</p>;
   }
   return (
     <div className="player-exec-log">

@@ -7,7 +7,7 @@
 
 **Hierarquia normativa:** Este documento é **derivado e subordinado** a, **nesta ordem**: [PRODUCT_SPEC.md](./PRODUCT_SPEC.md), [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md), [UI_SPEC.md](./UI_SPEC.md), [EVENT_EDITOR_FEATURE_SPEC.md](./EVENT_EDITOR_FEATURE_SPEC.md), [PRE_FLIGHT_FEATURE_SPEC.md](./PRE_FLIGHT_FEATURE_SPEC.md), [PACK_EXPORT_FEATURE_SPEC.md](./PACK_EXPORT_FEATURE_SPEC.md). Em caso de ambiguidade ou conflito aparente, **prevalece** o documento **mais acima** na lista; o Player Runtime **deve** ser ajustado (via revisão deste arquivo e **ADR** quando couber) para restabelecer alinhamento.
 
-**Escopo:** comportamento funcional do **motor de execução** no palco — **sem código**, **sem DDL**. Detalhes de APIs internas, formatos de ficheiro local e codecs pertencem a especificações derivadas, **desde que** obedeçam a este documento e à **ARCHITECTURE_SPEC**.
+**Escopo:** comportamento funcional do **motor de execução** no palco — **sem código**, **sem DDL**. Detalhes de APIs internas, formatos de arquivo local e codecs pertencem a especificações derivadas, **desde que** obedeçam a este documento e à **ARCHITECTURE_SPEC**.
 
 **Fronteira:** O **Pre-flight** (orquestração de checks antes de `ready`) está normativamente definido no [PRE_FLIGHT_FEATURE_SPEC.md](./PRE_FLIGHT_FEATURE_SPEC.md); este documento **referencia** os seus **efeitos** na FSM e na execução, **sem** duplicar a taxonomia de checks.
 
@@ -15,7 +15,7 @@
 
 ## Prefácio
 
-O **Player Runtime** é o núcleo vivo do TelaFlow no local do evento: consome o [Pack](./PACK_EXPORT_FEATURE_SPEC.md) como contrato fechado, honra licença e integridade, e conduz o telão passo a passo conforme Scenes ordenadas — não como leitor de ficheiros genérico. O [PRODUCT_SPEC.md](./PRODUCT_SPEC.md) promete previsibilidade e modo offline para o núcleo do show; a [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) fixa a máquina de estados e os módulos; a [UI_SPEC.md](./UI_SPEC.md) exige mesa de controle clara em `executing`. Este documento unifica essas obrigações no comportamento do runtime.
+O **Player Runtime** é o núcleo vivo do TelaFlow no local do evento: consome o [Pack](./PACK_EXPORT_FEATURE_SPEC.md) como contrato fechado, honra licença e integridade, e conduz o telão passo a passo conforme Scenes ordenadas — não como leitor de arquivos genérico. O [PRODUCT_SPEC.md](./PRODUCT_SPEC.md) promete previsibilidade e modo offline para o núcleo do show; a [ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) fixa a máquina de estados e os módulos; a [UI_SPEC.md](./UI_SPEC.md) exige mesa de controle clara em `executing`. Este documento unifica essas obrigações no comportamento do runtime.
 
 ---
 
@@ -44,7 +44,7 @@ O **comprador** renova com base em **confiabilidade** e **governança**; o **ope
 | **Respeitar Pre-flight** | Transição para **`executing`** **só** com último pre-flight **sem bloqueantes** e condições de integridade acordadas ([PRE_FLIGHT_FEATURE_SPEC.md](./PRE_FLIGHT_FEATURE_SPEC.md); ARCHITECTURE §11.4). |
 | **Interpretar roteiro** | **Uma** sequência **ordenada** de Scenes **como** exportada ([EVENT_EDITOR_FEATURE_SPEC.md](./EVENT_EDITOR_FEATURE_SPEC.md) §5.1); **sem** reordenar **por** heurística local. |
 | **Executar Scenes** | Para cada Scene **ativa**, **comportamento** alinhado ao **tipo** e às **referências** (`media_id`, `draw_config_id`, slots) **do** Pack **somente**. |
-| **Previsibilidade operacional** | Mesmo Pack + mesma workspace + binding + licença válidos → **mesmo** roteiro **observável** (salvo falha externa — ficheiro removido, etc.). |
+| **Previsibilidade operacional** | Mesmo Pack + mesma workspace + binding + licença válidos → **mesmo** roteiro **observável** (salvo falha externa — arquivo removido, etc.). |
 
 ---
 
@@ -107,7 +107,7 @@ O runtime **não** avança por **loop** livre ou “tick” contínuo **conceitu
 |--------|----------|
 | **Operador** | Avançar, voltar (se permitido), pausar, retomar, encerrar, disparar sorteio quando aplicável. |
 | **Fim de mídia / marco de playback** | Quando o Pack e a política exportada **ligarem** fim de clip ou auto-avanço a um evento **nomeado** (§9.2, §11.2). |
-| **Falha detetada** | I/O, ficheiro ausente, erro de leitura, inconsistência de draw (§17). |
+| **Falha detetada** | I/O, arquivo ausente, erro de leitura, inconsistência de draw (§17). |
 | **Gatilhos internos** | Conclusão atómica de transição de Scene (§11.4); **timeouts** ou **marcos** **só** se **existirem** em **ADR** ou spec derivada. |
 
 **Motivo:** fixa **onde** a implementação **deve** ancorar trabalho — **handlers** sobre **eventos** **nomeados**, **não** uma **engine** **tipo** **simulação** **por** **iteração** **aberta**. Reduz ambiguidade entre **estado** **da** **FSM** **global** **e** **momento** **em** **que** **o** **roteiro** **de** **Scene** **avança**.
@@ -140,7 +140,7 @@ O **núcleo** de execução (ativação de Scene, saída para telão conforme ro
 
 ## 6.1 Como o Pack **entra**
 
-O operador **indica** o **artefato** (diretório descompactado ou contêiner suportado) **dentro** das **permissões** do Player ([ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §16.3). O **pack_loader** **lê** ficheiros **do** filesystem **local** — **sem** depender de rede para o **núcleo**.
+O operador **indica** o **artefato** (diretório descompactado ou contêiner suportado) **dentro** das **permissões** do Player ([ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §16.3). O **pack_loader** **lê** arquivos **do** filesystem **local** — **sem** depender de rede para o **núcleo**.
 
 ## 6.2 O que o runtime lê **primeiro**
 
@@ -148,7 +148,7 @@ O operador **indica** o **artefato** (diretório descompactado ou contêiner sup
 
 ## 6.3 Ordem **lógica** de leitura
 
-Alinhada à **ordem canónica** de **verificação** ([PACK_EXPORT_FEATURE_SPEC.md](./PACK_EXPORT_FEATURE_SPEC.md) §6.1): após `pack.json`, **`event.json`**, **`branding.json`**, **`media-manifest.json`**, **`draw-configs.json`**, licença, **`signature.sig`** — para **validação** de integridade e **construção** do modelo **interno**. **Falha** **cedo** com mensagem **estruturada** (o quê / por quê / próximo passo — [UI_SPEC.md](./UI_SPEC.md) §18.1).
+Alinhada à **ordem canônica** de **verificação** ([PACK_EXPORT_FEATURE_SPEC.md](./PACK_EXPORT_FEATURE_SPEC.md) §6.1): após `pack.json`, **`event.json`**, **`branding.json`**, **`media-manifest.json`**, **`draw-configs.json`**, licença, **`signature.sig`** — para **validação** de integridade e **construção** do modelo **interno**. **Falha** **cedo** com mensagem **estruturada** (o quê / por quê / próximo passo — [UI_SPEC.md](./UI_SPEC.md) §18.1).
 
 ---
 
@@ -160,7 +160,7 @@ Após **parse** e **validação** de schema, o runtime **monta** uma **visão** 
 
 ## 7.2 Scenes **carregadas**
 
-Cada Scene é um **objeto** **tipado** com **ordem** **canónica**; **não** **reordenar** por UI local **salvo** ações **explícitas** de “ir para” **se** política **permitir** (§11) — **não** alteram o Pack em disco.
+Cada Scene é um **objeto** **tipado** com **ordem** **canônica**; **não** **reordenar** por UI local **salvo** ações **explícitas** de “ir para” **se** política **permitir** (§11) — **não** alteram o Pack em disco.
 
 ## 7.3 Branding **resolvido**
 
@@ -210,7 +210,7 @@ Transição **atómica**: **desativa** **output** específico da Scene anterior 
 
 ## 9.3 O que o runtime faz **ao entrar** numa Scene
 
-- **Valida** **referências** **locais** **mínimas** **para** **aquela** Scene (ficheiros **ainda** **presentes** — §17).  
+- **Valida** **referências** **locais** **mínimas** **para** **aquela** Scene (arquivos **ainda** **presentes** — §17).  
 - **Compõe** **camadas** **autorizadas**: mídia principal **se** houver, overlays **de** **tipos** **fechados**, slots de patrocinador **previstos**.  
 - **Expõe** **no** **telão** **conforme** **tipo** e **branding** (§10, §13).  
 - **Regista** **ativação** em **log** (§18).
@@ -219,7 +219,7 @@ Transição **atómica**: **desativa** **output** específico da Scene anterior 
 
 Antes de **aceitar** o **avanço** do roteiro (mudança do ponteiro da Scene **ativa** para a **seguinte**, ou efeito **irreversível** **equivalente**), o runtime **deve** **registar** **explicitamente** a Scene **que** **termina** como **concluída** no **fluxo** de execução: **`scene_id`**, **timestamp**, **causa** da conclusão (**manual**, **fim de mídia** / marco exportado, **erro** com política de **pular** Scene, **encerramento** do evento, …).
 
-**Ordem normativa:** **(1)** registo de **conclusão** **(completed)** **→** **(2)** **transição atómica** (§11.4) **→** **(3)** **ativação** da **nova** Scene **e** **log** de **ativação** (§18). **Não** avançar **dois** **índices** **de** **roteiro** **sem** **dois** **registos** **de** **conclusão** **compatíveis** **com** **§15.2**.
+**Ordem normativa:** **(1)** registro de **conclusão** **(completed)** **→** **(2)** **transição atómica** (§11.4) **→** **(3)** **ativação** da **nova** Scene **e** **log** de **ativação** (§18). **Não** avançar **dois** **índices** **de** **roteiro** **sem** **dois** **registros** **de** **conclusão** **compatíveis** **com** **§15.2**.
 
 ---
 
@@ -258,7 +258,7 @@ Comportamento **operacional** alinhado ao enum do [EVENT_EDITOR_FEATURE_SPEC.md]
 
 ## 11.4 Atomicidade da transição (ponto de vista do operador e do telão)
 
-A troca entre duas Scenes **deve** ser **atómica** **no** **efeito** **visível**: **não** **há** **estado** **intermediário** **estável** **em** **que** **metade** **da** **composição** **pertença** **à** **Scene** **A** **e** **metade** **à** **Scene** **B** **como** **“palco** **válido”**. Trabalho **interno** (I/O, decode, preload — §11.5) **pode** **correr** **antes** **do** **momento** **da** **troca**; **o** **instante** **em** **que** **a** **Scene** **ativa** **no** **telão** **muda** **é** **único** **e** **alinhado** **ao** **registo** **de** **conclusão** **(§9.4)**.
+A troca entre duas Scenes **deve** ser **atómica** **no** **efeito** **visível**: **não** **há** **estado** **intermediário** **estável** **em** **que** **metade** **da** **composição** **pertença** **à** **Scene** **A** **e** **metade** **à** **Scene** **B** **como** **“palco** **válido”**. Trabalho **interno** (I/O, decode, preload — §11.5) **pode** **correr** **antes** **do** **momento** **da** **troca**; **o** **instante** **em** **que** **a** **Scene** **ativa** **no** **telão** **muda** **é** **único** **e** **alinhado** **ao** **registro** **de** **conclusão** **(§9.4)**.
 
 ## 11.5 Preparo antecipado (preload mínimo)
 
@@ -273,11 +273,11 @@ O runtime **pode** **preparar** **a** **próxima** Scene **antes** **de** **a** 
 
 ## 12.1 Uso do binding **resolvido**
 
-O runtime **resolve** `media_id` → **ficheiro** **apenas** **via** **LocalMediaBinding** **oficial** + **workspace** **root** ([ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §8.4, §8.7). **Paths** **absolutos** **opacos** **fora** **da** **workspace** **normativa** **não** são **fonte** **primária**.
+O runtime **resolve** `media_id` → **arquivo** **apenas** **via** **LocalMediaBinding** **oficial** + **workspace** **root** ([ARCHITECTURE_SPEC.md](./ARCHITECTURE_SPEC.md) §8.4, §8.7). **Paths** **absolutos** **opacos** **fora** **da** **workspace** **normativa** **não** são **fonte** **primária**.
 
 ## 12.2 **Não** procurar mídia **fora** **do** **contrato**
 
-**Proibido** **como** **comportamento** **padrão**: **varrer** **disco**, **adivinhar** **por** **nome** **parecido**, **substituir** **ficheiro** **sem** **atualizar** **binding** **e** **revalidar** **pre-flight** **conforme** [PRE_FLIGHT_FEATURE_SPEC.md](./PRE_FLIGHT_FEATURE_SPEC.md) §17. **Sugestões** **com** **confirmação** **explícita** **podem** **existir** **na** **fase** **de** **binding**, **não** **como** **substituto** **silencioso** **em** **`executing`**.
+**Proibido** **como** **comportamento** **padrão**: **varrer** **disco**, **adivinhar** **por** **nome** **parecido**, **substituir** **arquivo** **sem** **atualizar** **binding** **e** **revalidar** **pre-flight** **conforme** [PRE_FLIGHT_FEATURE_SPEC.md](./PRE_FLIGHT_FEATURE_SPEC.md) §17. **Sugestões** **com** **confirmação** **explícita** **podem** **existir** **na** **fase** **de** **binding**, **não** **como** **substituto** **silencioso** **em** **`executing`**.
 
 ---
 
@@ -368,7 +368,7 @@ Linha **“Próximo:”** **quando** **o** Pack **o** **permitir** **inferir** (
 
 ## 17.1 Mídia **ausente** **descoberta** **tardiamente**
 
-**Cenário:** ficheiro **removeu-se** **após** `ready`. **Tratamento:** **bloqueante** **imediato** **para** **aquela** **Scene** **ou** **para** **o** **playback** **afetado** — **overlay** / **banner** **com** **ação** **“Repetir”** / **“Pular”** **se** **política** ([UI_SPEC.md](./UI_SPEC.md) §17.6); **log** **com** `media_id` **e** **path** **relativo** **esperado**. **Não** **silêncio** **no** telão.
+**Cenário:** arquivo **removeu-se** **após** `ready`. **Tratamento:** **bloqueante** **imediato** **para** **aquela** **Scene** **ou** **para** **o** **playback** **afetado** — **overlay** / **banner** **com** **ação** **“Repetir”** / **“Pular”** **se** **política** ([UI_SPEC.md](./UI_SPEC.md) §17.6); **log** **com** `media_id` **e** **path** **relativo** **esperado**. **Não** **silêncio** **no** telão.
 
 ## 17.2 Erro **local** **de** **leitura** / I/O
 
@@ -418,7 +418,7 @@ Quando a Scene **atual** **falhar** **de** **forma** **severa** — **impossibil
 
 ## 19.1 O **que** **pode** **invalidar** `ready`
 
-- **Mudança** **de** **binding** **ou** **substituição** **de** **ficheiro** **na** **workspace**.  
+- **Mudança** **de** **binding** **ou** **substituição** **de** **arquivo** **na** **workspace**.  
 - **Novo** Pack **carregado**.  
 - **Alteração** **de** **workspace** **root**.  
 - **Pedido** **explícito** **de** **revalidação** **pelo** **operador** ([PRE_FLIGHT_FEATURE_SPEC.md](./PRE_FLIGHT_FEATURE_SPEC.md) §17).
@@ -442,7 +442,7 @@ Quando a Scene **atual** **falhar** **de** **forma** **severa** — **impossibil
 
 ## 20.2 Comportamento **após** **última** Scene
 
-**Não** **reiniciar** **roteiro** **silenciosamente** **para** **o** **início** **salvo** **ação** **explícita** **“repetir** **evento”** **se** **existir** **no** **produto**. **Predefinição:** **manter** **última** **Scene** **ou** **ecrã** **de** **fim** **controlado** **até** **reset** / **novo** Pack.
+**Não** **reiniciar** **roteiro** **silenciosamente** **para** **o** **início** **salvo** **ação** **explícita** **“repetir** **evento”** **se** **existir** **no** **produto**. **Predefinição:** **manter** **última** **Scene** **ou** **tela** **de** **fim** **controlado** **até** **reset** / **novo** Pack.
 
 ## 20.3 **Após** **`finished`**
 
@@ -469,7 +469,7 @@ Quando a Scene **atual** **falhar** **de** **forma** **severa** — **impossibil
 15. **Preload** **que** **ativa** **a** **próxima** Scene **no** **telão** **antes** **do** **evento** **de** **transição** **(§11.5)**.  
 16. **Duplo** **clique** **ou** **input** **duplicado** **avançando** **mais** **de** **uma** Scene **(§15.2)**.  
 17. **Falha** **severa** **com** **telão** **vazio** **e** **sem** **fallback** **mínimo** **(§17.5)**.  
-18. **Avanço** **de** **roteiro** **sem** **registo** **de** **conclusão** **da** **Scene** **anterior** **(§9.4)**.
+18. **Avanço** **de** **roteiro** **sem** **registro** **de** **conclusão** **da** **Scene** **anterior** **(§9.4)**.
 
 ---
 
