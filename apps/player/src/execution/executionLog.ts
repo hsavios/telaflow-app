@@ -9,6 +9,8 @@ export const EXECUTION_LOG_CODES = {
   EXECUTION_STARTED: "execution_started",
   SCENE_ACTIVATED: "scene_activated",
   EXECUTION_FINISHED: "execution_finished",
+  MEDIA_STARTED: "media_started",
+  MEDIA_FAILED: "media_failed",
 } as const;
 
 export type ExecutionLogEntry = {

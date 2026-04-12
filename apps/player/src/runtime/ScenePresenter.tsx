@@ -1,4 +1,5 @@
 ﻿import type { MediaRequirementContract, SceneContract, SceneType } from "@telaflow/shared-contracts";
+import type { ExecutionLogLevel } from "../execution/executionLog.js";
 import { SceneMediaRenderer } from "./SceneMediaRenderer.js";
 import type { SceneMediaDerivedState } from "./sceneMediaResolution.js";
 
@@ -11,6 +12,12 @@ const TYPE_LABELS: Record<SceneType, string> = {
   closing: "Encerramento",
 };
 
+type PlaybackLogPayload = {
+  level: ExecutionLogLevel;
+  code: string;
+  message: string;
+};
+
 type Props = {
   scene: SceneContract;
   sceneOrdinal: number;
@@ -20,6 +27,7 @@ type Props = {
   workspaceRoot: string | null;
   bindings: Record<string, string>;
   mediaRequirement: MediaRequirementContract | null;
+  onPlaybackLog: (entry: PlaybackLogPayload) => void;
 };
 
 export function ScenePresenter({
@@ -31,6 +39,7 @@ export function ScenePresenter({
   workspaceRoot,
   bindings,
   mediaRequirement,
+  onPlaybackLog,
 }: Props) {
   const typeLabel = TYPE_LABELS[scene.type] ?? scene.type;
 
@@ -82,6 +91,7 @@ export function ScenePresenter({
         workspaceRoot={workspaceRoot}
         bindings={bindings}
         mediaRequirement={mediaRequirement}
+        onPlaybackLog={onPlaybackLog}
       />
     </div>
   );

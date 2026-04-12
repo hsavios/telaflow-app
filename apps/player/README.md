@@ -39,7 +39,7 @@ Conforme `PLAYER_RUNTIME_FEATURE_SPEC` / `ARCHITECTURE_SPEC` (subconjunto MVP):
 | **`pack_loaded`** | Pack + licença OK; workspace/bindings a configurar; pre-flight ainda não passou ou foi invalidado. |
 | **`preflight_failed`** | Último pre-flight com bloqueantes (detalhe em `lastPreflight`). |
 | **`ready`** | Último pre-flight **sem** bloqueantes — **gate** para iniciar roteiro. |
-| **`executing`** | Roteiro com **Runtime Visual MVP** (presenter + mídia derivada), sem playback nem sorteio real. |
+| **`executing`** | Roteiro com **Runtime Visual MVP** + **Playback Engine MVP** (imagem/vídeo via bindings), sem sorteio visual real. |
 
 Fluxo típico: `idle` → (abrir pack) → `pack_loaded` → (pre-flight) → `preflight_failed` **ou** `ready` → (**Iniciar roteiro**) → `executing` → (**Concluir execução**) → `ready`. Alterar workspace/bindings repõe `pack_loaded`.
 
@@ -52,9 +52,25 @@ Implementação: `src/pack/playerPackState.ts` + `src/App.tsx`.
 
 ## Runtime Visual MVP
 
-- **Scene Presenter** (`src/runtime/ScenePresenter.tsx`): cartão operacional da cena ativa, sem efeitos nem playback.
-- Tipos suportados (contrato `SceneType`): **`opening`**, **`institutional`**, **`sponsor`**, **`draw`**, **`break`**, **`closing`** — rótulos em pt-BR no cartão; conteúdo factual (`name`, ids, ordem).
+- **Scene Presenter** (`src/runtime/ScenePresenter.tsx`): cartão operacional da cena ativa (metadados, tipo `SceneType` em pt-BR, hints em `draw`). **Não** contém lógica de ficheiro/reprodução — delega mídia ao **Scene Media Renderer**.
+- **Scene Media Renderer** (`src/runtime/SceneMediaRenderer.tsx`): zona de mídia da cena (placeholder, fallback ou playback).
+- Tipos de cena (`SceneType`): **`opening`**, **`institutional`**, **`sponsor`**, **`draw`**, **`break`**, **`closing`**.
 - Cenas **`draw`**: texto explícito de que não há sorteio visual; se existir `draw_config_id` no pack, mostra-se resumo da configuração (nome, `max_winners`).
+
+## Playback Engine (MVP)
+
+- Tipos de **slot** suportados para ficheiro real: **`image`** e **`video`** (`media_type` no `media-manifest`).
+- **Imagem:** `<img>` com URL via `convertFileSrc` sobre o caminho absoluto canónico devolvido por `resolve_workspace_file_path` (Rust; valida caminho relativo seguro).
+- **Vídeo:** `<video>` com `controls`, **`muted`** e **`autoPlay`** + `playsInline` (MVP operacional).
+- **`audio`** / **`other`**: sem playback de ficheiro — mensagem + registo `media_failed` (motivo).
+- **`media_id`** sem linha no manifest: não há tipo declarado — placeholder + `media_failed`.
+- Estados derivados **sem** ficheiro pronto (`media_missing_binding`, `media_file_missing`): mantém-se o **placeholder / cartão de fallback** (sem tentar carregar URL).
+- **Tauri:** `app.security.assetProtocol` + CSP com `asset:` / `http://asset.localhost` para o WebView carregar ficheiros locais; âmbito amplo `**` no MVP (workspace escolhido pelo operador).
+
+## Logging de playback
+
+- **`media_started`**: após `onLoad` (imagem) ou `onLoadedData` (vídeo), uma vez por URL carregada.
+- **`media_failed`**: vínculo/ficheiro em falta, resolução de path, tipo não suportado, manifest em falta, ou erro de decode/elemento (`onError`).
 
 ## Resolução de mídia da cena atual
 
@@ -71,17 +87,18 @@ Textos para operador: `describeSceneMediaDerivedStatePt`.
 
 ## Registo de execução (MVP)
 
-- O registo **inicia** ao entrar em **`executing`**: eventos **`execution_started`**, **`scene_activated`** (inclui índice 0 ao iniciar e cada mudança), **`execution_finished`** (botão **Concluir execução**, descarregar sessão ou alteração de workspace/bindings durante execução).
+- O registo **inicia** ao entrar em **`executing`**: eventos **`execution_started`**, **`scene_activated`** (inclui índice 0 ao iniciar e cada mudança), **`execution_finished`** (botão **Concluir execução**, descarregar sessão ou alteração de workspace/bindings durante execução), mais **`media_started`** / **`media_failed`** durante o playback MVP.
 - **Persistência:** comando Tauri `append_execution_jsonl` — ficheiro **`.telaflow/execution-log.jsonl`** sob a raiz do **workspace** se existir; caso contrário sob a **pasta do pack** (append JSON por linha).
 - Memória de sessão: `executionLog` + UI `ExecutionLogPanel` (visível em `executing`).
 
 ## Fora de escopo
 
-- **Playback** real de vídeo/imagem no presenter.
 - **Sorteio visual** real (extração, animação, telão dedicado).
 - **Multi-monitor** / projeção estendida.
+- **Transições** avançadas entre cenas ou efeitos no telão.
 - **Cloud** em runtime (o pack é local).
 - **Assinatura criptográfica** da licença (validação estrutural/janela apenas).
+- **Playback** além do MVP: áudio dedicado, streaming, DRM, playlists, etc.
 
 ## Desenvolvimento
 

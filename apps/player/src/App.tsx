@@ -7,6 +7,7 @@ import {
   EXECUTION_LOG_CODES,
   toJsonlLine,
   type ExecutionLogEntry,
+  type ExecutionLogLevel,
 } from "./execution/executionLog.js";
 import { persistExecutionJsonl } from "./execution/persistExecutionLog.js";
 import {
@@ -245,6 +246,18 @@ export default function App() {
     });
   }, []);
 
+  const onAppendExecutionPlaybackLog = useCallback(
+    (entry: { level: ExecutionLogLevel; code: string; message: string }) => {
+      setEstado((prev) => {
+        if (prev.kind !== "executing") return prev;
+        const row = appendExecutionLog(prev.executionLog, entry);
+        persistLine(prev, row[row.length - 1]);
+        return { ...prev, executionLog: row };
+      });
+    },
+    [],
+  );
+
   const onFinishExecution = useCallback(() => {
     setEstado((prev) => {
       if (prev.kind !== "executing") return prev;
@@ -274,8 +287,8 @@ export default function App() {
       <header className="player-header">
         <h1>TelaFlow Player</h1>
         <p className="player-tagline">
-          FSM operacional, pre-flight, runtime visual e playback MVP (imagem/vídeo via bindings e
-          protocolo asset do Tauri) — sem Cloud em runtime; registo JSONL para eventos de execução.
+          FSM operacional, pre-flight, runtime visual, playback MVP (imagem/vídeo via bindings) e
+          registo JSONL — sem Cloud em runtime, sem sorteio visual real e sem multi-monitor.
         </p>
       </header>
 
@@ -314,6 +327,7 @@ export default function App() {
             onStartExecution={onStartExecution}
             onSceneIndexChange={onSceneIndexChange}
             onFinishExecution={onFinishExecution}
+            onAppendExecutionLog={onAppendExecutionPlaybackLog}
           />
         )}
         {estado.kind === "idle" && !carregando && (

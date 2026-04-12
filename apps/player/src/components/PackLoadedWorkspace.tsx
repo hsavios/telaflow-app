@@ -11,7 +11,7 @@ import {
   serializeBindingsFile,
 } from "../media/mediaBindingsFile.js";
 import { ExecutionLogPanel } from "../execution/ExecutionLogPanel.js";
-import type { ExecutionLogEntry } from "../execution/executionLog.js";
+import type { ExecutionLogEntry, ExecutionLogLevel } from "../execution/executionLog.js";
 import { runPreflightMvp } from "../preflight/runPreflight.js";
 import type { PreflightResult } from "../preflight/types.js";
 import { ExecutingRuntimeView } from "../runtime/ExecutingRuntimeView.js";
@@ -48,6 +48,12 @@ type Props = {
   onStartExecution: () => void;
   onSceneIndexChange: (index: number) => void;
   onFinishExecution: () => void;
+  /** Apenas em `executing`: anexa eventos ao registo JSONL (ex.: playback). */
+  onAppendExecutionLog?: (entry: {
+    level: ExecutionLogLevel;
+    code: string;
+    message: string;
+  }) => void;
 };
 
 export function PackLoadedWorkspace({
@@ -65,6 +71,7 @@ export function PackLoadedWorkspace({
   onStartExecution,
   onSceneIndexChange,
   onFinishExecution,
+  onAppendExecutionLog,
 }: Props) {
   const resumo = useMemo(() => buildPackSummary(packRoot, packData), [packRoot, packData]);
   const [existeCache, setExisteCache] = useState<Map<string, boolean>>(new Map());
@@ -234,6 +241,7 @@ export function PackLoadedWorkspace({
             fileExistsCache={existeCache}
             onSceneIndexChange={onSceneIndexChange}
             onFinishExecution={onFinishExecution}
+            onPlaybackLog={(entry) => onAppendExecutionLog?.(entry)}
           />
         </section>
       )}

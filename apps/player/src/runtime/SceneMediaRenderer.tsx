@@ -1,10 +1,18 @@
 ﻿import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import type { MediaKind, MediaRequirementContract, SceneContract } from "@telaflow/shared-contracts";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { EXECUTION_LOG_CODES } from "../execution/executionLog.js";
+import type { ExecutionLogLevel } from "../execution/executionLog.js";
 import {
   describeSceneMediaDerivedStatePt,
   type SceneMediaDerivedState,
 } from "./sceneMediaResolution.js";
+
+type PlaybackLogPayload = {
+  level: ExecutionLogLevel;
+  code: string;
+  message: string;
+};
 
 type Props = {
   scene: SceneContract;
@@ -13,7 +21,17 @@ type Props = {
   bindings: Record<string, string>;
   /** Linha do manifest para `scene.media_id`, se existir. */
   mediaRequirement: MediaRequirementContract | null;
+  onPlaybackLog: (entry: PlaybackLogPayload) => void;
 };
+
+function logMedia(
+  onPlaybackLog: (entry: PlaybackLogPayload) => void,
+  code: string,
+  message: string,
+  level: ExecutionLogLevel = "info",
+) {
+  onPlaybackLog({ level, code, message });
+}
 
 export function SceneMediaRenderer({
   scene,
@@ -21,12 +39,37 @@ export function SceneMediaRenderer({
   workspaceRoot,
   bindings,
   mediaRequirement,
+  onPlaybackLog,
 }: Props) {
   const mediaId = scene.media_id ?? null;
   const mediaKind: MediaKind | null = mediaRequirement?.media_type ?? null;
 
   const [assetSrc, setAssetSrc] = useState<string | null>(null);
   const [resolveError, setResolveError] = useState(false);
+  const stateFailKey = `${scene.scene_id}:${mediaState}`;
+  const loggedStateFail = useRef<string | null>(null);
+  const loggedUnsupported = useRef<string | null>(null);
+  const loggedStartedForSrc = useRef<string | null>(null);
+  const loggedDecodeFailForSrc = useRef<string | null>(null);
+
+  useEffect(() => {
+    loggedStartedForSrc.current = null;
+    loggedDecodeFailForSrc.current = null;
+  }, [assetSrc]);
+
+  useEffect(() => {
+    if (mediaState !== "media_missing_binding" && mediaState !== "media_file_missing") {
+      return;
+    }
+    if (loggedStateFail.current === stateFailKey) return;
+    loggedStateFail.current = stateFailKey;
+    logMedia(
+      onPlaybackLog,
+      EXECUTION_LOG_CODES.MEDIA_FAILED,
+      `media_id=${mediaId ?? "—"}; estado=${mediaState}; ${describeSceneMediaDerivedStatePt(mediaState)}`,
+      "warn",
+    );
+  }, [mediaState, mediaId, onPlaybackLog, stateFailKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,6 +82,15 @@ export function SceneMediaRenderer({
       };
     }
     if (mediaKind !== "image" && mediaKind !== "video") {
+      const key = `${scene.scene_id}:unsupported:${mediaKind ?? "none"}`;
+      if (loggedUnsupported.current !== key) {
+        loggedUnsupported.current = key;
+        const msg =
+          mediaKind == null
+            ? `media_id=${mediaId}; sem entrada no media-manifest — não é possível playback tipado`
+            : `media_id=${mediaId}; tipo=${mediaKind} — playback MVP só suporta image e video`;
+        logMedia(onPlaybackLog, EXECUTION_LOG_CODES.MEDIA_FAILED, msg, "warn");
+      }
       return () => {
         cancelled = true;
       };
@@ -62,6 +114,12 @@ export function SceneMediaRenderer({
       } catch {
         if (!cancelled) {
           setResolveError(true);
+          logMedia(
+            onPlaybackLog,
+            EXECUTION_LOG_CODES.MEDIA_FAILED,
+            `media_id=${mediaId}; falha ao resolver caminho para playback`,
+            "error",
+          );
         }
       }
     })();
@@ -69,7 +127,35 @@ export function SceneMediaRenderer({
     return () => {
       cancelled = true;
     };
-  }, [bindings, mediaId, mediaKind, mediaState, scene.scene_id, workspaceRoot]);
+  }, [bindings, mediaId, mediaKind, mediaState, onPlaybackLog, scene.scene_id, workspaceRoot]);
+
+  const onMediaStarted = useCallback(
+    (kind: "image" | "video", srcKey: string) => {
+      if (loggedStartedForSrc.current === srcKey) return;
+      loggedStartedForSrc.current = srcKey;
+      logMedia(
+        onPlaybackLog,
+        EXECUTION_LOG_CODES.MEDIA_STARTED,
+        `scene_id=${scene.scene_id}; media_id=${mediaId}; kind=${kind}`,
+        "info",
+      );
+    },
+    [mediaId, onPlaybackLog, scene.scene_id],
+  );
+
+  const onMediaDecodeFailed = useCallback(
+    (srcKey: string) => {
+      if (loggedDecodeFailForSrc.current === srcKey) return;
+      loggedDecodeFailForSrc.current = srcKey;
+      logMedia(
+        onPlaybackLog,
+        EXECUTION_LOG_CODES.MEDIA_FAILED,
+        `scene_id=${scene.scene_id}; media_id=${mediaId}; erro ao carregar recurso (decode/rede)`,
+        "error",
+      );
+    },
+    [mediaId, onPlaybackLog, scene.scene_id],
+  );
 
   if (mediaState === "no_media_required") {
     return (
@@ -137,6 +223,8 @@ export function SceneMediaRenderer({
           src={assetSrc}
           alt={mediaRequirement?.label ?? scene.name}
           className="scene-media__img"
+          onLoad={() => onMediaStarted("image", assetSrc)}
+          onError={() => onMediaDecodeFailed(assetSrc)}
         />
       </section>
     );
@@ -152,6 +240,8 @@ export function SceneMediaRenderer({
           muted
           autoPlay
           playsInline
+          onLoadedData={() => onMediaStarted("video", assetSrc)}
+          onError={() => onMediaDecodeFailed(assetSrc)}
         />
       </section>
     );

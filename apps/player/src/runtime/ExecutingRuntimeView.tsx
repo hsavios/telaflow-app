@@ -9,6 +9,12 @@ import {
   type SceneMediaDerivedState,
 } from "./sceneMediaResolution.js";
 
+type PlaybackLogPayload = {
+  level: "info" | "warn" | "error";
+  code: string;
+  message: string;
+};
+
 type Props = {
   packData: PackLoaderSuccess;
   sceneIndex: number;
@@ -17,6 +23,7 @@ type Props = {
   fileExistsCache: Map<string, boolean>;
   onSceneIndexChange: (next: number) => void;
   onFinishExecution: () => void;
+  onPlaybackLog: (entry: PlaybackLogPayload) => void;
 };
 
 function drawConfigLine(pack: PackLoaderSuccess, drawConfigId: string | null | undefined): string | null {
@@ -34,6 +41,7 @@ export function ExecutingRuntimeView({
   fileExistsCache,
   onSceneIndexChange,
   onFinishExecution,
+  onPlaybackLog,
 }: Props) {
   const ordenadas = useMemo(() => enabledScenesSorted(packData.event.scenes), [packData.event.scenes]);
   const n = ordenadas.length;
@@ -102,6 +110,7 @@ export function ExecutingRuntimeView({
           workspaceRoot={workspaceRoot}
           bindings={bindings}
           mediaRequirement={mediaRequirement}
+          onPlaybackLog={onPlaybackLog}
         />
       </div>
 
