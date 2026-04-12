@@ -72,10 +72,11 @@ Implementação: `src/pack/playerPackState.ts` + `src/App.tsx`.
 - **`SceneDrawEngine`** (`src/runtime/SceneDrawEngine.tsx`), só em cenas **`draw`** com `draw_config_id`: resumo (nome, modo, intervalo, `max_winners`), **Iniciar sorteio** → valor aleatório inclusivo → **Confirmar resultado**.
 - Sem animações, sem painel público separado, sem Cloud.
 
-## Logging de playback
+## Logging de playback e sorteio
 
 - **`media_started`**: após `onLoad` (imagem) ou `onLoadedData` (vídeo), uma vez por URL carregada.
 - **`media_failed`**: vínculo/ficheiro em falta, resolução de path, tipo não suportado, manifest em falta, ou erro de decode/elemento (`onError`).
+- **`draw_started`**, **`draw_result_generated`**, **`draw_result_confirmed`**: ciclo do sorteio `number_range` no motor MVP.
 
 ## Resolução de mídia da cena atual
 
@@ -92,7 +93,7 @@ Textos para operador: `describeSceneMediaDerivedStatePt`.
 
 ## Registo de execução (MVP)
 
-- O registo **inicia** ao entrar em **`executing`**: eventos **`execution_started`**, **`scene_activated`** (inclui índice 0 ao iniciar e cada mudança), **`execution_finished`** (botão **Concluir execução**, descarregar sessão ou alteração de workspace/bindings durante execução), mais **`media_started`** / **`media_failed`** durante o playback MVP.
+- O registo **inicia** ao entrar em **`executing`**: eventos **`execution_started`**, **`scene_activated`**, **`execution_finished`**, **`media_started`** / **`media_failed`**, e **`draw_started`** / **`draw_result_generated`** / **`draw_result_confirmed`** quando aplicável.
 - **Persistência:** comando Tauri `append_execution_jsonl` — ficheiro **`.telaflow/execution-log.jsonl`** sob a raiz do **workspace** se existir; caso contrário sob a **pasta do pack** (append JSON por linha).
 - Memória de sessão: `executionLog` + UI `ExecutionLogPanel` (visível em `executing`).
 
@@ -100,7 +101,7 @@ Textos para operador: `describeSceneMediaDerivedStatePt`.
 
 - **Sorteio visual** avançado (animações, telão dedicado, modos múltiplos além do MVP `number_range`).
 - **Dual-screen** / painel público separado.
-- **Multi-monitor** / projeção estendida.
+- **Multi-monitor** / projeção estendida (além do dual-screen acima).
 - **Transições** avançadas entre cenas ou efeitos no telão.
 - **Cloud** em runtime (o pack é local).
 - **Assinatura criptográfica** da licença (validação estrutural/janela apenas).

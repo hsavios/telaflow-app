@@ -86,7 +86,9 @@ export function ScenePresenter({
           </div>
         ) : null}
       </dl>
-      {scene.type === "draw" && <SceneDrawEngine scene={scene} drawConfig={drawConfig} />}
+      {scene.type === "draw" && (
+        <SceneDrawEngine scene={scene} drawConfig={drawConfig} onPlaybackLog={onPlaybackLog} />
+      )}
       <SceneMediaRenderer
         scene={scene}
         mediaState={mediaState}

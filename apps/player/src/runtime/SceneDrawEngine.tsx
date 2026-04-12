@@ -1,15 +1,33 @@
 ﻿import type { DrawConfigContract, SceneContract } from "@telaflow/shared-contracts";
 import { useCallback, useEffect, useState } from "react";
+import { EXECUTION_LOG_CODES } from "../execution/executionLog.js";
+import type { ExecutionLogLevel } from "../execution/executionLog.js";
 import { effectiveNumberRange, randomIntInclusive } from "./drawNumberRange.js";
+
+type LogPayload = {
+  level: ExecutionLogLevel;
+  code: string;
+  message: string;
+};
 
 type DrawPhase = "idle" | "awaiting_confirm" | "confirmed";
 
 type Props = {
   scene: SceneContract;
   drawConfig: DrawConfigContract | null;
+  onPlaybackLog: (entry: LogPayload) => void;
 };
 
-export function SceneDrawEngine({ scene, drawConfig }: Props) {
+function logDraw(
+  onPlaybackLog: (entry: LogPayload) => void,
+  code: string,
+  message: string,
+  level: ExecutionLogLevel = "info",
+) {
+  onPlaybackLog({ level, code, message });
+}
+
+export function SceneDrawEngine({ scene, drawConfig, onPlaybackLog }: Props) {
   const [phase, setPhase] = useState<DrawPhase>("idle");
   const [rolledValue, setRolledValue] = useState<number | null>(null);
 
@@ -26,12 +44,30 @@ export function SceneDrawEngine({ scene, drawConfig }: Props) {
     const value = randomIntInclusive(min, max);
     setRolledValue(value);
     setPhase("awaiting_confirm");
-  }, [drawConfig]);
+    logDraw(
+      onPlaybackLog,
+      EXECUTION_LOG_CODES.DRAW_STARTED,
+      `scene_id=${scene.scene_id}; draw_config_id=${drawConfig.draw_config_id}; draw_type=number_range; interval=[${min},${max}]`,
+      "info",
+    );
+    logDraw(
+      onPlaybackLog,
+      EXECUTION_LOG_CODES.DRAW_RESULT_GENERATED,
+      `scene_id=${scene.scene_id}; draw_config_id=${drawConfig.draw_config_id}; value=${value}`,
+      "info",
+    );
+  }, [drawConfig, onPlaybackLog, scene.scene_id]);
 
   const confirmDraw = useCallback(() => {
-    if (rolledValue == null) return;
+    if (rolledValue == null || !drawConfig) return;
+    logDraw(
+      onPlaybackLog,
+      EXECUTION_LOG_CODES.DRAW_RESULT_CONFIRMED,
+      `scene_id=${scene.scene_id}; draw_config_id=${drawConfig.draw_config_id}; value=${rolledValue}`,
+      "info",
+    );
     setPhase("confirmed");
-  }, [rolledValue]);
+  }, [drawConfig, onPlaybackLog, rolledValue, scene.scene_id]);
 
   if (scene.type !== "draw") {
     return null;

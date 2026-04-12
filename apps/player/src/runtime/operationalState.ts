@@ -22,7 +22,7 @@ export function describeOperationalKindPt(kind: PlayerOperationalKind): string {
     pack_loaded: "pack carregado — configurar workspace / bindings e correr pre-flight",
     preflight_failed: "pre-flight com bloqueantes",
     ready: "pronto (gate sem bloqueantes)",
-    executing: "a executar roteiro — presenter + playback MVP (imagem/vídeo)",
+    executing: "a executar roteiro — presenter, playback (imagem/vídeo) e sorteio number_range MVP",
   };
   return m[kind];
 }

@@ -11,6 +11,9 @@ export const EXECUTION_LOG_CODES = {
   EXECUTION_FINISHED: "execution_finished",
   MEDIA_STARTED: "media_started",
   MEDIA_FAILED: "media_failed",
+  DRAW_STARTED: "draw_started",
+  DRAW_RESULT_GENERATED: "draw_result_generated",
+  DRAW_RESULT_CONFIRMED: "draw_result_confirmed",
 } as const;
 
 export type ExecutionLogEntry = {
