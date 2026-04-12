@@ -263,7 +263,7 @@ export function DrawConfigsWorkspace({
   };
 
   return (
-    <div className="mt-8 space-y-6">
+    <div className="mt-8 min-w-0 space-y-6">
       {banner ? (
         <p
           className="rounded-tf border border-tf-teal/30 bg-tf-teal-soft/30 px-4 py-3 text-sm text-tf-fg"
@@ -308,7 +308,7 @@ export function DrawConfigsWorkspace({
           </button>
         </div>
       ) : (
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,22rem)_1fr] lg:items-start">
+        <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,22rem)_1fr] lg:items-start">
           <div>
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-tf-subtle">
               Lista
@@ -326,7 +326,7 @@ export function DrawConfigsWorkspace({
                     }`}
                   >
                     <div className="font-medium text-tf-fg">{d.name}</div>
-                    <div className="mt-1 font-mono text-xs text-tf-faint">
+                    <div className="mt-1 break-all font-mono text-xs text-tf-faint">
                       {d.draw_config_id}
                     </div>
                     {d.number_range ? (
@@ -357,7 +357,7 @@ export function DrawConfigsWorkspace({
             </ul>
           </div>
 
-          <aside className="rounded-tf-lg border border-tf-border bg-tf-mid/30 p-5 lg:min-h-[18rem]">
+          <aside className="min-w-0 rounded-tf-lg border border-tf-border bg-tf-mid/30 p-4 sm:p-5 lg:min-h-[18rem]">
             {!selected ? (
               <p className="text-sm text-tf-muted">
                 Selecione um sorteio na lista para editar nome, ganhadores, intervalo
@@ -543,7 +543,7 @@ export function DrawConfigsWorkspace({
                     TelaFlow Player no equipamento do evento.
                   </p>
                   <div
-                    className="mt-3 overflow-hidden rounded-tf border border-slate-600/50 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-5 py-5 text-slate-100 shadow-inner"
+                    className="mt-3 max-w-full overflow-hidden break-words rounded-tf border border-slate-600/50 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 py-4 text-slate-100 shadow-inner sm:px-5 sm:py-5"
                     aria-label="Pré-visualização interpretativa do telão"
                   >
                     <p className="text-[0.65rem] font-bold uppercase tracking-widest text-slate-400">
@@ -628,7 +628,7 @@ export function DrawConfigsWorkspace({
           }}
         >
           <div
-            className="w-full max-w-md rounded-tf-lg border border-tf-border bg-tf-mid p-6 shadow-xl"
+            className="max-h-[min(90dvh,28rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-tf-lg border border-tf-border bg-tf-mid p-5 shadow-xl sm:p-6"
             role="dialog"
             aria-modal="true"
             aria-labelledby={modalTitleId}

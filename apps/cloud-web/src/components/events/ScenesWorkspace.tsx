@@ -122,7 +122,7 @@ function SortableSceneRow({
         onClick={onSelect}
         className="min-w-0 flex-1 px-3 py-3 text-left"
       >
-        <div className="font-medium text-tf-fg">{scene.name}</div>
+        <div className="break-words font-medium text-tf-fg">{scene.name}</div>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-tf-muted">
           <span className="tabular-nums text-tf-subtle">#{scene.sort_order}</span>
           <span>{label}</span>
@@ -355,7 +355,7 @@ export function ScenesWorkspace({
   }, [banner]);
 
   return (
-    <div className="mt-8 space-y-6">
+    <div className="mt-8 min-w-0 space-y-6">
       {banner ? (
         <p
           className="rounded-tf border border-tf-teal/30 bg-tf-teal-soft/30 px-4 py-3 text-sm text-tf-fg"
@@ -400,7 +400,7 @@ export function ScenesWorkspace({
           </button>
         </div>
       ) : (
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,22rem)_1fr] lg:items-start">
+        <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,22rem)_1fr] lg:items-start">
           <div>
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-tf-subtle">
               Sequência
@@ -433,7 +433,7 @@ export function ScenesWorkspace({
           </div>
 
           <aside
-            className="rounded-tf-lg border border-tf-border bg-tf-mid/30 p-5 lg:min-h-[20rem]"
+            className="min-w-0 rounded-tf-lg border border-tf-border bg-tf-mid/30 p-4 sm:p-5 lg:min-h-[20rem]"
             aria-label="Edição da scene"
           >
             {!selected ? (
@@ -625,7 +625,7 @@ export function ScenesWorkspace({
           }}
         >
           <div
-            className="w-full max-w-md rounded-tf-lg border border-tf-border bg-tf-mid p-6 shadow-xl"
+            className="max-h-[min(90dvh,36rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-tf-lg border border-tf-border bg-tf-mid p-5 shadow-xl sm:p-6"
             role="dialog"
             aria-modal="true"
             aria-labelledby={modalTitleId}

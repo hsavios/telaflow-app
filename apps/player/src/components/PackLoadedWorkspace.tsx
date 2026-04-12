@@ -312,6 +312,7 @@ export function PackLoadedWorkspace() {
 
       <section className="player-section">
         <h3>3 · Vínculos de mídia</h3>
+        <div className="player-table-scroll">
         <table className="player-table">
           <thead>
             <tr>
@@ -359,6 +360,7 @@ export function PackLoadedWorkspace() {
             ))}
           </tbody>
         </table>
+        </div>
       </section>
 
       <section className="player-section">

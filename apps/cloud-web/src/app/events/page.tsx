@@ -146,7 +146,10 @@ export default function EventsPage() {
     <div className="min-h-screen text-tf-muted">
       <AppHeader />
 
-      <main id="conteudo-principal" className="mx-auto max-w-content px-6 pb-20 pt-10 lg:px-10">
+      <main
+        id="conteudo-principal"
+        className="mx-auto min-w-0 max-w-content px-4 pb-16 pt-8 sm:px-6 sm:pb-20 sm:pt-10 lg:px-10"
+      >
         {successMsg ? (
           <p
             className="mb-6 rounded-tf border border-tf-teal/30 bg-tf-teal-soft/30 px-4 py-3 text-sm text-tf-fg"
@@ -222,14 +225,18 @@ export default function EventsPage() {
         ) : null}
 
         {loadState === "ok" && events.length > 0 ? (
-          <div className="mt-10 overflow-hidden rounded-tf-lg border border-tf-border">
-            <table className="w-full text-left text-sm">
+          <div className="tf-scroll-touch mt-10 overflow-x-auto rounded-tf-lg border border-tf-border">
+            <table className="w-full min-w-[20rem] text-left text-sm sm:min-w-0">
               <thead className="border-b border-tf-border bg-tf-mid/80 text-tf-subtle">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Nome</th>
-                  <th className="px-4 py-3 font-medium">event_id</th>
-                  <th className="px-4 py-3 font-medium">organization_id</th>
-                  <th className="px-4 py-3 font-medium text-right">
+                  <th className="px-3 py-3 font-medium sm:px-4">Nome</th>
+                  <th className="hidden px-3 py-3 font-medium sm:table-cell sm:px-4">
+                    event_id
+                  </th>
+                  <th className="hidden px-3 py-3 font-medium md:table-cell sm:px-4">
+                    organization_id
+                  </th>
+                  <th className="px-3 py-3 font-medium text-right sm:px-4">
                     <span className="sr-only">Ação</span>
                   </th>
                 </tr>
@@ -237,16 +244,19 @@ export default function EventsPage() {
               <tbody className="divide-y divide-tf-border bg-tf-mid/25">
                 {events.map((ev) => (
                   <tr key={ev.event_id} className="hover:bg-tf-mid/40">
-                    <td className="px-4 py-3.5 font-medium text-tf-fg">
-                      {ev.name}
+                    <td className="max-w-[10rem] px-3 py-3 align-top font-medium text-tf-fg sm:max-w-none sm:px-4 sm:py-3.5">
+                      <span className="break-words">{ev.name}</span>
+                      <span className="mt-1.5 block font-mono text-[10px] leading-snug text-tf-muted sm:hidden">
+                        {ev.event_id}
+                      </span>
                     </td>
-                    <td className="px-4 py-3.5 font-mono text-xs text-tf-muted">
+                    <td className="hidden px-3 py-3 align-top font-mono text-xs text-tf-muted break-all sm:table-cell sm:px-4 sm:py-3.5">
                       {ev.event_id}
                     </td>
-                    <td className="px-4 py-3.5 font-mono text-xs text-tf-muted">
+                    <td className="hidden px-3 py-3 align-top font-mono text-xs text-tf-muted break-all md:table-cell sm:px-4 sm:py-3.5">
                       {ev.organization_id}
                     </td>
-                    <td className="px-4 py-3.5 text-right">
+                    <td className="whitespace-nowrap px-3 py-3 align-top text-right sm:px-4 sm:py-3.5">
                       <Link
                         href={`/events/${encodeURIComponent(ev.event_id)}`}
                         className="text-sm font-medium text-tf-accent transition-colors hover:text-blue-300"
@@ -273,7 +283,7 @@ export default function EventsPage() {
           }}
         >
           <div
-            className="w-full max-w-md rounded-tf-lg border border-tf-border bg-tf-mid p-6 shadow-xl"
+            className="max-h-[min(90dvh,32rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-tf-lg border border-tf-border bg-tf-mid p-5 shadow-xl sm:p-6"
             role="dialog"
             aria-modal="true"
             aria-labelledby={dialogTitleId}

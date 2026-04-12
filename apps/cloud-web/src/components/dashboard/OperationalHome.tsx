@@ -266,7 +266,7 @@ export function OperationalHome() {
   return (
     <main
       id="conteudo-principal"
-      className="mx-auto max-w-content px-6 pb-20 pt-5 md:pt-6 lg:px-10"
+      className="mx-auto min-w-0 max-w-content px-4 pb-16 pt-4 sm:px-6 sm:pb-20 sm:pt-5 md:pt-6 lg:px-10"
     >
       <section
         id="visao-geral"
@@ -345,13 +345,13 @@ export function OperationalHome() {
         ) : null}
 
         {loadState === "ok" ? (
-          <div className="mt-5 flex flex-col gap-8 xl:flex-row xl:items-start xl:gap-10">
-            <div className="min-w-0 flex-1 xl:min-w-0">
+          <div className="mt-5 flex min-w-0 flex-col gap-8 xl:flex-row xl:items-start xl:gap-10">
+            <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-end justify-between gap-2 border-b border-tf-border pb-3">
                 <h2 className="font-display text-base font-semibold text-tf-fg md:text-lg">
                   Seus eventos
                 </h2>
-                <p className="text-[11px] text-tf-faint">
+                <p className="max-w-[12rem] text-right text-[11px] leading-snug text-tf-faint sm:max-w-none sm:text-left">
                   Toque na linha para definir o evento em foco
                 </p>
               </div>
@@ -372,8 +372,15 @@ export function OperationalHome() {
                   </Link>
                 </div>
               ) : (
-                <div className="mt-3 overflow-x-auto rounded-tf-lg border border-tf-border shadow-[0_0_0_1px_rgba(248,250,252,0.02)_inset]">
-                  <table className="w-full min-w-[48rem] text-left text-sm">
+                <>
+                  <p
+                    className="mt-3 text-[11px] text-tf-faint md:hidden"
+                    aria-hidden="true"
+                  >
+                    Deslize a tabela horizontalmente para ver todas as colunas.
+                  </p>
+                  <div className="tf-scroll-touch mt-2 overflow-x-auto rounded-tf-lg border border-tf-border shadow-[0_0_0_1px_rgba(248,250,252,0.02)_inset]">
+                  <table className="w-full min-w-[34rem] text-left text-sm sm:min-w-[40rem] lg:min-w-[48rem]">
                     <thead className="border-b border-tf-border bg-tf-mid/90 text-[11px] font-medium uppercase tracking-wide text-tf-subtle">
                       <tr>
                         <th className="px-3 py-2.5">Nome</th>
@@ -486,11 +493,12 @@ export function OperationalHome() {
                     </tbody>
                   </table>
                 </div>
+                </>
               )}
             </div>
 
             {rows.length > 0 ? (
-              <aside className="w-full shrink-0 space-y-5 border-t border-tf-border pt-6 xl:w-[min(100%,320px)] xl:border-l xl:border-t-0 xl:pl-8 xl:pt-0">
+              <aside className="w-full min-w-0 shrink-0 space-y-5 border-t border-tf-border pt-6 xl:w-[min(100%,320px)] xl:border-l xl:border-t-0 xl:pl-8 xl:pt-0">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-tf-faint">
                     Resumo

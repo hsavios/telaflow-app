@@ -56,9 +56,9 @@ export function ExportReadinessPanel({ eventId, apiConfigured }: Props) {
   const evaluations = data?.scene_evaluations ?? [];
 
   return (
-    <div className="mt-8 space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="max-w-2xl text-sm text-tf-subtle">
+    <div className="mt-8 min-w-0 space-y-6">
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="min-w-0 max-w-2xl text-sm text-tf-subtle">
           Contrato{" "}
           <span className="font-mono text-tf-muted">
             {data?.schema_version ?? "export_readiness.v1"}
@@ -152,8 +152,8 @@ export function ExportReadinessPanel({ eventId, apiConfigured }: Props) {
           ) : null}
 
           {evaluations.length > 0 ? (
-            <div className="overflow-x-auto rounded-tf border border-tf-border">
-              <table className="w-full min-w-[32rem] text-left text-sm">
+            <div className="tf-scroll-touch overflow-x-auto rounded-tf border border-tf-border">
+              <table className="w-full min-w-[22rem] text-left text-sm sm:min-w-[28rem] md:min-w-[32rem]">
                 <thead className="border-b border-tf-border bg-tf-bg/40 text-xs uppercase text-tf-subtle">
                   <tr>
                     <th className="px-3 py-2">#</th>
@@ -171,7 +171,7 @@ export function ExportReadinessPanel({ eventId, apiConfigured }: Props) {
                       <td className="px-3 py-2 tabular-nums text-tf-muted">
                         {row.sort_order}
                       </td>
-                      <td className="px-3 py-2 font-mono text-xs text-tf-faint">
+                      <td className="max-w-[10rem] break-all px-3 py-2 font-mono text-xs text-tf-faint sm:max-w-none">
                         {row.scene_id}
                       </td>
                       <td className="px-3 py-2 text-tf-fg">

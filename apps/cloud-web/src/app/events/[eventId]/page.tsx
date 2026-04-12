@@ -158,7 +158,7 @@ export default function EventDetailPage() {
 
       <main
         id="conteudo-principal"
-        className="mx-auto max-w-content px-6 pb-20 pt-8 lg:px-10"
+        className="mx-auto min-w-0 max-w-content px-4 pb-16 pt-6 sm:px-6 sm:pb-20 sm:pt-8 lg:px-10"
       >
         <nav className="mb-8 text-sm" aria-label="Navegação secundária">
           <Link
@@ -224,15 +224,15 @@ export default function EventDetailPage() {
                 {event.name}
               </h1>
               <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
-                <div>
+                <div className="min-w-0">
                   <dt className="text-tf-faint">event_id</dt>
-                  <dd className="mt-1 font-mono text-xs text-tf-muted">
+                  <dd className="mt-1 break-all font-mono text-xs text-tf-muted">
                     {event.event_id}
                   </dd>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <dt className="text-tf-faint">organization_id</dt>
-                  <dd className="mt-1 font-mono text-xs text-tf-muted">
+                  <dd className="mt-1 break-all font-mono text-xs text-tf-muted">
                     {event.organization_id}
                   </dd>
                 </div>
@@ -240,7 +240,7 @@ export default function EventDetailPage() {
             </header>
 
             <nav
-              className="mt-8 flex flex-wrap gap-2 border-b border-tf-border pb-4"
+              className="tf-scroll-touch mt-6 flex gap-2 overflow-x-auto border-b border-tf-border pb-3 sm:mt-8 sm:flex-wrap sm:overflow-visible sm:pb-4"
               aria-label="Módulos do editor"
             >
               {(Object.keys(ABA_LABEL) as EditorAba[]).map((key) => (
@@ -248,7 +248,7 @@ export default function EventDetailPage() {
                   key={key}
                   type="button"
                   onClick={() => setAba(key)}
-                  className={`rounded-tf px-4 py-2 text-sm font-medium transition-colors ${
+                  className={`shrink-0 rounded-tf px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${
                     aba === key
                       ? "bg-tf-accent text-white"
                       : "border border-tf-border bg-tf-mid/40 text-tf-muted hover:border-tf-accent/30 hover:text-tf-fg"

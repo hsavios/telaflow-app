@@ -205,7 +205,7 @@ export function MediaRequirementsWorkspace({
   );
 
   return (
-    <div className="mt-8 space-y-6">
+    <div className="mt-8 min-w-0 space-y-6">
       {banner ? (
         <p
           className="rounded-tf border border-tf-teal/30 bg-tf-teal-soft/30 px-4 py-3 text-sm text-tf-fg"
@@ -250,7 +250,7 @@ export function MediaRequirementsWorkspace({
           </button>
         </div>
       ) : (
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,22rem)_1fr] lg:items-start">
+        <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,22rem)_1fr] lg:items-start">
           <div>
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-tf-subtle">
               Manifesto
@@ -267,12 +267,12 @@ export function MediaRequirementsWorkspace({
                         : "border-tf-border bg-tf-mid/40 hover:border-tf-border hover:bg-tf-mid/55"
                     }`}
                   >
-                    <div className="font-medium text-tf-fg">{m.label}</div>
+                    <div className="break-words font-medium text-tf-fg">{m.label}</div>
                     <div className="mt-1 text-xs text-tf-muted">
                       {MEDIA_TYPE_LABELS[m.media_type]}
                       {m.required ? " · obrigatório" : ""}
                     </div>
-                    <div className="mt-1 font-mono text-xs text-tf-faint">
+                    <div className="mt-1 break-all font-mono text-xs text-tf-faint">
                       {m.media_id}
                     </div>
                   </button>
@@ -281,7 +281,7 @@ export function MediaRequirementsWorkspace({
             </ul>
           </div>
 
-          <aside className="rounded-tf-lg border border-tf-border bg-tf-mid/30 p-5 lg:min-h-[18rem]">
+          <aside className="min-w-0 rounded-tf-lg border border-tf-border bg-tf-mid/30 p-4 sm:p-5 lg:min-h-[18rem]">
             {!selected ? (
               <p className="text-sm text-tf-muted">
                 Selecione um item na lista para editar rótulo, tipo, obrigatoriedade
@@ -405,7 +405,7 @@ export function MediaRequirementsWorkspace({
           }}
         >
           <div
-            className="w-full max-w-md rounded-tf-lg border border-tf-border bg-tf-mid p-6 shadow-xl"
+            className="max-h-[min(90dvh,36rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-tf-lg border border-tf-border bg-tf-mid p-5 shadow-xl sm:p-6"
             role="dialog"
             aria-modal="true"
             aria-labelledby={modalTitleId}

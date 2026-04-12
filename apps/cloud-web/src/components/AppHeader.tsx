@@ -23,16 +23,16 @@ export function AppHeader() {
       >
         Ir para o conteúdo principal
       </a>
-      <header className="sticky top-0 z-40 border-b border-tf-border bg-tf-mid/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-content flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-3.5 lg:px-10">
+      <header className="sticky top-0 z-40 border-b border-tf-border bg-tf-mid/90 backdrop-blur-md supports-[backdrop-filter]:bg-tf-mid/80">
+        <div className="mx-auto flex max-w-content min-w-0 flex-col gap-3 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-y-2 sm:px-6 sm:py-3.5 lg:px-10">
           <Link
             href="/"
-            className="font-display text-lg font-semibold tracking-tight text-tf-fg"
+            className="shrink-0 font-display text-base font-semibold tracking-tight text-tf-fg sm:text-lg"
           >
             TelaFlow Cloud
           </Link>
           <nav
-            className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm"
+            className="-mx-1 flex min-w-0 flex-nowrap items-center gap-x-4 gap-y-2 overflow-x-auto px-1 pb-0.5 text-sm sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
             aria-label="Principal"
           >
             <Link href="/#visao-geral" className={onHome ? navActive : navClass}>
