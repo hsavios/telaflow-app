@@ -25,6 +25,14 @@ function formatErrorMessage(err: unknown): string {
       return "Falha ao carregar eventos. Verifique se a API está no ar.";
     }
     if (err.message.startsWith("create_failed:")) {
+      const cause = err.cause;
+      const detail =
+        cause != null && typeof cause === "object" && "detail" in cause
+          ? (cause as { detail?: { message?: string; error?: string } }).detail
+          : null;
+      if (detail?.error === "organization_mismatch") {
+        return "Organização do pedido não coincide com o cabeçalho da API. Alinhe NEXT_PUBLIC_TELAFLOW_ORGANIZATION_ID (Web) com o corpo do evento.";
+      }
       return "Não foi possível criar o evento. Tente de novo.";
     }
     if (err.message === "event_id_conflict") {
