@@ -14,7 +14,7 @@ import { ExecutionLogPanel } from "../execution/ExecutionLogPanel.js";
 import type { ExecutionLogEntry } from "../execution/executionLog.js";
 import { runPreflightMvp } from "../preflight/runPreflight.js";
 import type { PreflightResult } from "../preflight/types.js";
-import { SceneRuntimeNav } from "../runtime/sceneNavigator.js";
+import { ExecutingRuntimeView } from "../runtime/ExecutingRuntimeView.js";
 
 type StatusMidia = "nao_vinculado" | "vinculado" | "ausente";
 
@@ -219,9 +219,24 @@ export function PackLoadedWorkspace({
 
   const podeCorrerPreflight = runtimeKind !== "executing";
 
+  const execPrimary = runtimeKind === "executing";
+
   return (
-    <div className="pack-workspace">
+    <div className={`pack-workspace${execPrimary ? " pack-workspace--executing" : ""}`}>
       <h2>Sessão com pack</h2>
+      {execPrimary && (
+        <section className="player-section player-section--exec-focus" aria-label="Runtime visual MVP">
+          <ExecutingRuntimeView
+            packData={packData}
+            sceneIndex={sceneIndex}
+            workspaceRoot={workspaceRoot}
+            bindings={bindings}
+            fileExistsCache={existeCache}
+            onSceneIndexChange={onSceneIndexChange}
+            onFinishExecution={onFinishExecution}
+          />
+        </section>
+      )}
       <dl className="player-summary">
         <div>
           <dt>Pasta do pack</dt>
@@ -261,15 +276,16 @@ export function PackLoadedWorkspace({
         <h3>Gate ready → execução (MVP)</h3>
         <p className="player-hint">
           O pre-flight sem bloqueantes coloca o estado em <code>ready</code>. Aí pode iniciar o
-          roteiro (sem playback). Em <code>executing</code> pode concluir para voltar a{" "}
-          <code>ready</code> mantendo o último pre-flight válido.
+          roteiro (sem playback). Em <code>executing</code> use o painel <strong>Operação</strong>{" "}
+          para navegar e concluir; volta a <code>ready</code> mantendo o último pre-flight válido.
         </p>
-        <button type="button" disabled={runtimeKind !== "ready"} onClick={onStartExecution}>
-          Iniciar roteiro (MVP)
-        </button>{" "}
-        <button type="button" disabled={runtimeKind !== "executing"} onClick={onFinishExecution}>
-          Concluir execução
-        </button>
+        {runtimeKind === "executing" ? (
+          <p className="player-hint">Execução ativa — navegação e «Concluir execução» estão no painel lateral de operação.</p>
+        ) : (
+          <button type="button" disabled={runtimeKind !== "ready"} onClick={onStartExecution}>
+            Iniciar roteiro (MVP)
+          </button>
+        )}
       </section>
 
       <section className="player-section">
@@ -379,21 +395,13 @@ export function PackLoadedWorkspace({
         )}
       </section>
 
-      {runtimeKind === "executing" && (
-        <section className="player-section">
-          <h3>Roteiro (cenas ativas)</h3>
-          <SceneRuntimeNav
-            scenes={packData.event.scenes}
-            sceneIndex={sceneIndex}
-            onSceneIndexChange={onSceneIndexChange}
-          />
-        </section>
-      )}
-
       <section className="player-section">
         <h3>Registo de execução (MVP)</h3>
         {runtimeKind === "executing" ? (
-          <ExecutionLogPanel entries={executionLog} />
+          <details className="player-exec-details">
+            <summary>Mostrar registo JSONL (sessão atual)</summary>
+            <ExecutionLogPanel entries={executionLog} />
+          </details>
         ) : (
           <p className="player-hint">
             O ficheiro <code>.telaflow/execution-log.jsonl</code> regista{" "}

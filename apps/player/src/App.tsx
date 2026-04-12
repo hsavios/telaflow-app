@@ -267,13 +267,15 @@ export default function App() {
     });
   }, []);
 
+  const wideShell = estado.kind === "executing";
+
   return (
-    <main className="player-shell">
+    <main className={wideShell ? "player-shell player-shell--executing" : "player-shell"}>
       <header className="player-header">
         <h1>TelaFlow Player</h1>
         <p className="player-tagline">
-          FSM operacional (idle / pack_loaded / preflight_failed / ready / executing / blocked),
-          pre-flight, roteiro e registo JSONL — sem Cloud em runtime e sem playback de mídia.
+          FSM operacional, pre-flight, runtime visual MVP (presenter por tipo de cena), resolução de
+          mídia derivada e registo JSONL — sem Cloud em runtime e sem playback de ficheiros.
         </p>
       </header>
 

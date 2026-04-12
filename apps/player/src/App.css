@@ -37,6 +37,12 @@
   text-align: left;
 }
 
+.player-shell--executing {
+  max-width: min(1200px, 100%);
+  padding-left: clamp(0.75rem, 2vw, 1.5rem);
+  padding-right: clamp(0.75rem, 2vw, 1.5rem);
+}
+
 .player-header h1 {
   text-align: left;
   margin-bottom: 0.35rem;
@@ -216,6 +222,290 @@
   margin-top: 0;
 }
 
+.player-section--exec-focus {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0.5rem;
+}
+
+.player-exec-layout {
+  display: grid;
+  grid-template-columns: minmax(200px, 260px) 1fr minmax(180px, 220px);
+  gap: 1rem 1.25rem;
+  align-items: stretch;
+  min-height: 280px;
+}
+
+.player-exec-layout--empty {
+  grid-template-columns: 1fr;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .player-exec-layout:not(.player-exec-layout--empty) {
+    grid-template-columns: 1fr;
+  }
+
+  .player-exec-sidebar {
+    order: 1;
+  }
+
+  .player-exec-stage {
+    order: 0;
+  }
+
+  .player-exec-ops {
+    order: 2;
+  }
+}
+
+.player-exec-sidebar__title,
+.player-exec-ops__title {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #555;
+}
+
+.player-exec-script {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: min(52vh, 420px);
+  overflow-y: auto;
+}
+
+.player-exec-script li {
+  margin-bottom: 0.35rem;
+}
+
+.player-exec-script__btn {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.player-exec-script__btn:hover {
+  border-color: #396cd8;
+}
+
+.player-exec-script__btn.is-current {
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+  font-weight: 600;
+}
+
+.player-exec-script__name {
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+
+.player-exec-script__meta {
+  font-size: 0.78rem;
+  color: #666;
+}
+
+.player-exec-stage {
+  min-width: 0;
+}
+
+.scene-presenter {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem 1rem;
+  background: #fafafa;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+}
+
+.scene-presenter__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.scene-presenter__badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: #e8eefc;
+  color: #1e3a8a;
+}
+
+.scene-presenter__step {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.scene-presenter__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+
+.scene-presenter__type-meta {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  color: #444;
+}
+
+.scene-presenter__draw-hint {
+  margin: 0 0 0.85rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background: rgba(245, 158, 11, 0.15);
+  color: #78350f;
+}
+
+.scene-presenter__facts {
+  margin: 0 0 1rem;
+  display: grid;
+  gap: 0.4rem 1rem;
+  font-size: 0.88rem;
+}
+
+.scene-presenter__facts div {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 0.35rem 0.75rem;
+  align-items: baseline;
+}
+
+.scene-presenter__facts dt {
+  margin: 0;
+  font-weight: 600;
+  color: #555;
+}
+
+.scene-presenter__facts dd {
+  margin: 0;
+  word-break: break-all;
+}
+
+.scene-presenter__media {
+  margin-top: auto;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.scene-presenter__media strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 0.8rem;
+}
+
+.scene-presenter__media p {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.scene-presenter__media--no_media_required {
+  background: rgba(107, 114, 128, 0.12);
+  color: #374151;
+}
+
+.scene-presenter__media--media_bound {
+  background: rgba(16, 185, 129, 0.14);
+  color: #065f46;
+}
+
+.scene-presenter__media--media_missing_binding {
+  background: rgba(245, 158, 11, 0.2);
+  color: #92400e;
+}
+
+.scene-presenter__media--media_file_missing {
+  background: rgba(239, 68, 68, 0.14);
+  color: #991b1b;
+}
+
+.player-exec-ops {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.player-exec-ops__state {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.player-exec-ops__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #666;
+}
+
+.player-exec-ops__code {
+  font-size: 0.88rem;
+}
+
+.player-exec-ops__hint {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #555;
+}
+
+.player-exec-ops__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.player-exec-ops__nav button {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.88rem;
+}
+
+.player-exec-ops__finish {
+  margin-top: 0.15rem;
+  font-size: 0.88rem;
+  padding: 0.5rem 0.65rem;
+}
+
+.player-exec-details {
+  margin-top: 0.5rem;
+}
+
+.player-exec-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.35rem;
+}
+
 .player-scene-nav-actions {
   display: flex;
   flex-wrap: wrap;
@@ -310,6 +600,58 @@
 
   .player-scene-list-meta {
     color: #bbb;
+  }
+
+  .scene-presenter {
+    background: #1a1a1a;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .scene-presenter__badge {
+    background: rgba(59, 130, 246, 0.2);
+    color: #bfdbfe;
+  }
+
+  .scene-presenter__step,
+  .scene-presenter__type-meta {
+    color: #bbb;
+  }
+
+  .scene-presenter__draw-hint {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fcd34d;
+  }
+
+  .scene-presenter__facts dt {
+    color: #aaa;
+  }
+
+  .player-exec-sidebar__title,
+  .player-exec-ops__title {
+    color: #aaa;
+  }
+
+  .player-exec-script__btn {
+    background: #222;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .player-exec-script__btn.is-current {
+    border-color: #60a5fa;
+    background: rgba(59, 130, 246, 0.15);
+  }
+
+  .player-exec-script__meta {
+    color: #999;
+  }
+
+  .player-exec-ops {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .player-exec-details summary {
+    color: #d1d5db;
   }
 }
 

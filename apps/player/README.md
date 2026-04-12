@@ -39,7 +39,7 @@ Conforme `PLAYER_RUNTIME_FEATURE_SPEC` / `ARCHITECTURE_SPEC` (subconjunto MVP):
 | **`pack_loaded`** | Pack + licença OK; workspace/bindings a configurar; pre-flight ainda não passou ou foi invalidado. |
 | **`preflight_failed`** | Último pre-flight com bloqueantes (detalhe em `lastPreflight`). |
 | **`ready`** | Último pre-flight **sem** bloqueantes — **gate** para iniciar roteiro. |
-| **`executing`** | Navegação mínima do roteiro (sem playback nem sorteio visual). |
+| **`executing`** | Roteiro com **Runtime Visual MVP** (presenter + mídia derivada), sem playback nem sorteio real. |
 
 Fluxo típico: `idle` → (abrir pack) → `pack_loaded` → (pre-flight) → `preflight_failed` **ou** `ready` → (**Iniciar roteiro**) → `executing` → (**Concluir execução**) → `ready`. Alterar workspace/bindings repõe `pack_loaded`.
 
@@ -47,10 +47,27 @@ Implementação: `src/pack/playerPackState.ts` + `src/App.tsx`.
 
 ## Scene Runtime (MVP)
 
-- Fonte: `event.json` via `packData.event.scenes` — só cenas **`enabled`**, ordenadas por `sort_order` e `scene_id`.
-- Lista numerada do roteiro; **cena atual** com `scene_id`, `name`, `type`, `sort_order`, `media_id`, `draw_config_id` (ou `—` se vazio).
-- **Cena anterior / seguinte** — sem playback de mídia nem sorteio visual.
-- Código: `src/runtime/sceneNavigator.tsx`.
+- Fonte: `event.json` via `packData.event.scenes` — só cenas **`enabled`**, ordenadas por `sort_order` e `scene_id` (`enabledScenesSorted` em `src/runtime/sceneOrder.ts`).
+- Em **`executing`**: layout em três zonas — **roteiro** (lista clicável), **área central** com o **Scene Presenter**, **painel Operação** (estado, anterior/seguinte, concluir execução). Código: `src/runtime/ExecutingRuntimeView.tsx` + `ScenePresenter.tsx`.
+
+## Runtime Visual MVP
+
+- **Scene Presenter** (`src/runtime/ScenePresenter.tsx`): cartão operacional da cena ativa, sem efeitos nem playback.
+- Tipos suportados (contrato `SceneType`): **`opening`**, **`institutional`**, **`sponsor`**, **`draw`**, **`break`**, **`closing`** — rótulos em pt-BR no cartão; conteúdo factual (`name`, ids, ordem).
+- Cenas **`draw`**: texto explícito de que não há sorteio visual; se existir `draw_config_id` no pack, mostra-se resumo da configuração (nome, `max_winners`).
+
+## Resolução de mídia da cena atual
+
+Função `resolveSceneMediaState` em `src/runtime/sceneMediaResolution.ts`, com base em `scene.media_id`, vínculos (`bindings`) e existência de ficheiro no workspace (`file_exists_under_workspace`, cache alinhado ao painel de vínculos). O refresh de existência inclui **`media_id` referenciados por cenas ativas**, além dos requisitos do `media-manifest`.
+
+| Estado derivado | Significado |
+|-----------------|-------------|
+| **`no_media_required`** | Cena sem `media_id` (não aplicável). |
+| **`media_bound`** | `media_id` definido, vínculo presente e ficheiro encontrado sob o workspace. |
+| **`media_missing_binding`** | `media_id` definido mas sem caminho relativo em `bindings`. |
+| **`media_file_missing`** | Vínculo definido mas ficheiro ausente, ou workspace em falta com vínculo já gravado. |
+
+Textos para operador: `describeSceneMediaDerivedStatePt`.
 
 ## Registo de execução (MVP)
 
@@ -60,7 +77,11 @@ Implementação: `src/pack/playerPackState.ts` + `src/App.tsx`.
 
 ## Fora de escopo
 
-- Playback de mídia, sorteio visual no palco, assinatura criptográfica da licença, cliente da Cloud em runtime, execução visual final do telão.
+- **Playback** real de vídeo/imagem no presenter.
+- **Sorteio visual** real (extração, animação, telão dedicado).
+- **Multi-monitor** / projeção estendida.
+- **Cloud** em runtime (o pack é local).
+- **Assinatura criptográfica** da licença (validação estrutural/janela apenas).
 
 ## Desenvolvimento
 
