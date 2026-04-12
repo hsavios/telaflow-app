@@ -13,12 +13,26 @@ FastAPI service — Fase 1 skeleton (`PHASE_1_EXECUTION_SPEC.md`). Requer Python
 - `PATCH /events/{event_id}/scenes/{scene_id}` — atualização parcial (`SceneUpdate`)
 - `DELETE /events/{event_id}/scenes/{scene_id}` — remove e recompacta `sort_order`; limpa `scene_id` em `MediaRequirement` que apontavam para essa scene
 - Validação de scene: `media_id` / `draw_config_id` precisam existir no evento; tipo `draw` exige `draw_config_id` (`422` `draw_scene_requires_draw_config` se faltar)
-- `GET /events/{event_id}/export-readiness` — checagens mínimas para futuro pack (`blocking` / `warnings`, flag `ready`)
+- `GET /events/{event_id}/export-readiness` — checagens mínimas para futuro pack (`blocking` / `warnings`, flag `ready`, `schema_version` `export_readiness.v1`)
+- `POST /events/{event_id}/export` — gera snapshot JSON **somente** se `export_readiness.ready == true`; caso contrário **`409`** `export_not_ready` com o mesmo objeto `export_readiness` no `detail`. Resposta: `export_id`, `generated_at`, `artifacts` com chaves `manifest.json`, `event.json`, `draw-configs.json`, `media-manifest.json` (sem ZIP nem assinatura)
 - **DrawConfig** (sorteio por evento): `GET/POST /events/{event_id}/draw-configs`, `GET/PATCH/DELETE …/draw-configs/{draw_config_id}` — `409` `draw_config_in_use` se alguma scene referencia
 - **MediaRequirement** (manifesto por evento, sem upload): `GET/POST …/media-requirements`, `GET/PATCH/DELETE …/media-requirements/{media_id}` — `media_id` gerado no servidor; `409` `media_requirement_in_use` se scene usa o slot
 - `409` em criação/atualização de scene se `sort_order` duplicado no mesmo evento (`sort_order_conflict`)
 - CORS: variável `CLOUD_API_CORS_ORIGINS`; métodos `GET`, `POST`, `PATCH`, `DELETE`, `OPTIONS`
 - `domain/` — `event`, `scene`, `draw_config`, `media_requirement` (Pydantic)
+
+## Layout do código
+
+| Módulo | Função |
+|--------|--------|
+| `main.py` | App FastAPI, CORS, `GET /health`, `include_router` |
+| `memory.py` | Stores em memória + helpers (`_compute_export_readiness`, etc.) |
+| `routers/events.py` | CRUD mínimo de eventos |
+| `routers/scenes.py` | Scenes + reorder |
+| `routers/draw_configs.py` | DrawConfig |
+| `routers/media_requirements.py` | MediaRequirement |
+| `routers/export.py` | `export-readiness` + `POST …/export` |
+| `services/export_bundle.py` | Montagem dos artefatos JSON do export |
 
 ## Run (dev)
 

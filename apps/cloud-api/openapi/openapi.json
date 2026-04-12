@@ -6,31 +6,11 @@
     "version": "0.1.0"
   },
   "paths": {
-    "/health": {
-      "get": {
-        "summary": "Health",
-        "description": "Healthcheck para runtime, load balancers e probes.",
-        "operationId": "health_health_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object",
-                  "title": "Response Health Health Get"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/events": {
       "get": {
+        "tags": [
+          "events"
+        ],
         "summary": "List Events",
         "description": "Lista eventos em mem\u00f3ria (ordem de cria\u00e7\u00e3o).",
         "operationId": "list_events_events_get",
@@ -50,6 +30,9 @@
         }
       },
       "post": {
+        "tags": [
+          "events"
+        ],
         "summary": "Create Event",
         "description": "Cria evento em mem\u00f3ria. N\u00e3o \u00e9 CRUD completo \u2014 apenas stub para integra\u00e7\u00e3o inicial.",
         "operationId": "create_event_events_post",
@@ -91,6 +74,9 @@
     },
     "/events/{event_id}": {
       "get": {
+        "tags": [
+          "events"
+        ],
         "summary": "Get Event",
         "description": "Retorna um evento por id ou 404.",
         "operationId": "get_event_events__event_id__get",
@@ -131,50 +117,11 @@
         }
       }
     },
-    "/events/{event_id}/export-readiness": {
-      "get": {
-        "summary": "Export Readiness",
-        "description": "Checagens m\u00ednimas server-side para futuro ExportPackage.\nN\u00e3o gera pack nem assinatura \u2014 s\u00f3 estrutura e consist\u00eancia declar\u00e1vel.",
-        "operationId": "export_readiness_events__event_id__export_readiness_get",
-        "parameters": [
-          {
-            "name": "event_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Event Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Export Readiness Events  Event Id  Export Readiness Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/events/{event_id}/scenes": {
       "get": {
+        "tags": [
+          "scenes"
+        ],
         "summary": "List Scenes",
         "description": "Lista scenes do evento, ordenadas por sort_order.",
         "operationId": "list_scenes_events__event_id__scenes_get",
@@ -215,6 +162,9 @@
         }
       },
       "post": {
+        "tags": [
+          "scenes"
+        ],
         "summary": "Create Scene",
         "description": "Cria scene; `scene_id` gerado no servidor; `sort_order` \u00fanico por evento.",
         "operationId": "create_scene_events__event_id__scenes_post",
@@ -267,6 +217,9 @@
     },
     "/events/{event_id}/scenes/reorder": {
       "post": {
+        "tags": [
+          "scenes"
+        ],
         "summary": "Reorder Scenes",
         "description": "Define a ordem das scenes: `scene_ids` deve listar todos os ids atuais do evento,\ncada um exatamente uma vez, na ordem desejada.\nAtribui `sort_order` de 0 a n-1 na ordem recebida.",
         "operationId": "reorder_scenes_events__event_id__scenes_reorder_post",
@@ -319,6 +272,9 @@
     },
     "/events/{event_id}/scenes/{scene_id}": {
       "get": {
+        "tags": [
+          "scenes"
+        ],
         "summary": "Get Scene",
         "operationId": "get_scene_events__event_id__scenes__scene_id__get",
         "parameters": [
@@ -367,6 +323,9 @@
         }
       },
       "patch": {
+        "tags": [
+          "scenes"
+        ],
         "summary": "Update Scene",
         "operationId": "update_scene_events__event_id__scenes__scene_id__patch",
         "parameters": [
@@ -425,6 +384,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "scenes"
+        ],
         "summary": "Delete Scene",
         "operationId": "delete_scene_events__event_id__scenes__scene_id__delete",
         "parameters": [
@@ -475,6 +437,9 @@
     },
     "/events/{event_id}/draw-configs": {
       "get": {
+        "tags": [
+          "draw-configs"
+        ],
         "summary": "List Draw Configs",
         "operationId": "list_draw_configs_events__event_id__draw_configs_get",
         "parameters": [
@@ -514,6 +479,9 @@
         }
       },
       "post": {
+        "tags": [
+          "draw-configs"
+        ],
         "summary": "Create Draw Config",
         "operationId": "create_draw_config_events__event_id__draw_configs_post",
         "parameters": [
@@ -565,6 +533,9 @@
     },
     "/events/{event_id}/draw-configs/{draw_config_id}": {
       "get": {
+        "tags": [
+          "draw-configs"
+        ],
         "summary": "Get Draw Config",
         "operationId": "get_draw_config_events__event_id__draw_configs__draw_config_id__get",
         "parameters": [
@@ -613,6 +584,9 @@
         }
       },
       "patch": {
+        "tags": [
+          "draw-configs"
+        ],
         "summary": "Update Draw Config",
         "operationId": "update_draw_config_events__event_id__draw_configs__draw_config_id__patch",
         "parameters": [
@@ -671,6 +645,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "draw-configs"
+        ],
         "summary": "Delete Draw Config",
         "operationId": "delete_draw_config_events__event_id__draw_configs__draw_config_id__delete",
         "parameters": [
@@ -721,6 +698,9 @@
     },
     "/events/{event_id}/media-requirements": {
       "get": {
+        "tags": [
+          "media-requirements"
+        ],
         "summary": "List Media Requirements",
         "operationId": "list_media_requirements_events__event_id__media_requirements_get",
         "parameters": [
@@ -760,6 +740,9 @@
         }
       },
       "post": {
+        "tags": [
+          "media-requirements"
+        ],
         "summary": "Create Media Requirement",
         "operationId": "create_media_requirement_events__event_id__media_requirements_post",
         "parameters": [
@@ -811,6 +794,9 @@
     },
     "/events/{event_id}/media-requirements/{media_id}": {
       "get": {
+        "tags": [
+          "media-requirements"
+        ],
         "summary": "Get Media Requirement",
         "operationId": "get_media_requirement_events__event_id__media_requirements__media_id__get",
         "parameters": [
@@ -859,6 +845,9 @@
         }
       },
       "patch": {
+        "tags": [
+          "media-requirements"
+        ],
         "summary": "Update Media Requirement",
         "operationId": "update_media_requirement_events__event_id__media_requirements__media_id__patch",
         "parameters": [
@@ -917,6 +906,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "media-requirements"
+        ],
         "summary": "Delete Media Requirement",
         "operationId": "delete_media_requirement_events__event_id__media_requirements__media_id__delete",
         "parameters": [
@@ -958,6 +950,119 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/{event_id}/export-readiness": {
+      "get": {
+        "tags": [
+          "export"
+        ],
+        "summary": "Export Readiness",
+        "description": "Checagens m\u00ednimas server-side para futuro ExportPackage.\nN\u00e3o gera pack nem assinatura \u2014 s\u00f3 estrutura e consist\u00eancia declar\u00e1vel.",
+        "operationId": "export_readiness_events__event_id__export_readiness_get",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Export Readiness Events  Event Id  Export Readiness Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/{event_id}/export": {
+      "post": {
+        "tags": [
+          "export"
+        ],
+        "summary": "Run Export",
+        "description": "Gera snapshot JSON do evento (artefatos l\u00f3gicos). Exige `export_readiness.ready == true`.\nN\u00e3o gera ZIP nem assinatura (MVP incremental).",
+        "operationId": "run_export_events__event_id__export_post",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Run Export Events  Event Id  Export Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "description": "Healthcheck para runtime, load balancers e probes.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
                 }
               }
             }

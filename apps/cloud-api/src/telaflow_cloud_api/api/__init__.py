@@ -1,1 +1,2 @@
-﻿"""HTTP routers (empty placeholder — health lives in main for now)."""
+﻿"""Pacote legado `api` — routers vivem em `telaflow_cloud_api.routers`."""
+
