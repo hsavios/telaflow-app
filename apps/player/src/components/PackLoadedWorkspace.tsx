@@ -76,9 +76,18 @@ export function PackLoadedWorkspace({
       setExisteCache(new Map());
       return;
     }
-    const m = new Map<string, boolean>();
+    const mediaIds = new Set<string>();
     for (const req of packData.mediaManifest.requirements) {
-      const rel = bindings[req.media_id];
+      mediaIds.add(req.media_id);
+    }
+    for (const sc of packData.event.scenes) {
+      if (sc.enabled && sc.media_id) {
+        mediaIds.add(sc.media_id);
+      }
+    }
+    const m = new Map<string, boolean>();
+    for (const mediaId of mediaIds) {
+      const rel = bindings[mediaId];
       if (!rel) continue;
       const key = `${workspaceRoot}||${rel}`;
       try {
@@ -92,7 +101,7 @@ export function PackLoadedWorkspace({
       }
     }
     setExisteCache(m);
-  }, [workspaceRoot, bindings, packData.mediaManifest.requirements]);
+  }, [workspaceRoot, bindings, packData.mediaManifest.requirements, packData.event.scenes]);
 
   const escolherWorkspace = useCallback(async () => {
     setBinderBusy(true);
