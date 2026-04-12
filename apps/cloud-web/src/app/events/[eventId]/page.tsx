@@ -20,6 +20,7 @@ import {
   type CloudMediaRequirement,
   type CloudScene,
 } from "@/lib/cloud-api";
+import { rememberLastOpenedEvent } from "@/lib/cloud-prefs";
 
 type PageState = "loading" | "ready" | "not_found" | "error";
 
@@ -145,6 +146,11 @@ export default function EventDetailPage() {
   useEffect(() => {
     void loadAll();
   }, [loadAll]);
+
+  useEffect(() => {
+    if (pageState !== "ready" || !eventId || !event) return;
+    rememberLastOpenedEvent(eventId);
+  }, [pageState, eventId, event]);
 
   return (
     <div className="min-h-screen text-tf-muted">

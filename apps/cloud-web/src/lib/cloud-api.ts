@@ -608,3 +608,33 @@ export async function fetchExportReadiness(
   const data = (await res.json()) as ExportReadinessResponse;
   return data.export_readiness;
 }
+
+export type RunPackExportResponse = {
+  ok: boolean;
+  export_id: string;
+  generated_at?: string;
+  export_directory: string;
+  files_written: string[];
+  artifacts?: unknown;
+};
+
+export async function runPackExport(
+  eventId: string,
+): Promise<RunPackExportResponse> {
+  const base = getCloudApiBase();
+  if (!base) throw new Error("missing_api_url");
+  const res = await fetch(`${base}/events/${enc(eventId)}/export`, {
+    method: "POST",
+    cache: "no-store",
+    headers: { Accept: "application/json" },
+  });
+  const body = await parseJsonOrText(res);
+  if (res.status === 404) throw new Error("event_not_found");
+  if (res.status === 409) {
+    throw new Error("export_not_ready", { cause: body });
+  }
+  if (!res.ok) {
+    throw new Error(`export_failed:${res.status}`, { cause: body });
+  }
+  return body as RunPackExportResponse;
+}

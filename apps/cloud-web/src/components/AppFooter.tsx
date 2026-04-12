@@ -3,9 +3,7 @@
 export function AppFooter() {
   return (
     <footer className="border-t border-tf-border bg-tf-mid/30 py-8 text-center text-xs leading-relaxed text-tf-subtle md:py-9">
-      <p className="font-medium text-tf-muted">
-        TelaFlow Cloud · Camada operacional do ecossistema TelaFlow
-      </p>
+      <p className="font-medium text-tf-muted">TelaFlow Cloud</p>
       <p className="mt-2">
         <Link
           href="https://telaflow.ia.br/"

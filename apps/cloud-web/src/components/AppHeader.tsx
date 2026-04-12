@@ -11,6 +11,7 @@ const navActive =
 
 export function AppHeader() {
   const pathname = usePathname();
+  const onHome = pathname === "/";
   const onEvents =
     pathname === "/events" || pathname?.startsWith("/events/");
 
@@ -34,14 +35,11 @@ export function AppHeader() {
             className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm"
             aria-label="Principal"
           >
-            <Link href="/#visao-geral" className={navClass}>
+            <Link href="/#visao-geral" className={onHome ? navActive : navClass}>
               Visão geral
             </Link>
             <Link href="/events" className={onEvents ? navActive : navClass}>
               Eventos
-            </Link>
-            <Link href="/#arquitetura" className={navClass}>
-              Arquitetura
             </Link>
             <span className="hidden h-4 w-px bg-tf-border sm:inline" aria-hidden />
             <Link
