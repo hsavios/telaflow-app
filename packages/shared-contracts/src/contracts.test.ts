@@ -5,12 +5,15 @@ import { describe, expect, it } from "vitest";
 import {
   DrawConfigContractSchema,
   EventContractSchema,
+  EventExportFileSchema,
   EventIdSchema,
   EventSnapshotSchema,
   EXPORT_READINESS_SCHEMA_VERSION,
   ExportReadinessV1Schema,
+  LicenseExportMvpSchema,
   MediaRequirementContractSchema,
   PACK_VERSION,
+  PackManifestMvpSchema,
   PackMetadataSchema,
   SCHEMA_VERSION,
   SNAPSHOT_VERSION,
@@ -26,6 +29,7 @@ const validExp = "exp_sample001";
 const validScn = "scn_sample001";
 const validMed = "med_sample0001";
 const validDcf = "dcf_sample0001";
+const validExp2 = "exp_sample0002";
 
 const __contractsDir = dirname(fileURLToPath(import.meta.url));
 
@@ -195,6 +199,64 @@ describe("ExportReadinessV1Schema — fixtures (espelho Cloud API)", () => {
       ).toBe(true);
       expect(r.data.scene_evaluations).toHaveLength(4);
     }
+  });
+});
+
+describe("Pack MVP artifact schemas", () => {
+  const iso = "2026-04-10T12:00:00Z";
+
+  it("parses pack manifest MVP", () => {
+    const r = PackManifestMvpSchema.safeParse({
+      schema_version: "pack_manifest.v1",
+      pack_format: "telaflow_direct_export_mvp",
+      export_id: validExp2,
+      generated_at: iso,
+      event_id: validEvt,
+      organization_id: validOrg,
+      artifacts: [
+        { path: "event.json", role: "event_snapshot" },
+        { path: "draw-configs.json", role: "draw_configs" },
+        { path: "media-manifest.json", role: "media_manifest" },
+        { path: "branding.json", role: "branding" },
+        { path: "license.json", role: "license" },
+      ],
+      gate: { export_readiness_schema: "export_readiness.v1" },
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("parses event export file", () => {
+    const r = EventExportFileSchema.safeParse({
+      schema_version: "event_export.v1",
+      event_id: validEvt,
+      organization_id: validOrg,
+      name: "Show",
+      scenes: [
+        {
+          scene_id: validScn,
+          event_id: validEvt,
+          sort_order: 0,
+          type: "opening",
+          name: "Abertura",
+          enabled: true,
+        },
+      ],
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("parses license export MVP", () => {
+    const r = LicenseExportMvpSchema.safeParse({
+      schema_version: "license_export.v1",
+      organization_id: validOrg,
+      event_id: validEvt,
+      export_id: validExp2,
+      issued_at: iso,
+      valid_from: iso,
+      valid_until: "2026-05-10T12:00:00Z",
+      scope: "event_player_binding_mvp",
+    });
+    expect(r.success).toBe(true);
   });
 });
 

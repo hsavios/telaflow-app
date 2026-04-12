@@ -17,3 +17,7 @@ venv/
 # TypeScript / tooling
 *.tsbuildinfo
 coverage/
+
+# Export local da Cloud API (artefatos gerados; manter só .gitkeep)
+apps/cloud-api/data/pack-exports/*
+!apps/cloud-api/data/pack-exports/.gitkeep

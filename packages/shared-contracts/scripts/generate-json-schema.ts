@@ -6,13 +6,19 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import {
+  BrandingExportMvpSchema,
   DrawConfigContractSchema,
+  DrawConfigsPackFileSchema,
   EventContractSchema,
+  EventExportFileSchema,
   EventSnapshotSchema,
   ExportReadinessV1Schema,
+  LicenseExportMvpSchema,
   MediaKindSchema,
+  MediaManifestPackFileSchema,
   MediaRequirementContractSchema,
   OrganizationIdSchema,
+  PackManifestMvpSchema,
   PackMetadataSchema,
   SceneContractSchema,
   SceneTypeSchema,
@@ -39,6 +45,12 @@ writeSchema(
 );
 writeSchema("media-kind", MediaKindSchema, "MediaKind");
 writeSchema("export-readiness-v1", ExportReadinessV1Schema, "ExportReadinessV1");
+writeSchema("pack-manifest-mvp", PackManifestMvpSchema, "PackManifestMvp");
+writeSchema("event-export-file", EventExportFileSchema, "EventExportFile");
+writeSchema("draw-configs-pack-file", DrawConfigsPackFileSchema, "DrawConfigsPackFile");
+writeSchema("media-manifest-pack-file", MediaManifestPackFileSchema, "MediaManifestPackFile");
+writeSchema("branding-export-mvp", BrandingExportMvpSchema, "BrandingExportMvp");
+writeSchema("license-export-mvp", LicenseExportMvpSchema, "LicenseExportMvp");
 writeSchema("pack-metadata", PackMetadataSchema, "PackMetadata");
 writeSchema("event-snapshot", EventSnapshotSchema, "EventSnapshot");
 writeSchema("opaque-id", OrganizationIdSchema, "OrganizationId");

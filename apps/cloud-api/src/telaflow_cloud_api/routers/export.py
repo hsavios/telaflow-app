@@ -1,11 +1,11 @@
-﻿"""Export readiness e export JSON (sem zip / assinatura)."""
+﻿"""Export readiness e pack export (JSON no disco; sem ZIP / assinatura)."""
 
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
 from telaflow_cloud_api import memory
-from telaflow_cloud_api.services import export_bundle
+from telaflow_cloud_api.services import pack_export
 
 router = APIRouter(tags=["export"])
 
@@ -28,8 +28,10 @@ def export_readiness(event_id: str) -> dict:
 @router.post("/events/{event_id}/export", status_code=200)
 def run_export(event_id: str) -> dict:
     """
-    Gera snapshot JSON do evento (artefatos lógicos). Exige `export_readiness.ready == true`.
-    Não gera ZIP nem assinatura (MVP incremental).
+    Gera pack mínimo (MVP) em diretório dedicado ao export_id.
+
+    Exige export_readiness.ready == true; caso contrário 409 estruturado.
+    Não inclui mídia binária, ZIP nem assinatura criptográfica.
     """
     if event_id not in memory._events_store:
         raise HTTPException(
@@ -46,16 +48,12 @@ def run_export(event_id: str) -> dict:
                 "export_readiness": readiness,
             },
         )
-    export_id = export_bundle.new_export_id()
-    generated_at = export_bundle.utc_iso_z()
-    artifacts = export_bundle.build_export_artifacts(
-        event_id,
-        export_id=export_id,
-        generated_at=generated_at,
-    )
+    result = pack_export.run_pack_export_for_ready_event(event_id)
     return {
         "ok": True,
-        "export_id": export_id,
-        "generated_at": generated_at,
-        "artifacts": artifacts,
+        "export_id": result["export_id"],
+        "generated_at": result["generated_at"],
+        "export_directory": result["export_directory"],
+        "files_written": result["files_written"],
+        "artifacts": result["artifacts"],
     }

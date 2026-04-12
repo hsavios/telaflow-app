@@ -1008,7 +1008,7 @@
           "export"
         ],
         "summary": "Run Export",
-        "description": "Gera snapshot JSON do evento (artefatos l\u00f3gicos). Exige `export_readiness.ready == true`.\nN\u00e3o gera ZIP nem assinatura (MVP incremental).",
+        "description": "Gera pack m\u00ednimo (MVP) em diret\u00f3rio dedicado ao export_id.\n\nExige export_readiness.ready == true; caso contr\u00e1rio 409 estruturado.\nN\u00e3o inclui m\u00eddia bin\u00e1ria, ZIP nem assinatura criptogr\u00e1fica.",
         "operationId": "run_export_events__event_id__export_post",
         "parameters": [
           {
