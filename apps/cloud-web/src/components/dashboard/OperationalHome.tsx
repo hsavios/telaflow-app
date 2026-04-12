@@ -40,7 +40,8 @@ function formatWhen(iso: string): string {
   return dateFmt.format(t);
 }
 
-function readinessLabel(r: ExportReadinessBody | null): {
+/** Texto curto de status operacional (sem jargão de API). */
+function statusOperacional(r: ExportReadinessBody | null): {
   text: string;
   tone: "ok" | "warn" | "bad" | "muted";
 } {
@@ -49,15 +50,15 @@ function readinessLabel(r: ExportReadinessBody | null): {
     return { text: "Pronto", tone: "ok" };
   }
   if (r.ready && r.warnings.length > 0) {
-    return { text: "Pronto · avisos", tone: "warn" };
+    return { text: "Pronto com avisos", tone: "warn" };
   }
   if (r.blocking.length > 0) {
-    return { text: "Bloqueado", tone: "bad" };
+    return { text: "Com bloqueios", tone: "bad" };
   }
-  return { text: "Pendente", tone: "warn" };
+  return { text: "Em preparação", tone: "warn" };
 }
 
-const readinessToneClass = {
+const statusToneClass = {
   ok: "border-tf-teal/30 bg-tf-teal-soft/25 text-tf-teal",
   warn: "border-amber-500/30 bg-amber-950/30 text-amber-100/90",
   bad: "border-red-500/30 bg-red-950/25 text-red-100/90",
@@ -73,31 +74,37 @@ function formatListError(err: unknown): string {
       return "Não foi possível carregar os eventos.";
     }
   }
-  return "Falha ao carregar o painel.";
+  return "Falha ao carregar a página.";
 }
 
-function KpiCard({
+function KpiChip({
   label,
   value,
-  hint,
 }: {
   label: string;
   value: string | number;
-  hint?: string;
 }) {
   return (
-    <div className="rounded-tf-lg border border-tf-border bg-tf-mid/40 px-4 py-3.5 shadow-[0_0_0_1px_rgba(248,250,252,0.03)_inset]">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-tf-subtle">
+    <div className="rounded-tf border border-tf-border bg-tf-mid/35 px-3 py-2.5">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-tf-faint">
         {label}
       </p>
-      <p className="mt-1 font-display text-2xl font-semibold tabular-nums tracking-tight text-tf-fg">
+      <p className="mt-0.5 font-display text-xl font-semibold tabular-nums text-tf-fg">
         {value}
       </p>
-      {hint ? (
-        <p className="mt-1 text-xs leading-snug text-tf-faint">{hint}</p>
-      ) : null}
     </div>
   );
+}
+
+function resolveFocoEventId(
+  rows: DashboardRow[],
+  lastOpened: string | null,
+  manualId: string | null,
+): string | null {
+  const ids = new Set(rows.map((r) => r.event.event_id));
+  if (manualId && ids.has(manualId)) return manualId;
+  if (lastOpened && ids.has(lastOpened)) return lastOpened;
+  return rows[0]?.event.event_id ?? null;
 }
 
 export function OperationalHome() {
@@ -109,6 +116,7 @@ export function OperationalHome() {
     apiConfigured ? null : "Configure NEXT_PUBLIC_CLOUD_API_URL.",
   );
   const [rows, setRows] = useState<DashboardRow[]>([]);
+  const [focoManualId, setFocoManualId] = useState<string | null>(null);
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [exportBanner, setExportBanner] = useState<{
     tone: "ok" | "err";
@@ -155,13 +163,24 @@ export function OperationalHome() {
     return () => window.clearTimeout(t);
   }, [exportBanner]);
 
+  const lastOpened = getLastOpenedEventId();
+  const focoEventId = useMemo(
+    () => resolveFocoEventId(rows, lastOpened, focoManualId),
+    [rows, lastOpened, focoManualId],
+  );
+
+  const focoRow = useMemo(
+    () => rows.find((r) => r.event.event_id === focoEventId) ?? null,
+    [rows, focoEventId],
+  );
+
   const now = Date.now();
   const kpis = {
     active: rows.length,
-    readyExport: rows.filter((r) => r.readiness?.ready).length,
-    withAlerts: rows.filter((r) => (r.readiness?.warnings.length ?? 0) > 0)
+    prontosExportar: rows.filter((r) => r.readiness?.ready).length,
+    comBloqueios: rows.filter((r) => (r.readiness?.blocking.length ?? 0) > 0)
       .length,
-    exports7d: countExportsSince(now - MS_7D),
+    exportsRecentes: countExportsSince(now - MS_7D),
   };
 
   const attention = useMemo(() => {
@@ -185,15 +204,13 @@ export function OperationalHome() {
       }
     }
     return {
-      blocks: blocks.slice(0, 12),
-      warns: warns.slice(0, 10),
+      blocks: blocks.slice(0, 8),
+      warns: warns.slice(0, 6),
     };
   }, [rows]);
 
-  const recentExports = readRecentExports().slice(0, 8);
-  const recentEvents = rows.slice(0, 6);
+  const recentExports = readRecentExports().slice(0, 6);
 
-  const lastOpened = getLastOpenedEventId();
   const lastOpenedValid =
     lastOpened && rows.some((r) => r.event.event_id === lastOpened);
 
@@ -210,7 +227,7 @@ export function OperationalHome() {
       });
       setExportBanner({
         tone: "ok",
-        text: `Export concluído: ${ev.name} · ${out.export_id}`,
+        text: `Pack gerado: ${ev.name} · ${out.export_id}`,
       });
       try {
         const readiness = await fetchExportReadiness(ev.event_id);
@@ -228,12 +245,12 @@ export function OperationalHome() {
       if (e instanceof Error && e.message === "export_not_ready") {
         setExportBanner({
           tone: "err",
-          text: `${ev.name}: corrija os bloqueios antes de exportar.`,
+          text: `${ev.name}: resolva os bloqueios antes de exportar o pack.`,
         });
       } else {
         setExportBanner({
           tone: "err",
-          text: `${ev.name}: falha ao exportar. Tente de novo.`,
+          text: `${ev.name}: não foi possível exportar o pack. Tente de novo.`,
         });
       }
     } finally {
@@ -241,32 +258,32 @@ export function OperationalHome() {
     }
   };
 
+  const setFocoFromRow = (eventId: string) => {
+    setFocoManualId(eventId);
+    rememberLastOpenedEvent(eventId);
+  };
+
   return (
     <main
       id="conteudo-principal"
-      className="mx-auto max-w-content px-6 pb-20 pt-8 md:pt-10 lg:px-10"
+      className="mx-auto max-w-content px-6 pb-20 pt-5 md:pt-6 lg:px-10"
     >
       <section
         id="visao-geral"
         className="scroll-mt-28"
         aria-labelledby="dash-titulo"
       >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1
-              id="dash-titulo"
-              className="font-display text-2xl font-semibold tracking-tight text-tf-fg md:text-3xl"
-            >
-              Operação
-            </h1>
-            <p className="mt-1 text-sm text-tf-muted">
-              Eventos, prontidão para pack e export recente.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2 sm:justify-end">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <h1
+            id="dash-titulo"
+            className="font-display text-lg font-semibold tracking-tight text-tf-fg md:text-xl"
+          >
+            Operação
+          </h1>
+          <div className="flex flex-wrap gap-2">
             <Link
               href="/events"
-              className="inline-flex items-center justify-center rounded-tf border border-tf-border bg-tf-mid/50 px-4 py-2.5 text-sm font-semibold text-tf-fg transition-colors hover:border-tf-accent/35 hover:bg-tf-mid"
+              className="inline-flex items-center justify-center rounded-tf border border-tf-border bg-tf-mid/50 px-3 py-2 text-xs font-semibold text-tf-fg sm:text-sm"
             >
               Novo evento
             </Link>
@@ -274,16 +291,16 @@ export function OperationalHome() {
               <Link
                 href={`/events/${encodeURIComponent(lastOpened)}`}
                 onClick={() => rememberLastOpenedEvent(lastOpened)}
-                className="inline-flex items-center justify-center rounded-tf bg-tf-accent px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                className="inline-flex items-center justify-center rounded-tf bg-tf-accent px-3 py-2 text-xs font-semibold text-white sm:text-sm"
               >
-                Abrir último evento
+                Último evento
               </Link>
             ) : (
               <span
-                className="inline-flex cursor-not-allowed items-center justify-center rounded-tf border border-tf-border bg-tf-mid/25 px-4 py-2.5 text-sm font-medium text-tf-faint"
-                title="Abra um evento a partir da lista para memorizar o atalho."
+                className="inline-flex cursor-not-allowed items-center justify-center rounded-tf border border-tf-border px-3 py-2 text-xs font-medium text-tf-faint sm:text-sm"
+                title="Abra um evento na lista para memorizar o atalho."
               >
-                Abrir último evento
+                Último evento
               </span>
             )}
           </div>
@@ -291,7 +308,7 @@ export function OperationalHome() {
 
         {exportBanner ? (
           <p
-            className={`mt-6 rounded-tf border px-4 py-3 text-sm ${
+            className={`mt-3 rounded-tf border px-3 py-2 text-xs sm:text-sm ${
               exportBanner.tone === "ok"
                 ? "border-tf-teal/30 bg-tf-teal-soft/25 text-tf-fg"
                 : "border-red-500/25 bg-red-950/25 text-red-100/90"
@@ -303,23 +320,23 @@ export function OperationalHome() {
         ) : null}
 
         {loadState === "loading" ? (
-          <p className="mt-8 text-sm text-tf-subtle" aria-live="polite">
-            Carregando painel…
+          <p className="mt-4 text-xs text-tf-subtle sm:text-sm" aria-live="polite">
+            Carregando eventos…
           </p>
         ) : null}
 
         {loadState === "error" && listError ? (
           <div
-            className="mt-8 rounded-tf-lg border border-red-500/25 bg-red-950/20 px-5 py-4 text-sm text-red-100/90"
+            className="mt-4 rounded-tf-lg border border-red-500/25 bg-red-950/20 px-4 py-3 text-sm text-red-100/90"
             role="alert"
           >
-            <p className="font-medium">Não foi possível carregar o painel</p>
+            <p className="font-medium">Algo deu errado</p>
             <p className="mt-1 text-red-100/80">{listError}</p>
             {apiConfigured ? (
               <button
                 type="button"
                 onClick={() => void loadDashboard()}
-                className="mt-4 text-sm font-medium text-tf-fg underline-offset-2 hover:underline"
+                className="mt-3 text-sm font-medium text-tf-fg underline-offset-2 hover:underline"
               >
                 Tentar de novo
               </button>
@@ -328,274 +345,340 @@ export function OperationalHome() {
         ) : null}
 
         {loadState === "ok" ? (
-          <>
-            <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <KpiCard label="Eventos ativos" value={kpis.active} />
-              <KpiCard
-                label="Prontos para exportar"
-                value={kpis.readyExport}
-                hint="Checagem de prontidão ok."
-              />
-              <KpiCard
-                label="Com alertas"
-                value={kpis.withAlerts}
-                hint="Há avisos na prontidão."
-              />
-              <KpiCard
-                label="Exports (7 dias)"
-                value={kpis.exports7d}
-                hint="Neste navegador."
-              />
-            </div>
-
-            <div className="mt-10 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-8">
-              <div className="min-w-0">
-                <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-tf-subtle">
-                  Eventos
+          <div className="mt-5 flex flex-col gap-8 xl:flex-row xl:items-start xl:gap-10">
+            <div className="min-w-0 flex-1 xl:min-w-0">
+              <div className="flex flex-wrap items-end justify-between gap-2 border-b border-tf-border pb-3">
+                <h2 className="font-display text-base font-semibold text-tf-fg md:text-lg">
+                  Seus eventos
                 </h2>
-                {rows.length === 0 ? (
-                  <div className="mt-4 rounded-tf-lg border border-tf-border bg-tf-mid/30 px-6 py-10 text-center">
-                    <p className="text-sm font-medium text-tf-fg">
-                      Nenhum evento ainda
-                    </p>
-                    <p className="mx-auto mt-2 max-w-sm text-sm text-tf-muted">
-                      Crie um evento para montar o roteiro e gerar pack na VPS.
-                    </p>
-                    <Link
-                      href="/events"
-                      className="mt-6 inline-flex rounded-tf bg-tf-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-                    >
-                      Ir para Eventos
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="mt-4 overflow-x-auto rounded-tf-lg border border-tf-border">
-                    <table className="w-full min-w-[52rem] text-left text-sm">
-                      <thead className="border-b border-tf-border bg-tf-mid/80 text-xs uppercase tracking-wide text-tf-subtle">
-                        <tr>
-                          <th className="px-3 py-3 font-medium">Nome</th>
-                          <th className="px-3 py-3 font-medium tabular-nums">
-                            Scenes
-                          </th>
-                          <th className="px-3 py-3 font-medium tabular-nums">
-                            Sorteios
-                          </th>
-                          <th className="px-3 py-3 font-medium tabular-nums">
-                            Mídias
-                          </th>
-                          <th className="px-3 py-3 font-medium">Prontidão</th>
-                          <th className="px-3 py-3 font-medium">Último export</th>
-                          <th className="px-3 py-3 font-medium text-right">
-                            Ações
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-tf-border bg-tf-mid/20">
-                        {rows.map(({ event: ev, readiness: r, readinessError }) => {
-                          const rl = readinessLabel(r);
-                          const last = lastExportForEvent(ev.event_id);
-                          const canExport = Boolean(r?.ready);
-                          return (
-                            <tr
-                              key={ev.event_id}
-                              className="hover:bg-tf-mid/35"
-                            >
-                              <td className="max-w-[14rem] px-3 py-3">
-                                <span className="font-medium text-tf-fg">
-                                  {ev.name}
-                                </span>
-                                {readinessError ? (
-                                  <span className="mt-1 block text-xs text-amber-200/80">
-                                    Prontidão indisponível
-                                  </span>
-                                ) : null}
-                              </td>
-                              <td className="px-3 py-3 tabular-nums text-tf-muted">
-                                {r?.scene_count ?? "—"}
-                              </td>
-                              <td className="px-3 py-3 tabular-nums text-tf-muted">
-                                {r?.draw_config_count ?? "—"}
-                              </td>
-                              <td className="px-3 py-3 tabular-nums text-tf-muted">
-                                {r?.media_requirement_count ?? "—"}
-                              </td>
-                              <td className="px-3 py-3">
-                                <span
-                                  className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${readinessToneClass[rl.tone]}`}
-                                >
-                                  {rl.text}
-                                </span>
-                              </td>
-                              <td className="px-3 py-3 text-tf-muted">
-                                {last ? (
-                                  <span className="text-xs leading-snug">
-                                    {formatWhen(last.at)}
-                                    <span className="mt-0.5 block font-mono text-[10px] text-tf-faint">
-                                      {last.exportId}
-                                    </span>
-                                  </span>
-                                ) : (
-                                  <span className="text-tf-faint">—</span>
-                                )}
-                              </td>
-                              <td className="px-3 py-3 text-right">
-                                <div className="flex flex-wrap justify-end gap-2">
-                                  <Link
-                                    href={`/events/${encodeURIComponent(ev.event_id)}`}
-                                    onClick={() =>
-                                      rememberLastOpenedEvent(ev.event_id)
-                                    }
-                                    className="text-sm font-medium text-tf-accent hover:text-blue-300"
-                                  >
-                                    Abrir
-                                  </Link>
-                                  <button
-                                    type="button"
-                                    disabled={
-                                      !canExport ||
-                                      exportingId === ev.event_id ||
-                                      readinessError
-                                    }
-                                    onClick={() => void onExport(ev)}
-                                    className="text-sm font-medium text-tf-fg underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:text-tf-faint disabled:no-underline"
-                                    title={
-                                      canExport
-                                        ? "Gerar pack no servidor"
-                                        : "Evento ainda não está pronto para export"
-                                    }
-                                  >
-                                    {exportingId === ev.event_id
-                                      ? "Exportando…"
-                                      : "Exportar"}
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                <p className="text-[11px] text-tf-faint">
+                  Toque na linha para definir o evento em foco
+                </p>
               </div>
 
-              <aside className="mt-10 space-y-8 lg:mt-8">
+              {rows.length === 0 ? (
+                <div className="mt-6 rounded-tf-lg border border-tf-border bg-tf-mid/30 px-6 py-10 text-center">
+                  <p className="text-sm font-medium text-tf-fg">
+                    Nenhum evento ainda
+                  </p>
+                  <p className="mx-auto mt-2 max-w-sm text-sm text-tf-muted">
+                    Crie um evento e volte aqui para acompanhar o pack.
+                  </p>
+                  <Link
+                    href="/events"
+                    className="mt-6 inline-flex rounded-tf bg-tf-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+                  >
+                    Criar evento
+                  </Link>
+                </div>
+              ) : (
+                <div className="mt-3 overflow-x-auto rounded-tf-lg border border-tf-border shadow-[0_0_0_1px_rgba(248,250,252,0.02)_inset]">
+                  <table className="w-full min-w-[48rem] text-left text-sm">
+                    <thead className="border-b border-tf-border bg-tf-mid/90 text-[11px] font-medium uppercase tracking-wide text-tf-subtle">
+                      <tr>
+                        <th className="px-3 py-2.5">Nome</th>
+                        <th className="px-3 py-2.5 tabular-nums">Cenas</th>
+                        <th className="px-3 py-2.5 tabular-nums">Sorteios</th>
+                        <th className="px-3 py-2.5 tabular-nums">Mídias</th>
+                        <th className="px-3 py-2.5">Pronto para exportar</th>
+                        <th className="px-3 py-2.5">Último pack</th>
+                        <th className="px-3 py-2.5 text-right">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-tf-border bg-tf-mid/15">
+                      {rows.map(({ event: ev, readiness: r, readinessError }) => {
+                        const st = statusOperacional(r);
+                        const last = lastExportForEvent(ev.event_id);
+                        const podeExportar = Boolean(r?.ready);
+                        const isFoco = ev.event_id === focoEventId;
+                        return (
+                          <tr
+                            key={ev.event_id}
+                            onClick={() => setFocoFromRow(ev.event_id)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                setFocoFromRow(ev.event_id);
+                              }
+                            }}
+                            tabIndex={0}
+                            className={`cursor-pointer outline-none transition-colors hover:bg-tf-mid/40 focus-visible:bg-tf-mid/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-tf-accent/40 ${
+                              isFoco ? "bg-tf-accent-soft/15" : ""
+                            }`}
+                            aria-selected={isFoco}
+                          >
+                            <td className="max-w-[13rem] px-3 py-2.5">
+                              <span className="font-medium text-tf-fg">
+                                {ev.name}
+                              </span>
+                              {readinessError ? (
+                                <span className="mt-0.5 block text-[11px] text-amber-200/85">
+                                  Status indisponível
+                                </span>
+                              ) : null}
+                            </td>
+                            <td className="px-3 py-2.5 tabular-nums text-tf-muted">
+                              {r?.scene_count ?? "—"}
+                            </td>
+                            <td className="px-3 py-2.5 tabular-nums text-tf-muted">
+                              {r?.draw_config_count ?? "—"}
+                            </td>
+                            <td className="px-3 py-2.5 tabular-nums text-tf-muted">
+                              {r?.media_requirement_count ?? "—"}
+                            </td>
+                            <td className="px-3 py-2.5">
+                              <span
+                                className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusToneClass[st.tone]}`}
+                              >
+                                {st.text}
+                              </span>
+                            </td>
+                            <td
+                              className="px-3 py-2.5 text-tf-muted"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {last ? (
+                                <span className="text-[11px] leading-snug">
+                                  {formatWhen(last.at)}
+                                </span>
+                              ) : (
+                                <span className="text-tf-faint">—</span>
+                              )}
+                            </td>
+                            <td
+                              className="px-3 py-2.5 text-right"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="flex flex-wrap justify-end gap-2">
+                                <Link
+                                  href={`/events/${encodeURIComponent(ev.event_id)}`}
+                                  onClick={() =>
+                                    rememberLastOpenedEvent(ev.event_id)
+                                  }
+                                  className="text-xs font-medium text-tf-accent sm:text-sm"
+                                >
+                                  Abrir
+                                </Link>
+                                <button
+                                  type="button"
+                                  disabled={
+                                    !podeExportar ||
+                                    exportingId === ev.event_id ||
+                                    readinessError
+                                  }
+                                  onClick={() => void onExport(ev)}
+                                  className="text-xs font-medium text-tf-fg underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:text-tf-faint disabled:no-underline sm:text-sm"
+                                  title={
+                                    podeExportar
+                                      ? "Gerar pack no servidor"
+                                      : "Resolva os bloqueios para exportar o pack"
+                                  }
+                                >
+                                  {exportingId === ev.event_id
+                                    ? "Exportando…"
+                                    : "Exportar pack"}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {rows.length > 0 ? (
+              <aside className="w-full shrink-0 space-y-5 border-t border-tf-border pt-6 xl:w-[min(100%,320px)] xl:border-l xl:border-t-0 xl:pl-8 xl:pt-0">
                 <div>
-                  <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-tf-subtle">
-                    Atenção operacional
-                  </h2>
-                  <div className="mt-3 space-y-4 rounded-tf-lg border border-tf-border bg-tf-mid/30 p-4">
-                    {attention.blocks.length === 0 &&
-                    attention.warns.length === 0 ? (
-                      <p className="text-sm text-tf-muted">
-                        Nenhuma pendência listada pela prontidão.
-                      </p>
-                    ) : null}
-                    {attention.blocks.length > 0 ? (
-                      <div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wide text-red-200/85">
-                          Bloqueios
-                        </h3>
-                        <ul className="mt-2 space-y-2 text-sm text-red-100/88">
-                          {attention.blocks.map((b, i) => (
-                            <li key={`b-${b.eventId}-${i}`}>
-                              <Link
-                                href={`/events/${encodeURIComponent(b.eventId)}`}
-                                className="font-medium text-tf-fg underline-offset-2 hover:underline"
-                              >
-                                {b.eventName}
-                              </Link>
-                              <span className="text-red-100/70">
-                                {" "}
-                                · {b.line}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null}
-                    {attention.warns.length > 0 ? (
-                      <div>
-                        <h3 className="text-xs font-semibold uppercase tracking-wide text-amber-200/85">
-                          Avisos
-                        </h3>
-                        <ul className="mt-2 space-y-2 text-sm text-amber-100/88">
-                          {attention.warns.map((w, i) => (
-                            <li key={`w-${w.eventId}-${i}`}>
-                              <Link
-                                href={`/events/${encodeURIComponent(w.eventId)}`}
-                                className="font-medium text-tf-fg underline-offset-2 hover:underline"
-                              >
-                                {w.eventName}
-                              </Link>
-                              <span className="text-amber-100/75">
-                                {" "}
-                                · {w.line}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null}
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-tf-faint">
+                    Resumo
+                  </p>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <KpiChip label="Eventos ativos" value={kpis.active} />
+                    <KpiChip
+                      label="Prontos para exportar"
+                      value={kpis.prontosExportar}
+                    />
+                    <KpiChip label="Com bloqueios" value={kpis.comBloqueios} />
+                    <KpiChip
+                      label="Exports recentes"
+                      value={kpis.exportsRecentes}
+                    />
                   </div>
+                  <p className="mt-2 text-[10px] leading-snug text-tf-faint">
+                    Exports recentes: últimos 7 dias, neste dispositivo.
+                  </p>
                 </div>
 
-                <div>
-                  <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-tf-subtle">
-                    Atividade recente
-                  </h2>
-                  <div className="mt-3 rounded-tf-lg border border-tf-border bg-tf-mid/30 p-4">
-                    <h3 className="text-xs font-medium text-tf-faint">
-                      Exports (neste navegador)
-                    </h3>
-                    {recentExports.length === 0 ? (
-                      <p className="mt-2 text-sm text-tf-muted">
-                        Nenhum export registrado ainda.
+                {focoRow ? (
+                  <div className="rounded-tf-lg border border-tf-accent/25 bg-gradient-to-b from-tf-accent-soft/20 to-tf-mid/40 p-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-tf-subtle">
+                      Evento em foco
+                    </p>
+                    <p className="mt-2 font-display text-base font-semibold text-tf-fg">
+                      {focoRow.event.name}
+                    </p>
+                    <div className="mt-2">
+                      {(() => {
+                        const st = statusOperacional(focoRow.readiness);
+                        return (
+                          <span
+                            className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusToneClass[st.tone]}`}
+                          >
+                            {st.text}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                    {focoRow.readiness && !focoRow.readinessError ? (
+                      <p className="mt-3 text-xs leading-relaxed text-tf-muted">
+                        <span className="font-medium text-tf-fg">
+                          {focoRow.readiness.blocking.length}
+                        </span>{" "}
+                        {focoRow.readiness.blocking.length === 1
+                          ? "bloqueio"
+                          : "bloqueios"}
+                        {" · "}
+                        <span className="font-medium text-tf-fg">
+                          {focoRow.readiness.warnings.length}
+                        </span>{" "}
+                        {focoRow.readiness.warnings.length === 1
+                          ? "aviso"
+                          : "avisos"}
+                      </p>
+                    ) : focoRow.readinessError ? (
+                      <p className="mt-3 text-xs text-amber-200/85">
+                        Não foi possível carregar o status neste momento.
                       </p>
                     ) : (
-                      <ul className="mt-2 space-y-2 text-sm">
-                        {recentExports.map((ex) => (
-                          <li key={ex.exportId} className="leading-snug">
-                            <Link
-                              href={`/events/${encodeURIComponent(ex.eventId)}`}
-                              className="font-medium text-tf-accent hover:text-blue-300"
+                      <p className="mt-3 text-xs text-tf-muted">—</p>
+                    )}
+                    <div className="mt-3 text-xs text-tf-subtle">
+                      <span className="text-tf-faint">Último pack: </span>
+                      {(() => {
+                        const last = lastExportForEvent(focoRow.event.event_id);
+                        return last ? (
+                          <>
+                            {formatWhen(last.at)}
+                            <span className="mt-0.5 block font-mono text-[10px] text-tf-faint">
+                              {last.exportId}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-tf-muted">
+                            Ainda não exportado neste dispositivo.
+                          </span>
+                        );
+                      })()}
+                    </div>
+                    <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                      <Link
+                        href={`/events/${encodeURIComponent(focoRow.event.event_id)}`}
+                        onClick={() =>
+                          rememberLastOpenedEvent(focoRow.event.event_id)
+                        }
+                        className="inline-flex flex-1 items-center justify-center rounded-tf bg-tf-accent px-3 py-2 text-center text-sm font-semibold text-white hover:opacity-90"
+                      >
+                        Continuar edição
+                      </Link>
+                      <button
+                        type="button"
+                        disabled={
+                          !focoRow.readiness?.ready ||
+                          exportingId === focoRow.event.event_id ||
+                          focoRow.readinessError
+                        }
+                        onClick={() => void onExport(focoRow.event)}
+                        className="inline-flex flex-1 items-center justify-center rounded-tf border border-tf-border bg-tf-mid/60 px-3 py-2 text-sm font-semibold text-tf-fg hover:bg-tf-mid disabled:cursor-not-allowed disabled:opacity-45"
+                      >
+                        {exportingId === focoRow.event.event_id
+                          ? "Exportando…"
+                          : "Exportar pack"}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {attention.blocks.length > 0 || attention.warns.length > 0 ? (
+                  <div className="rounded-tf border border-tf-border/80 bg-tf-mid/20 p-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-tf-faint">
+                      Outras pendências
+                    </p>
+                    {attention.blocks.length > 0 ? (
+                      <ul className="mt-2 space-y-1.5 text-[11px] leading-snug text-red-100/85">
+                        {attention.blocks.map((b, i) => (
+                          <li key={`b-${b.eventId}-${i}`}>
+                            <button
+                              type="button"
+                              onClick={() => setFocoFromRow(b.eventId)}
+                              className="text-left font-medium text-tf-fg underline-offset-2 hover:underline"
                             >
-                              {ex.eventName}
-                            </Link>
-                            <span className="block text-xs text-tf-subtle">
-                              {formatWhen(ex.at)} ·{" "}
-                              <span className="font-mono text-tf-faint">
-                                {ex.exportId}
-                              </span>
+                              {b.eventName}
+                            </button>
+                            <span className="text-red-100/65"> · {b.line}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    {attention.warns.length > 0 ? (
+                      <ul
+                        className={`mt-2 space-y-1.5 text-[11px] leading-snug text-amber-100/85 ${attention.blocks.length > 0 ? "border-t border-tf-border/60 pt-2" : ""}`}
+                      >
+                        {attention.warns.map((w, i) => (
+                          <li key={`w-${w.eventId}-${i}`}>
+                            <button
+                              type="button"
+                              onClick={() => setFocoFromRow(w.eventId)}
+                              className="text-left font-medium text-tf-fg underline-offset-2 hover:underline"
+                            >
+                              {w.eventName}
+                            </button>
+                            <span className="text-amber-100/65">
+                              {" "}
+                              · {w.line}
                             </span>
                           </li>
                         ))}
                       </ul>
-                    )}
-                    {recentEvents.length > 0 ? (
-                      <>
-                        <h3 className="mt-5 text-xs font-medium text-tf-faint">
-                          Eventos recentes
-                        </h3>
-                        <ul className="mt-2 space-y-1.5 text-sm text-tf-muted">
-                          {recentEvents.map(({ event: ev }) => (
-                            <li key={ev.event_id}>
-                              <Link
-                                href={`/events/${encodeURIComponent(ev.event_id)}`}
-                                className="text-tf-fg hover:text-tf-accent"
-                              >
-                                {ev.name}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      </>
                     ) : null}
                   </div>
+                ) : null}
+
+                <div className="rounded-tf border border-tf-border/60 bg-tf-bg/20 p-3 opacity-90">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-tf-faint">
+                    Atividade recente
+                  </p>
+                  <p className="mt-1 text-[10px] leading-snug text-tf-faint">
+                    Registrado neste dispositivo — não sincroniza com outros
+                    navegadores ou aparelhos.
+                  </p>
+                  {recentExports.length === 0 ? (
+                    <p className="mt-2 text-xs text-tf-subtle">
+                      Nenhum pack listado ainda por aqui.
+                    </p>
+                  ) : (
+                    <ul className="mt-2 space-y-1.5 text-xs text-tf-muted">
+                      {recentExports.map((ex) => (
+                        <li key={ex.exportId}>
+                          <Link
+                            href={`/events/${encodeURIComponent(ex.eventId)}`}
+                            className="font-medium text-tf-accent/90 hover:text-blue-300"
+                          >
+                            {ex.eventName}
+                          </Link>
+                          <span className="block text-[10px] text-tf-faint">
+                            {formatWhen(ex.at)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </aside>
-            </div>
-          </>
+            ) : null}
+          </div>
         ) : null}
       </section>
     </main>
