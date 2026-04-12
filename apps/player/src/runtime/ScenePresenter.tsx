@@ -1,6 +1,6 @@
-﻿import type { SceneContract, SceneType } from "@telaflow/shared-contracts";
+﻿import type { MediaRequirementContract, SceneContract, SceneType } from "@telaflow/shared-contracts";
+import { SceneMediaRenderer } from "./SceneMediaRenderer.js";
 import type { SceneMediaDerivedState } from "./sceneMediaResolution.js";
-import { describeSceneMediaDerivedStatePt } from "./sceneMediaResolution.js";
 
 const TYPE_LABELS: Record<SceneType, string> = {
   opening: "Abertura",
@@ -17,6 +17,9 @@ type Props = {
   sceneTotal: number;
   mediaState: SceneMediaDerivedState;
   drawConfigSummary?: string | null;
+  workspaceRoot: string | null;
+  bindings: Record<string, string>;
+  mediaRequirement: MediaRequirementContract | null;
 };
 
 export function ScenePresenter({
@@ -25,6 +28,9 @@ export function ScenePresenter({
   sceneTotal,
   mediaState,
   drawConfigSummary,
+  workspaceRoot,
+  bindings,
+  mediaRequirement,
 }: Props) {
   const typeLabel = TYPE_LABELS[scene.type] ?? scene.type;
 
@@ -70,10 +76,13 @@ export function ScenePresenter({
           </div>
         ) : null}
       </dl>
-      <footer className={`scene-presenter__media scene-presenter__media--${mediaState}`}>
-        <strong>Mídia (estado derivado)</strong>
-        <p>{describeSceneMediaDerivedStatePt(mediaState)}</p>
-      </footer>
+      <SceneMediaRenderer
+        scene={scene}
+        mediaState={mediaState}
+        workspaceRoot={workspaceRoot}
+        bindings={bindings}
+        mediaRequirement={mediaRequirement}
+      />
     </div>
   );
 }

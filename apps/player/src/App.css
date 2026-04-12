@@ -402,42 +402,81 @@
   word-break: break-all;
 }
 
-.scene-presenter__media {
+.scene-media {
   margin-top: auto;
-  padding: 0.55rem 0.65rem;
-  border-radius: 8px;
-  font-size: 0.85rem;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.5);
 }
 
-.scene-presenter__media strong {
-  display: block;
-  margin-bottom: 0.2rem;
-  font-size: 0.8rem;
-}
-
-.scene-presenter__media p {
+.scene-media__placeholder-text {
   margin: 0;
-  line-height: 1.35;
+  padding: 0.75rem 1rem;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: #444;
 }
 
-.scene-presenter__media--no_media_required {
-  background: rgba(107, 114, 128, 0.12);
-  color: #374151;
+.scene-media__fallback-card {
+  padding: 0.85rem 1rem;
+  font-size: 0.88rem;
+  line-height: 1.4;
 }
 
-.scene-presenter__media--media_bound {
-  background: rgba(16, 185, 129, 0.14);
-  color: #065f46;
+.scene-media__fallback-card strong {
+  display: block;
+  margin-bottom: 0.35rem;
 }
 
-.scene-presenter__media--media_missing_binding {
-  background: rgba(245, 158, 11, 0.2);
-  color: #92400e;
+.scene-media__fallback-card p {
+  margin: 0.25rem 0 0;
 }
 
-.scene-presenter__media--media_file_missing {
-  background: rgba(239, 68, 68, 0.14);
-  color: #991b1b;
+.scene-media__mono {
+  margin: 0.5rem 0 0;
+  font-size: 0.82rem;
+}
+
+.scene-media--fallback.scene-media--media_missing_binding {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(217, 119, 6, 0.35);
+}
+
+.scene-media--fallback.scene-media--media_file_missing {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(220, 38, 38, 0.25);
+}
+
+.scene-media--fallback.scene-media--resolve-error {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(185, 28, 28, 0.3);
+}
+
+.scene-media--playback {
+  padding: 0;
+  justify-content: stretch;
+  background: #000;
+  border-color: rgba(0, 0, 0, 0.35);
+}
+
+.scene-media__img {
+  display: block;
+  width: 100%;
+  max-height: min(48vh, 360px);
+  object-fit: contain;
+  background: #0a0a0a;
+}
+
+.scene-media__video {
+  display: block;
+  width: 100%;
+  max-height: min(48vh, 360px);
+  background: #000;
 }
 
 .player-exec-ops {
@@ -624,6 +663,15 @@
 
   .scene-presenter__facts dt {
     color: #aaa;
+  }
+
+  .scene-media {
+    background: rgba(0, 0, 0, 0.25);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .scene-media__placeholder-text {
+    color: #ccc;
   }
 
   .player-exec-sidebar__title,

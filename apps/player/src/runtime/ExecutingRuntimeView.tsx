@@ -40,6 +40,12 @@ export function ExecutingRuntimeView({
   const idx = n > 0 ? Math.min(Math.max(0, sceneIndex), n - 1) : 0;
   const atual: SceneContract | null = n > 0 ? ordenadas[idx]! : null;
 
+  const mediaRequirement = useMemo(() => {
+    const mid = atual?.media_id;
+    if (!mid) return null;
+    return packData.mediaManifest.requirements.find((r) => r.media_id === mid) ?? null;
+  }, [atual, packData.mediaManifest.requirements]);
+
   const mediaState: SceneMediaDerivedState = atual
     ? resolveSceneMediaState(atual, workspaceRoot, bindings, fileExistsCache)
     : "no_media_required";
@@ -93,6 +99,9 @@ export function ExecutingRuntimeView({
           sceneTotal={n}
           mediaState={mediaState}
           drawConfigSummary={drawLine}
+          workspaceRoot={workspaceRoot}
+          bindings={bindings}
+          mediaRequirement={mediaRequirement}
         />
       </div>
 

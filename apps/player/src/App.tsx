@@ -274,8 +274,8 @@ export default function App() {
       <header className="player-header">
         <h1>TelaFlow Player</h1>
         <p className="player-tagline">
-          FSM operacional, pre-flight, runtime visual MVP (presenter por tipo de cena), resolução de
-          mídia derivada e registo JSONL — sem Cloud em runtime e sem playback de ficheiros.
+          FSM operacional, pre-flight, runtime visual e playback MVP (imagem/vídeo via bindings e
+          protocolo asset do Tauri) — sem Cloud em runtime; registo JSONL para eventos de execução.
         </p>
       </header>
 

@@ -9,6 +9,7 @@ pub fn run() {
             pack_io::load_pack_from_directory,
             workspace_bindings::normalize_media_binding_relative,
             workspace_bindings::file_exists_under_workspace,
+            workspace_bindings::resolve_workspace_file_path,
             workspace_bindings::load_media_bindings_file,
             workspace_bindings::save_media_bindings_file,
             workspace_bindings::append_execution_jsonl,

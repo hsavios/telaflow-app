@@ -76,6 +76,27 @@ pub fn file_exists_under_workspace(
     Ok(full.is_file())
 }
 
+/// Caminho absoluto canónico de `relative` sob `workspace_path` (para `convertFileSrc` no frontend).
+#[tauri::command]
+pub fn resolve_workspace_file_path(
+    workspace_path: String,
+    relative: String,
+) -> Result<String, String> {
+    let workspace = PathBuf::from(workspace_path.trim());
+    if !workspace.is_dir() {
+        return Err("workspace não é um diretório".to_string());
+    }
+    assert_safe_relative(&relative)?;
+    let full = workspace.join(relative.trim());
+    let canon = full
+        .canonicalize()
+        .map_err(|e| format!("ficheiro inacessível ou inexistente: {e}"))?;
+    if !canon.is_file() {
+        return Err("caminho não é um ficheiro".to_string());
+    }
+    Ok(canon.to_string_lossy().to_string())
+}
+
 #[tauri::command]
 pub fn load_media_bindings_file(workspace_path: String) -> Result<Option<String>, String> {
     let workspace = PathBuf::from(workspace_path.trim());
