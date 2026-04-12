@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { EXECUTION_LOG_CODES } from "../execution/executionLog.js";
 import type { ExecutionLogLevel } from "../execution/executionLog.js";
+import { DrawExperienceV1 } from "./draw/drawPresentation.js";
 import { useDrawRuntime } from "./drawRuntimeContext.js";
 import { useRuntimeSession } from "./RuntimeSessionContext.js";
 import { effectiveNumberRange } from "./drawNumberRange.js";
@@ -39,7 +40,8 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
   const { comandos, seletores } = useRuntimeSession();
   const cmdSorteio = seletores.comandos.iniciarSorteio;
   const cmdConfirmar = seletores.comandos.confirmarSorteio;
-  const { resetKey, panelState, winnerValue, errorMessage } = useDrawRuntime();
+  const drawSnap = useDrawRuntime();
+  const { resetKey, panelState, winnerValue } = drawSnap;
 
   const staticFailLoggedRef = useRef<string | null>(null);
 
@@ -113,6 +115,9 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
   }
 
   const { min: startNumber, max: endNumber } = effectiveNumberRange(drawConfig);
+  const publicCopy = drawConfig.public_copy;
+  const resultLabel = publicCopy?.result_label?.trim() || "Número sorteado";
+  const audienceHint = publicCopy?.audience_instructions?.trim() ?? null;
   const intervaloOrigem =
     drawConfig.number_range != null
       ? "Intervalo definido no pack (number_range.min / number_range.max)."
@@ -163,6 +168,30 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
         </p>
       )}
 
+      {(panelState === "ready" ||
+        panelState === "drawing" ||
+        panelState === "result_generated" ||
+        panelState === "result_confirmed" ||
+        panelState === "error") && (
+        <div className="draw-scene-panel__experience">
+          <DrawExperienceV1
+            variant="operator"
+            panelState={panelState}
+            winnerValue={drawSnap.winnerValue}
+            pendingWinner={drawSnap.pendingWinner}
+            errorMessage={drawSnap.errorMessage}
+            resetKey={drawSnap.resetKey}
+            drawAttemptId={drawSnap.drawAttemptId}
+            min={startNumber}
+            max={endNumber}
+            drawName={drawConfig.name ?? ""}
+            audienceHint={audienceHint}
+            resultLabel={resultLabel}
+            soundEnabled={false}
+          />
+        </div>
+      )}
+
       {panelState === "ready" && (
         <div className="draw-scene-panel__actions">
           <button
@@ -177,47 +206,24 @@ export function DrawScenePanel({ scene, drawConfig, onPlaybackLog }: Props) {
         </div>
       )}
 
-      {panelState === "drawing" && (
-        <p className="draw-scene-panel__drawing" aria-live="assertive">
-          Sorteando...
-        </p>
-      )}
-
       {panelState === "result_generated" && winnerValue != null && (
-        <div className="draw-scene-panel__result-block">
-          <p className="draw-scene-panel__result-label">Número sorteado</p>
-          <p className="draw-scene-panel__result-value" aria-live="polite">
-            {winnerValue}
-          </p>
-          <div className="draw-scene-panel__actions">
-            <button
-              type="button"
-              className="draw-scene-panel__primary"
-              disabled={!cmdConfirmar.permitido}
-              title={cmdConfirmar.permitido ? undefined : cmdConfirmar.motivo}
-              onClick={confirmarResultado}
-            >
-              Confirmar resultado
-            </button>
-          </div>
+        <div className="draw-scene-panel__actions">
+          <button
+            type="button"
+            className="draw-scene-panel__primary"
+            disabled={!cmdConfirmar.permitido}
+            title={cmdConfirmar.permitido ? undefined : cmdConfirmar.motivo}
+            onClick={confirmarResultado}
+          >
+            Confirmar resultado
+          </button>
         </div>
       )}
 
       {panelState === "result_confirmed" && winnerValue != null && (
-        <div className="draw-scene-panel__result-block draw-scene-panel__result-block--confirmed">
-          <p className="draw-scene-panel__result-label">Resultado confirmado pelo operador</p>
-          <p className="draw-scene-panel__result-value">{winnerValue}</p>
-          <p className="draw-scene-panel__confirmed-note">
-            O valor foi registrado no log de execução (JSONL). Você pode avançar no roteiro quando estiver pronto.
-          </p>
-        </div>
-      )}
-
-      {panelState === "error" && errorMessage && (
-        <div className="draw-scene-panel__error-box" role="alert">
-          <strong>Não é possível sortear</strong>
-          <p>{errorMessage}</p>
-        </div>
+        <p className="draw-scene-panel__confirmed-note">
+          O valor foi registrado no log de execução (JSONL). Você pode avançar no roteiro quando estiver pronto.
+        </p>
       )}
     </DrawPanelChrome>
   );

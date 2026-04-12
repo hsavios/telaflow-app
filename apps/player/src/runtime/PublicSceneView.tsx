@@ -11,9 +11,10 @@ import type {
   SceneContract,
   SceneType,
 } from "@telaflow/shared-contracts";
+import { DrawExperienceV1 } from "./draw/drawPresentation.js";
+import { effectiveNumberRange } from "./drawNumberRange.js";
 import { SceneMediaRenderer } from "./SceneMediaRenderer.js";
 import type { SceneMediaDerivedState } from "./sceneMediaResolution.js";
-import type { DrawPanelState } from "./drawRuntimeContext.js";
 import { useDrawRuntime } from "./drawRuntimeContext.js";
 import type { PublicWindowDrawSnapshot } from "./publicWindowBridge.js";
 
@@ -48,82 +49,48 @@ type Props = {
 /** Sem logs de execução a partir da janela pública (operador mantém o registro JSONL). */
 function noopPlaybackLog(_entry: PlaybackLogPayload) {}
 
-function drawMirrorBody(
-  scene: SceneContract,
-  drawConfig: DrawConfigContract | null,
-  panelState: DrawPanelState,
-  winnerValue: number | null,
-  errorMessage: string | null,
+function publicDrawUnavailable() {
+  return (
+    <div className="public-scene-view__draw public-scene-view__draw--muted" role="status">
+      <p>Sorteio indisponível neste momento.</p>
+    </div>
+  );
+}
+
+function publicDrawExperience(
+  drawConfig: DrawConfigContract,
+  snap: Pick<
+    PublicWindowDrawSnapshot,
+    | "resetKey"
+    | "panelState"
+    | "pendingWinner"
+    | "winnerValue"
+    | "errorMessage"
+    | "drawAttemptId"
+  >,
 ) {
-  const publicCopy = drawConfig?.public_copy;
+  const { min, max } = effectiveNumberRange(drawConfig);
+  const publicCopy = drawConfig.public_copy;
   const resultLabel = publicCopy?.result_label?.trim() || "Número sorteado";
-  const audienceHint = publicCopy?.audience_instructions?.trim();
+  const audienceHint = publicCopy?.audience_instructions?.trim() ?? null;
 
-  if (panelState === "error" && errorMessage) {
-    return (
-      <div className="public-scene-view__draw public-scene-view__draw--error" role="alert">
-        <p className="public-scene-view__draw-line">{errorMessage}</p>
-      </div>
-    );
-  }
-
-  if (!scene.draw_config_id || !drawConfig || drawConfig.draw_type !== "number_range") {
-    return (
-      <div className="public-scene-view__draw public-scene-view__draw--muted" role="status">
-        <p>Sorteio indisponível neste momento.</p>
-      </div>
-    );
-  }
-
-  if (panelState === "idle") {
-    return (
-      <div className="public-scene-view__draw" role="status">
-        <p className="public-scene-view__draw-line">Preparando sorteio...</p>
-      </div>
-    );
-  }
-
-  if (panelState === "ready") {
-    return (
-      <div className="public-scene-view__draw public-scene-view__draw--ready" role="status">
-        <p className="public-scene-view__draw-line">Pronto para sortear</p>
-        <p className="public-scene-view__draw-sub">{drawConfig.name}</p>
-        {audienceHint ? <p className="public-scene-view__draw-hint">{audienceHint}</p> : null}
-      </div>
-    );
-  }
-
-  if (panelState === "drawing") {
-    return (
-      <div className="public-scene-view__draw public-scene-view__draw--drawing" role="status">
-        <p className="public-scene-view__draw-line public-scene-view__draw-line--pulse">Sorteando...</p>
-        {audienceHint ? <p className="public-scene-view__draw-hint">{audienceHint}</p> : null}
-      </div>
-    );
-  }
-
-  if (panelState === "result_generated" && winnerValue != null) {
-    return (
-      <div className="public-scene-view__draw public-scene-view__draw--result" role="status">
-        <p className="public-scene-view__draw-label">{resultLabel}</p>
-        <p className="public-scene-view__draw-number" aria-live="polite">
-          {winnerValue}
-        </p>
-        <p className="public-scene-view__draw-sub">Aguardando confirmação do operador</p>
-      </div>
-    );
-  }
-
-  if (panelState === "result_confirmed" && winnerValue != null) {
-    return (
-      <div className="public-scene-view__draw public-scene-view__draw--confirmed" role="status">
-        <p className="public-scene-view__draw-label">Sorteio confirmado</p>
-        <p className="public-scene-view__draw-number public-scene-view__draw-number--confirmed">{winnerValue}</p>
-      </div>
-    );
-  }
-
-  return null;
+  return (
+    <DrawExperienceV1
+      variant="telao"
+      panelState={snap.panelState}
+      winnerValue={snap.winnerValue}
+      pendingWinner={snap.pendingWinner}
+      errorMessage={snap.errorMessage}
+      resetKey={snap.resetKey}
+      drawAttemptId={snap.drawAttemptId}
+      min={min}
+      max={max}
+      drawName={drawConfig.name ?? ""}
+      audienceHint={audienceHint}
+      resultLabel={resultLabel}
+      soundEnabled
+    />
+  );
 }
 
 function PublicDrawMirrorFromContext({
@@ -133,8 +100,11 @@ function PublicDrawMirrorFromContext({
   scene: SceneContract;
   drawConfig: DrawConfigContract | null;
 }) {
-  const { panelState, winnerValue, errorMessage } = useDrawRuntime();
-  return <>{drawMirrorBody(scene, drawConfig, panelState, winnerValue, errorMessage)}</>;
+  const snap = useDrawRuntime();
+  if (!scene.draw_config_id || !drawConfig || drawConfig.draw_type !== "number_range") {
+    return publicDrawUnavailable();
+  }
+  return publicDrawExperience(drawConfig, snap);
 }
 
 function PublicDrawMirrorRemote({
@@ -146,17 +116,10 @@ function PublicDrawMirrorRemote({
   drawConfig: DrawConfigContract | null;
   snapshot: PublicWindowDrawSnapshot;
 }) {
-  return (
-    <>
-      {drawMirrorBody(
-        scene,
-        drawConfig,
-        snapshot.panelState,
-        snapshot.winnerValue,
-        snapshot.errorMessage,
-      )}
-    </>
-  );
+  if (!scene.draw_config_id || !drawConfig || drawConfig.draw_type !== "number_range") {
+    return publicDrawUnavailable();
+  }
+  return publicDrawExperience(drawConfig, snapshot);
 }
 
 export function PublicSceneView({
@@ -170,6 +133,15 @@ export function PublicSceneView({
   remoteDrawSnapshot,
 }: Props) {
   const typeLabel = TYPE_LABELS_PUBLIC[scene.type] ?? scene.type;
+
+  const emptySnap: PublicWindowDrawSnapshot = {
+    resetKey: "",
+    panelState: "idle",
+    pendingWinner: null,
+    winnerValue: null,
+    errorMessage: null,
+    drawAttemptId: 0,
+  };
 
   return (
     <article className="public-scene-view" aria-label="Saída pública — cena atual">
@@ -186,14 +158,7 @@ export function PublicSceneView({
           <PublicDrawMirrorRemote
             scene={scene}
             drawConfig={drawConfig}
-            snapshot={
-              remoteDrawSnapshot ?? {
-                resetKey: "",
-                panelState: "idle",
-                winnerValue: null,
-                errorMessage: null,
-              }
-            }
+            snapshot={remoteDrawSnapshot ?? emptySnap}
           />
         ) : (
           <PublicDrawMirrorFromContext scene={scene} drawConfig={drawConfig} />

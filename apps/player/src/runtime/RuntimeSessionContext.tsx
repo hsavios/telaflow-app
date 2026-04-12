@@ -24,6 +24,7 @@ import { persistExecutionJsonl } from "../execution/persistExecutionLog.js";
 import { isActiveSession, type PlayerActiveSession } from "../pack/playerPackState.js";
 import type { PackLoaderSuccess } from "../pack/validateLoadedPack.js";
 import type { PreflightResult } from "../preflight/types.js";
+import { DRAW_SPIN_TOTAL_MS } from "./draw/drawEngine.js";
 import { effectiveNumberRange, randomIntInclusive } from "./drawNumberRange.js";
 import { validateDrawSceneNumberRange } from "./drawValidation.js";
 import { enabledScenesSorted } from "./sceneOrder.js";
@@ -75,6 +76,7 @@ export type AcoesSessaoRuntime = {
     panelState: DrawPanelState;
     errorMessage: string | null;
     winnerValue: number | null;
+    pendingWinner?: number | null;
   }) => void;
 };
 
@@ -92,7 +94,6 @@ type ValorContexto = {
 
 const RuntimeSessionContext = createContext<ValorContexto | null>(null);
 
-const SORTEIO_DELAY_MS = 480;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -318,6 +319,7 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
       panelState: DrawPanelState;
       errorMessage: string | null;
       winnerValue: number | null;
+      pendingWinner?: number | null;
     }) => {
       aplicar({
         type: "SINCRONIZAR_SORTEIO_ESTATICO",
@@ -325,6 +327,7 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
         panelState: payload.panelState,
         errorMessage: payload.errorMessage,
         winnerValue: payload.winnerValue,
+        pendingWinner: payload.pendingWinner ?? null,
       });
     },
     [aplicar],
@@ -363,6 +366,7 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
       }
 
       const { min, max } = effectiveNumberRange(drawConfig);
+      const value = randomIntInclusive(min, max);
       sorteioAsyncLivreRef.current = false;
       try {
         aplicarEncadeado([
@@ -374,7 +378,7 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
               message: `scene_id=${scene.scene_id}; draw_config_id=${drawConfig.draw_config_id}; draw_type=number_range; start_number=${v.startNumber}; end_number=${v.endNumber}`,
             },
           },
-          { type: "SORTEIO_PARA_DESENHANDO" },
+          { type: "SORTEIO_PARA_DESENHANDO", pendingWinner: value },
         ]);
 
         const ctx0 = estadoRef.current.operationalContext;
@@ -382,7 +386,7 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
         const flightScene = ctx0.sceneActivationId;
         const flightDraw = ctx0.drawAttemptId;
 
-        await sleep(SORTEIO_DELAY_MS);
+        await sleep(DRAW_SPIN_TOTAL_MS);
 
         const now = estadoRef.current;
         if (now.appState.kind !== "executing") return { ok: true };
@@ -391,7 +395,6 @@ export function RuntimeSessionProvider({ children }: { children: ReactNode }) {
         if (!drawAttemptCorresponde(now.operationalContext, flightDraw)) return { ok: true };
         if (now.drawRuntime.panelState !== "drawing") return { ok: true };
 
-        const value = randomIntInclusive(min, max);
         aplicarEncadeado([
           {
             type: "ANEXAR_LOG_EXECUCAO",

@@ -581,6 +581,179 @@
   opacity: 0.95;
 }
 
+/* Draw Experience v1 — telão (público) e painel (operador) */
+.draw-exp {
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.draw-exp--telao {
+  padding: clamp(1rem, 2vw, 1.75rem) clamp(1.25rem, 3vw, 2.5rem);
+}
+
+.draw-exp--operator {
+  padding: 0.75rem 0.9rem;
+}
+
+.draw-exp--ready {
+  border-color: rgba(52, 211, 153, 0.45);
+  background: rgba(6, 78, 59, 0.38);
+}
+
+.draw-exp--drawing {
+  border-color: rgba(96, 165, 250, 0.5);
+  background: radial-gradient(ellipse at 50% 0%, rgba(37, 99, 235, 0.35) 0%, rgba(15, 23, 42, 0.88) 62%);
+}
+
+.draw-exp--result {
+  border-color: rgba(251, 191, 36, 0.75);
+  background: radial-gradient(ellipse at 50% 20%, rgba(217, 119, 6, 0.55) 0%, rgba(55, 20, 6, 0.92) 100%);
+  box-shadow:
+    0 0 0 1px rgba(253, 224, 71, 0.28),
+    0 16px 48px rgba(0, 0, 0, 0.5);
+  animation: draw-exp-result-in 0.55s ease-out both;
+}
+
+.draw-exp--confirmed {
+  border-color: rgba(52, 211, 153, 0.7);
+  background: radial-gradient(ellipse at 50% 20%, rgba(16, 185, 129, 0.45) 0%, rgba(6, 78, 59, 0.9) 100%);
+  box-shadow:
+    0 0 0 1px rgba(167, 243, 208, 0.35),
+    0 14px 44px rgba(0, 0, 0, 0.45);
+}
+
+.draw-exp--error {
+  border-color: rgba(248, 113, 113, 0.5);
+  background: rgba(127, 29, 29, 0.28);
+  color: #fecaca;
+}
+
+.draw-exp__line {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.draw-exp__status {
+  margin: 0 0 0.35rem;
+  font-size: clamp(0.75rem, 1.8vw, 0.95rem);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #bfdbfe;
+}
+
+.draw-exp__announce {
+  margin: 0 0 0.35rem;
+  font-size: clamp(0.8rem, 2vw, 1rem);
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fef3c7;
+}
+
+.draw-exp__prize {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1rem, 2.8vw, 1.45rem);
+  font-weight: 700;
+  color: #fde68a;
+  line-height: 1.25;
+}
+
+.draw-exp__prize--dim {
+  opacity: 0.88;
+}
+
+.draw-exp__prize--under {
+  margin-top: 0.15rem;
+  margin-bottom: 0.35rem;
+}
+
+.draw-exp__label {
+  margin: 0 0 0.2rem;
+  font-size: clamp(0.7rem, 1.6vw, 0.85rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #fde68a;
+}
+
+.draw-exp__number {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+}
+
+.draw-exp--telao .draw-exp__number--spinning {
+  font-size: clamp(3.5rem, 18vw, 9rem);
+  text-shadow:
+    0 0 32px rgba(96, 165, 250, 0.45),
+    0 6px 36px rgba(0, 0, 0, 0.55);
+}
+
+.draw-exp--operator .draw-exp__number--spinning {
+  font-size: clamp(2rem, 6vw, 3.25rem);
+  text-shadow: 0 0 18px rgba(96, 165, 250, 0.35);
+}
+
+.draw-exp--telao .draw-exp__number--reveal,
+.draw-exp--telao .draw-exp__number--confirmed {
+  font-size: clamp(4rem, 22vw, 10rem);
+  text-shadow:
+    0 0 40px rgba(251, 191, 36, 0.55),
+    0 8px 40px rgba(0, 0, 0, 0.55);
+}
+
+.draw-exp--operator .draw-exp__number--reveal,
+.draw-exp--operator .draw-exp__number--confirmed {
+  font-size: clamp(2.25rem, 7vw, 3.5rem);
+  text-shadow: 0 0 22px rgba(251, 191, 36, 0.4);
+}
+
+.draw-exp__number--confirmed {
+  color: #ecfdf5;
+  text-shadow:
+    0 0 36px rgba(52, 211, 153, 0.5),
+    0 6px 32px rgba(0, 0, 0, 0.45);
+}
+
+.draw-exp__sub {
+  margin: 0.65rem 0 0;
+  font-size: clamp(0.85rem, 2vw, 1.05rem);
+  color: #e2e8f0;
+}
+
+.draw-exp__hint {
+  margin: 0.45rem 0 0;
+  font-size: clamp(0.8rem, 1.8vw, 0.95rem);
+  line-height: 1.45;
+  color: #cbd5e1;
+}
+
+.draw-scene-panel__experience {
+  margin-top: 0.75rem;
+}
+
+@keyframes draw-exp-result-in {
+  from {
+    opacity: 0.5;
+    transform: scale(0.94);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
 .scene-media--public.scene-media--playback .scene-media__img {
   max-height: min(52vh, 480px);
 }

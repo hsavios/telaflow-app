@@ -21,6 +21,8 @@ export type DrawRuntimeSlice = {
   /** `${scene_id}:${draw_config_id ?? ""}` em execução. */
   resetKey: string;
   panelState: DrawPanelState;
+  /** Alvo do sorteio enquanto `drawing` — permite animação determinística no telão sem revelar resultado oficial. */
+  pendingWinner: number | null;
   winnerValue: number | null;
   errorMessage: string | null;
 };
@@ -29,6 +31,7 @@ export function criarSliceSorteioInicial(): DrawRuntimeSlice {
   return {
     resetKey: "",
     panelState: "idle",
+    pendingWinner: null,
     winnerValue: null,
     errorMessage: null,
   };
@@ -74,8 +77,15 @@ export type RuntimeSessionDispatchAction =
   | { type: "CONCLUIR_EXECUCAO" }
   | { type: "ATIVAR_CENA"; indice: number; drawResetKey: string }
   | { type: "ANEXAR_LOG_EXECUCAO"; entrada: { level: ExecutionLogLevel; code: string; message: string } }
-  | { type: "SINCRONIZAR_SORTEIO_ESTATICO"; resetKey: string; panelState: DrawPanelState; errorMessage: string | null; winnerValue: number | null }
-  | { type: "SORTEIO_PARA_DESENHANDO" }
+  | {
+      type: "SINCRONIZAR_SORTEIO_ESTATICO";
+      resetKey: string;
+      panelState: DrawPanelState;
+      errorMessage: string | null;
+      winnerValue: number | null;
+      pendingWinner?: number | null;
+    }
+  | { type: "SORTEIO_PARA_DESENHANDO"; pendingWinner: number }
   | { type: "SORTEIO_PARA_RESULTADO"; winnerValue: number }
   | { type: "SORTEIO_PARA_CONFIRMADO" }
   | { type: "SORTEIO_PARA_ERRO"; errorMessage: string };

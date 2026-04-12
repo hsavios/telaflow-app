@@ -163,6 +163,7 @@ export function transicionarSessaoRuntime(
         drawRuntime: {
           resetKey: action.drawResetKey,
           panelState: "idle",
+          pendingWinner: null,
           winnerValue: null,
           errorMessage: null,
         },
@@ -209,6 +210,7 @@ export function transicionarSessaoRuntime(
         drawRuntime: {
           resetKey: action.drawResetKey,
           panelState: "idle",
+          pendingWinner: null,
           winnerValue: null,
           errorMessage: null,
         },
@@ -239,6 +241,7 @@ export function transicionarSessaoRuntime(
           panelState: action.panelState,
           errorMessage: action.errorMessage,
           winnerValue: action.winnerValue,
+          pendingWinner: action.pendingWinner ?? null,
         },
       };
     }
@@ -246,7 +249,11 @@ export function transicionarSessaoRuntime(
     case "SORTEIO_PARA_DESENHANDO":
       return {
         ...prev,
-        drawRuntime: { ...prev.drawRuntime, panelState: "drawing" },
+        drawRuntime: {
+          ...prev.drawRuntime,
+          panelState: "drawing",
+          pendingWinner: action.pendingWinner,
+        },
         operationalContext: {
           ...oc,
           drawAttemptId: oc.drawAttemptId + 1,
@@ -260,6 +267,7 @@ export function transicionarSessaoRuntime(
           ...prev.drawRuntime,
           panelState: "result_generated",
           winnerValue: action.winnerValue,
+          pendingWinner: null,
         },
       };
 
@@ -276,6 +284,7 @@ export function transicionarSessaoRuntime(
           ...prev.drawRuntime,
           panelState: "error",
           errorMessage: action.errorMessage,
+          pendingWinner: null,
         },
       };
   }

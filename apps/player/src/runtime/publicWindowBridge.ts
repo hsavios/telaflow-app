@@ -32,8 +32,10 @@ export type PublicWindowAppStateSnapshot =
 export type PublicWindowDrawSnapshot = {
   resetKey: string;
   panelState: DrawPanelState;
+  pendingWinner: number | null;
   winnerValue: number | null;
   errorMessage: string | null;
+  drawAttemptId: number;
 };
 
 /**
@@ -145,8 +147,10 @@ export function derivarSnapshotJanelaPublica(
       ? {
           resetKey: draw.resetKey,
           panelState: draw.panelState,
+          pendingWinner: draw.pendingWinner,
           winnerValue: draw.winnerValue,
           errorMessage: draw.errorMessage,
+          drawAttemptId: estado.operationalContext.drawAttemptId,
         }
       : null;
 
