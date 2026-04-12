@@ -3,6 +3,7 @@ import type { MediaKind, MediaRequirementContract, SceneContract } from "@telafl
 import { useCallback, useEffect, useRef, useState } from "react";
 import { EXECUTION_LOG_CODES } from "../execution/executionLog.js";
 import type { ExecutionLogLevel } from "../execution/executionLog.js";
+import { inferPlaybackKindFromRelativePath } from "./mediaPlaybackInfer.js";
 import {
   describeSceneMediaDerivedStatePt,
   type SceneMediaDerivedState,
@@ -60,6 +61,10 @@ export function SceneMediaRenderer({
   const isPeek = visualVariant === "peek";
   const mediaId = scene.media_id ?? null;
   const mediaKind: MediaKind | null = mediaRequirement?.media_type ?? null;
+  const relBound =
+    mediaState === "media_bound" && mediaId ? (bindings[mediaId] ?? null) : null;
+  const inferredKind = relBound ? inferPlaybackKindFromRelativePath(relBound) : null;
+  const effectiveKind: MediaKind | null = mediaKind ?? inferredKind;
 
   const playbackIdRef = useRef(mediaPlaybackId);
   playbackIdRef.current = mediaPlaybackId;
@@ -102,15 +107,18 @@ export function SceneMediaRenderer({
         cancelled = true;
       };
     }
-    if (mediaKind !== "image" && mediaKind !== "video") {
-      const key = `${scene.scene_id}:unsupported:${mediaKind ?? "none"}`;
+    const rel = bindings[mediaId];
+    const inferred = rel ? inferPlaybackKindFromRelativePath(rel) : null;
+    const effective = (mediaKind ?? inferred) as MediaKind | null;
+    if (effective !== "image" && effective !== "video") {
+      const key = `${scene.scene_id}:unsupported:${String(effective ?? "none")}:${String(inferred ?? "")}`;
       if (loggedUnsupported.current !== key) {
         loggedUnsupported.current = key;
         if (!isPublic) {
           const msg =
-            mediaKind == null
-              ? `media_id=${mediaId}; sem entrada no media-manifest — não é possível playback tipado`
-              : `media_id=${mediaId}; tipo=${mediaKind} — playback MVP só suporta image e video`;
+            effective == null && !inferred
+              ? `media_id=${mediaId}; tipo desconhecido (manifest sem tipo e extensão não reconhecida)`
+              : `media_id=${mediaId}; tipo=${String(effective)} — reprodução suporta apenas imagem e vídeo`;
           logMedia(onPlaybackLog, EXECUTION_LOG_CODES.MEDIA_FAILED, msg, "warn");
         }
       }
@@ -119,7 +127,6 @@ export function SceneMediaRenderer({
       };
     }
 
-    const rel = bindings[mediaId];
     if (!rel) {
       return () => {
         cancelled = true;
@@ -249,7 +256,13 @@ export function SceneMediaRenderer({
     );
   }
 
-  if (mediaState === "media_bound" && mediaId && mediaKind == null) {
+  if (
+    mediaState === "media_bound" &&
+    mediaId &&
+    effectiveKind !== "image" &&
+    effectiveKind !== "video"
+  ) {
+    const desconhecido = effectiveKind == null && inferredKind == null && relBound;
     return (
       <section
         className={`scene-media scene-media--placeholder${pubClass}${peekClass}`}
@@ -257,36 +270,27 @@ export function SceneMediaRenderer({
       >
         <p className="scene-media__placeholder-text">
           {isPublic
-            ? "Conteúdo em preparação."
-            : "O media_id desta cena não consta no media-manifest deste export."}
+            ? desconhecido
+              ? "Não foi possível reconhecer este ficheiro como imagem ou vídeo pelo nome. Prefira JPG, PNG ou MP4."
+              : "Este tipo de mídia não é reproduzido nesta versão do player (apenas imagem e vídeo)."
+            : desconhecido
+              ? "Extensão do ficheiro não reconhecida; defina media_type no manifest ou use .jpg, .png, .mp4, …"
+              : `Tipo «${String(effectiveKind)}» — o player reproduz apenas imagem e vídeo.`}
         </p>
       </section>
     );
   }
 
-  if (mediaState === "media_bound" && mediaKind && mediaKind !== "image" && mediaKind !== "video") {
-    return (
-      <section
-        className={`scene-media scene-media--placeholder${pubClass}${peekClass}`}
-        aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
-      >
-        <p className="scene-media__placeholder-text">
-          {isPublic
-            ? "Este formato de mídia não é suportado nesta versão do player."
-            : `Tipo ${mediaKind} — playback MVP limitado a image e video.`}
-        </p>
-      </section>
-    );
-  }
-
-  if (mediaState === "media_bound" && mediaKind === "image" && assetSrc) {
+  if (mediaState === "media_bound" && effectiveKind === "image" && assetSrc) {
     const pb = mediaPlaybackId;
+    const mediaKey = `${scene.scene_id}-${mediaId}-${assetSrc}`;
     return (
       <section
         className={`scene-media scene-media--playback${pubClass}${peekClass}`}
         aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
       >
         <img
+          key={mediaKey}
           src={assetSrc}
           alt={mediaRequirement?.label ?? scene.name}
           className={isPublic ? "scene-media__img scene-media__img--public" : "scene-media__img"}
@@ -299,29 +303,36 @@ export function SceneMediaRenderer({
     );
   }
 
-  if (mediaState === "media_bound" && mediaKind === "video" && assetSrc) {
+  if (mediaState === "media_bound" && effectiveKind === "video" && assetSrc) {
     const pb = mediaPlaybackId;
+    const mediaKey = `${scene.scene_id}-${mediaId}-${assetSrc}`;
     return (
       <section
         className={`scene-media scene-media--playback${pubClass}${peekClass}`}
         aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
       >
         <video
+          key={mediaKey}
           className={isPublic ? "scene-media__video scene-media__video--public" : "scene-media__video"}
           src={assetSrc}
           controls={!isPeek}
           muted
           autoPlay={!isPeek}
           playsInline
-          preload="metadata"
+          preload={isPublic && !isPeek ? "auto" : "metadata"}
           onLoadedData={() => onMediaStarted("video", assetSrc, pb)}
+          onCanPlay={() => onMediaStarted("video", assetSrc, pb)}
           onError={() => onMediaDecodeFailed(assetSrc, pb)}
         />
       </section>
     );
   }
 
-  if (mediaState === "media_bound" && (mediaKind === "image" || mediaKind === "video") && !assetSrc) {
+  if (
+    mediaState === "media_bound" &&
+    (effectiveKind === "image" || effectiveKind === "video") &&
+    !assetSrc
+  ) {
     return (
       <section
         className={`scene-media scene-media--placeholder${pubClass}${peekClass}`}

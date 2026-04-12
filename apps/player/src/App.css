@@ -246,11 +246,19 @@
 }
 
 .player-preflight-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
   padding: 0.35rem 0.5rem;
   margin-bottom: 0.25rem;
   border-radius: 6px;
   font-size: 0.88rem;
   line-height: 1.35;
+}
+
+.player-preflight-message {
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .player-preflight-item--ok {
@@ -267,7 +275,8 @@
 
 .player-preflight-meta {
   font-family: ui-monospace, monospace;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  color: #64748b;
 }
 
 .player-preflight-sev {
@@ -276,6 +285,20 @@
 
 .pack-workspace h2 {
   margin-top: 0;
+}
+
+.player-export-details {
+  margin-bottom: 0.5rem;
+}
+
+.player-export-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #475569;
+}
+
+.player-summary--compact {
+  margin-top: 0.35rem;
 }
 
 .player-section--exec-focus {
@@ -468,6 +491,15 @@
   font-weight: 800;
   line-height: 1.15;
   color: #f8fafc;
+}
+
+.public-scene-view__atmosphere {
+  margin: 0.45rem 0 0;
+  max-width: 42rem;
+  font-size: clamp(0.95rem, 2vw, 1.15rem);
+  font-weight: 500;
+  line-height: 1.35;
+  color: #cbd5e1;
 }
 
 .public-scene-view__headline {
@@ -1323,6 +1355,13 @@
   margin: 0 0 0.75rem;
   font-size: 0.88rem;
   color: #444;
+}
+
+.scene-presenter__atmosphere {
+  margin: -0.35rem 0 0.85rem;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  color: #475569;
 }
 
 .scene-presenter--premium .scene-presenter__title {

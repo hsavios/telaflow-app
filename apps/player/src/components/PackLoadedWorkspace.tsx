@@ -16,6 +16,17 @@ import { ExecutingRuntimeView } from "../runtime/ExecutingRuntimeView.js";
 
 type StatusMidia = "nao_vinculado" | "vinculado" | "ausente";
 
+function legendaStatusMidia(st: StatusMidia): string {
+  switch (st) {
+    case "nao_vinculado":
+      return "Sem vínculo";
+    case "vinculado":
+      return "Ficheiro ok";
+    case "ausente":
+      return "Em falta";
+  }
+}
+
 function statusMidia(
   workspace: string | null,
   bindings: Record<string, string>,
@@ -140,7 +151,7 @@ export function PackLoadedWorkspace() {
       const sel = await open({
         directory: false,
         multiple: false,
-        title: `Arquivo para ${mediaId}`,
+        title: "Escolher ficheiro para esta mídia",
       });
       if (sel === null || Array.isArray(sel)) return;
       setBinderBusy(true);
@@ -204,9 +215,9 @@ export function PackLoadedWorkspace() {
 
   return (
     <div className={`pack-workspace${execPrimary ? " pack-workspace--executing" : ""}`}>
-      <h2>Sessão com pack</h2>
+      <h2>Preparar e ir ao vivo</h2>
       {execPrimary && (
-        <section className="player-section player-section--exec-focus" aria-label="Runtime visual MVP">
+        <section className="player-section player-section--exec-focus" aria-label="Palco e telão">
           <ExecutingRuntimeView fileExistsCache={existeCache} />
         </section>
       )}
@@ -224,33 +235,40 @@ export function PackLoadedWorkspace() {
           <dd className="player-license-ok">válida (janela temporal e escopo MVP)</dd>
         </div>
         <div>
-          <dt>export_id</dt>
-          <dd>
-            <code>{resumo.exportId}</code>
-          </dd>
-        </div>
-        <div>
-          <dt>Scenes (total no pack)</dt>
+          <dt>Cenas no roteiro</dt>
           <dd>{resumo.sceneCount}</dd>
         </div>
         <div>
-          <dt>Requisitos de mídia</dt>
+          <dt>Mídias no pack</dt>
           <dd>{resumo.mediaRequirementCount}</dd>
         </div>
         <div>
-          <dt>Estado operacional (FSM)</dt>
-          <dd>
-            <code>{runtimeKind}</code> — {describeOperationalKindPt(runtimeKind)}
-          </dd>
+          <dt>Fase</dt>
+          <dd>{describeOperationalKindPt(runtimeKind)}</dd>
         </div>
       </dl>
 
-      <section className="player-section player-section--event-start">
-        <h3>Início do evento</h3>
+      <details className="player-section player-export-details">
+        <summary>Identificação do export (avançado)</summary>
         <p className="player-hint">
-          Quando o pré-check estiver ok, o estado fica <strong>pronto</strong>. Use o botão abaixo para
-          colocar o roteiro no ar. Durante o evento, use o painel <strong>Operação</strong> (à direita) para
-          mudar de cena e encerrar; o telão segue o operador numa janela separada.
+          Útil se precisar de confirmar com a equipa que o ficheiro aberto corresponde ao export certo.
+        </p>
+        <dl className="player-summary player-summary--compact">
+          <div>
+            <dt>ID do export</dt>
+            <dd>
+              <code>{resumo.exportId}</code>
+            </dd>
+          </div>
+        </dl>
+      </details>
+
+      <section className="player-section player-section--event-start">
+        <h3>1 · Início do evento</h3>
+        <p className="player-hint">
+          Depois das checagens sem bloqueantes, fica <strong>pronto para ir ao vivo</strong>. Use o botão
+          abaixo para colocar o roteiro no ar. Com o evento a decorrer, use o painel <strong>Operação</strong>{" "}
+          (à direita) para mudar de cena e concluir; o telão acompanha numa janela separada.
         </p>
         <p className="player-fsm-badge" aria-live="polite">
           <span className="player-fsm-badge__label">Estado agora</span>
@@ -274,15 +292,13 @@ export function PackLoadedWorkspace() {
       </section>
 
       <section className="player-section">
-        <h3>Workspace local</h3>
+        <h3>2 · Pasta de mídia (workspace)</h3>
         <p className="player-hint">
-          Escolha a pasta raiz onde estão (ou estarão) os arquivos de mídia. Os bindings
-          gravam-se em <code>.telaflow/media-bindings.json</code> com caminhos relativos a
-          essa raiz. O registro de execução JSONL usa <code>.telaflow/execution-log.jsonl</code>{" "}
-          (workspace se existir; senão pasta do pack).
+          Indique a pasta onde estão os ficheiros de vídeo e imagem. Os vínculos guardam-se automaticamente
+          nessa pasta (ficheiro oculto <code>.telaflow</code>) com caminhos relativos à raiz escolhida.
         </p>
         <button type="button" disabled={binderBusy} onClick={escolherWorkspace}>
-          {workspaceRoot ? "Alterar workspace…" : "Selecionar workspace…"}
+          {workspaceRoot ? "Alterar pasta…" : "Escolher pasta…"}
         </button>
         {workspaceRoot && (
           <p className="player-workspace-path">
@@ -290,19 +306,19 @@ export function PackLoadedWorkspace() {
           </p>
         )}
         <button type="button" disabled={!workspaceRoot || binderBusy} onClick={refreshExistencia}>
-          Atualizar estado dos arquivos
+          Atualizar ficheiros no disco
         </button>
       </section>
 
       <section className="player-section">
-        <h3>Vínculos de mídia</h3>
+        <h3>3 · Vínculos de mídia</h3>
         <table className="player-table">
           <thead>
             <tr>
-              <th>media_id</th>
+              <th>ID</th>
               <th>Rótulo</th>
               <th>Obrigatório</th>
-              <th>Caminho relativo</th>
+              <th>Caminho</th>
               <th>Estado</th>
               <th>Ações</th>
             </tr>
@@ -319,7 +335,9 @@ export function PackLoadedWorkspace() {
                   <code>{bindings[req.media_id] ?? "—"}</code>
                 </td>
                 <td>
-                  <span className={`player-badge player-badge--${st}`}>{st}</span>
+                  <span className={`player-badge player-badge--${st}`} title={st}>
+                    {legendaStatusMidia(st)}
+                  </span>
                 </td>
                 <td>
                   <button
@@ -344,23 +362,23 @@ export function PackLoadedWorkspace() {
       </section>
 
       <section className="player-section">
-        <h3>Pre-flight</h3>
+        <h3>4 · Checagens antes do vivo</h3>
         <p className="player-hint">
-          Com bloqueantes → estado <code>preflight_failed</code>. Sem bloqueantes →{" "}
-          <code>ready</code>. Reexecute após alterar workspace ou vínculos.
+          Valida o pack, o workspace e os ficheiros. Se existirem bloqueantes, corrija-os antes de iniciar.
+          Volte a correr as checagens sempre que alterar a pasta ou os vínculos.
         </p>
         <button
           type="button"
           disabled={preflightBusy || !podeCorrerPreflight}
           onClick={() => void executarPreflight()}
         >
-          {preflightBusy ? "Executando…" : "Executar checagens"}
+          {preflightBusy ? "A validar…" : "Correr checagens"}
         </button>
         {lastPreflight && (
           <div className="player-preflight-report">
             <p>
-              <strong>Última execução:</strong> {lastPreflight.runAt} — bloqueantes:{" "}
-              {lastPreflight.blockingCount}, avisos: {lastPreflight.warningCount}, OK:{" "}
+              <strong>Última validação:</strong> {lastPreflight.runAt} — bloqueantes:{" "}
+              {lastPreflight.blockingCount}, avisos: {lastPreflight.warningCount}, ok:{" "}
               {lastPreflight.okCount}
             </p>
             <ul className="player-preflight-list">
@@ -369,10 +387,11 @@ export function PackLoadedWorkspace() {
                   key={`${it.check_id}-${i}`}
                   className={`player-preflight-item player-preflight-item--${it.severity}`}
                 >
+                  <span className="player-preflight-message">{it.message}</span>
                   <span className="player-preflight-meta">
-                    [{it.group}] {it.code}
-                  </span>{" "}
-                  <span className="player-preflight-sev">({it.severity})</span> — {it.message}
+                    {it.severity} · {it.group}
+                    {it.code ? ` · ${it.code}` : ""}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -381,17 +400,16 @@ export function PackLoadedWorkspace() {
       </section>
 
       <section className="player-section">
-        <h3>Registro de execução (MVP)</h3>
+        <h3>Registo do evento</h3>
         {runtimeKind === "executing" ? (
           <details className="player-exec-details">
-            <summary>Mostrar registro JSONL (sessão atual)</summary>
+            <summary>Ver registo detalhado (sessão atual)</summary>
             <ExecutionLogPanel entries={executionLog} />
           </details>
         ) : (
           <p className="player-hint">
-            O arquivo <code>.telaflow/execution-log.jsonl</code> regista{" "}
-            <code>execution_started</code>, <code>scene_activated</code> e{" "}
-            <code>execution_finished</code> após iniciar o roteiro.
+            Com o roteiro no ar, as ações principais ficam registadas automaticamente na pasta do evento
+            (workspace, se existir; caso contrário na pasta do pack), para arquivo ou suporte técnico.
           </p>
         )}
       </section>

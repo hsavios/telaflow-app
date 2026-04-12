@@ -15,6 +15,19 @@ export const SCENE_TYPE_LABELS_PT: Record<SceneType, string> = {
   closing: "Encerramento",
 };
 
+/** Uma linha curta para telão/palco (cenas sem sorteio), tom de evento ao vivo. */
+const FRASE_MOMENTO_CENA_PT: Partial<Record<SceneType, string>> = {
+  opening: "Boas-vindas — abertura oficial do programa.",
+  institutional: "Mensagem institucional da organização.",
+  sponsor: "Patrocínio — apoio ao evento.",
+  break: "Intervalo — breve pausa no programa.",
+  closing: "Encerramento — fim do programa.",
+};
+
+export function fraseMomentoCenaPt(type: SceneType): string | null {
+  return FRASE_MOMENTO_CENA_PT[type] ?? null;
+}
+
 export type MidiaPainelRoteiro = "pronta" | "pendente" | "ausente" | "sem_midia";
 
 export function midiaPainelRoteiro(estado: SceneMediaDerivedState): MidiaPainelRoteiro {

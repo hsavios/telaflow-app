@@ -6,11 +6,26 @@ import {
   evaluateLicense,
   formatLicenseBlockMessage,
 } from "./license/licenseValidator.js";
-import { isActiveSession } from "./pack/playerPackState.js";
+import { isActiveSession, type PlayerAppState } from "./pack/playerPackState.js";
 import type { LoadedPackInvokePayload } from "./pack/validateLoadedPack.js";
 import { validateLoadedPackPayload } from "./pack/validateLoadedPack.js";
+import { describeOperationalKindPt } from "./runtime/operationalState.js";
 import { RuntimeSessionProvider, useRuntimeSession } from "./runtime/RuntimeSessionContext.js";
 import "./App.css";
+
+function legendaEstadoApp(appState: PlayerAppState): string {
+  switch (appState.kind) {
+    case "idle":
+      return "Aguardando pasta do pack";
+    case "blocked":
+      return "Não foi possível carregar ou continuar";
+    case "pack_loaded":
+    case "preflight_failed":
+    case "ready":
+    case "executing":
+      return describeOperationalKindPt(appState.kind);
+  }
+}
 
 function AppShell() {
   const { estado, acoes } = useRuntimeSession();
@@ -23,7 +38,7 @@ function AppShell() {
       const selecionado = await open({
         directory: true,
         multiple: false,
-        title: "Selecionar pasta do pack (export direto MVP)",
+        title: "Selecionar pasta do pack exportado",
       });
       if (selecionado === null) {
         acoes.sessaoDescarregar();
@@ -74,8 +89,8 @@ function AppShell() {
       <header className="player-header">
         <h1>TelaFlow Player</h1>
         <p className="player-tagline">
-          FSM operacional, pre-flight, runtime visual, playback MVP (imagem/vídeo via bindings) e
-          registro JSONL — sem Cloud em runtime, sem sorteio visual real e sem multi-monitor.
+          Leve o export da TelaFlow Cloud ao evento: mídia local, checagens, palco do operador e telão
+          público — tudo offline durante a execução.
         </p>
       </header>
 
@@ -91,16 +106,16 @@ function AppShell() {
       </section>
 
       <section className="player-status" aria-live="polite">
-        <h2>Estado</h2>
+        <h2>Estado da sessão</h2>
         <p>
-          <strong>{appState.kind}</strong>
+          <strong>{legendaEstadoApp(appState)}</strong>
         </p>
         {appState.kind === "blocked" && <pre className="player-error">{appState.message}</pre>}
         {isActiveSession(appState) && <PackLoadedWorkspace />}
         {appState.kind === "idle" && !carregando && (
           <p className="player-hint">
-            Exporte um pack na TelaFlow Cloud e selecione a pasta do export (subpasta
-            nomeada pelo <code>export_id</code>) que contém os seis arquivos JSON.
+            Na Cloud, exporte o pack do evento e escolha aqui a pasta desse export (a que contém os
+            ficheiros JSON do roteiro e do manifesto).
           </p>
         )}
       </section>

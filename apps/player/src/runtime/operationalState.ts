@@ -19,10 +19,10 @@ export function kindAfterPreflight(result: PreflightResult): "ready" | "prefligh
 
 export function describeOperationalKindPt(kind: PlayerOperationalKind): string {
   const m: Record<PlayerOperationalKind, string> = {
-    pack_loaded: "pack carregado — configurar workspace / bindings e correr pre-flight",
-    preflight_failed: "pre-flight com bloqueantes",
-    ready: "pronto (gate sem bloqueantes)",
-    executing: "a executar roteiro — presenter, playback (imagem/vídeo) e sorteio number_range MVP",
+    pack_loaded: "Pack aberto — ligue a mídia ao workspace e corra as checagens",
+    preflight_failed: "Checagens com bloqueantes — corrija antes do vivo",
+    ready: "Pronto para ir ao vivo",
+    executing: "Roteiro em execução (palco, telão e sorteio)",
   };
   return m[kind];
 }

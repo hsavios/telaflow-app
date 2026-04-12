@@ -15,6 +15,7 @@ import { DrawExperienceV1 } from "./draw/drawPresentation.js";
 import { effectiveNumberRange } from "./drawNumberRange.js";
 import { SceneMediaRenderer } from "./SceneMediaRenderer.js";
 import type { SceneMediaDerivedState } from "./sceneMediaResolution.js";
+import { fraseMomentoCenaPt } from "./sceneRuntimeUi.js";
 import { useDrawRuntime } from "./drawRuntimeContext.js";
 import type { PublicWindowDrawBranding, PublicWindowDrawSnapshot } from "./publicWindowBridge.js";
 
@@ -152,16 +153,20 @@ export function PublicSceneView({
     drawAttemptId: 0,
   };
 
+  const momento = fraseMomentoCenaPt(scene.type);
   const articleClass =
     scene.type === "draw"
       ? "public-scene-view public-scene-view--draw-stage"
-      : "public-scene-view";
+      : `public-scene-view public-scene-view--kind-${scene.type}`;
 
   return (
     <article className={articleClass} aria-label="Saída pública — cena atual">
       <header className="public-scene-view__header">
         <p className="public-scene-view__kind">{typeLabel}</p>
         <h1 className="public-scene-view__title">{scene.name}</h1>
+        {scene.type !== "draw" && momento ? (
+          <p className="public-scene-view__atmosphere">{momento}</p>
+        ) : null}
         {scene.type === "draw" && drawConfig?.public_copy?.headline ? (
           <p className="public-scene-view__headline">{drawConfig.public_copy.headline}</p>
         ) : null}
