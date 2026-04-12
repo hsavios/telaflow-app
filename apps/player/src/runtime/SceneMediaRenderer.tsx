@@ -32,6 +32,8 @@ type Props = {
    * `operator`: comportamento MVP completo para o painel do operador.
    */
   presentation?: "operator" | "public";
+  /** Pré-visualização compacta (ex.: próxima cena) — sem autoplay em vídeo. */
+  visualVariant?: "default" | "peek";
 };
 
 function logMedia(
@@ -52,8 +54,10 @@ export function SceneMediaRenderer({
   mediaPlaybackId,
   onPlaybackLog,
   presentation = "operator",
+  visualVariant = "default",
 }: Props) {
   const isPublic = presentation === "public";
+  const isPeek = visualVariant === "peek";
   const mediaId = scene.media_id ?? null;
   const mediaKind: MediaKind | null = mediaRequirement?.media_type ?? null;
 
@@ -187,12 +191,13 @@ export function SceneMediaRenderer({
   );
 
   const pubClass = isPublic ? " scene-media--public" : "";
+  const peekClass = isPeek ? " scene-media--peek" : "";
 
   if (mediaState === "no_media_required") {
     return (
       <section
-        className={`scene-media scene-media--placeholder${pubClass}`}
-        aria-label="Mídia da cena"
+        className={`scene-media scene-media--placeholder${pubClass}${peekClass}`}
+        aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
       >
         <p className="scene-media__placeholder-text">
           {isPublic
@@ -206,8 +211,8 @@ export function SceneMediaRenderer({
   if (mediaState === "media_missing_binding" || mediaState === "media_file_missing") {
     return (
       <section
-        className={`scene-media scene-media--fallback scene-media--${mediaState}${pubClass}`}
-        aria-label="Mídia da cena"
+        className={`scene-media scene-media--fallback scene-media--${mediaState}${pubClass}${peekClass}`}
+        aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
       >
         <div className="scene-media__fallback-card">
           <strong>{isPublic ? "Não foi possível exibir esta mídia" : "Mídia indisponível"}</strong>
@@ -229,8 +234,8 @@ export function SceneMediaRenderer({
   if (mediaState === "media_bound" && resolveError) {
     return (
       <section
-        className={`scene-media scene-media--fallback scene-media--resolve-error${pubClass}`}
-        aria-label="Mídia da cena"
+        className={`scene-media scene-media--fallback scene-media--resolve-error${pubClass}${peekClass}`}
+        aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
       >
         <div className="scene-media__fallback-card">
           <strong>{isPublic ? "Conteúdo indisponível" : "Arquivo inacessível"}</strong>
@@ -246,7 +251,10 @@ export function SceneMediaRenderer({
 
   if (mediaState === "media_bound" && mediaId && mediaKind == null) {
     return (
-      <section className={`scene-media scene-media--placeholder${pubClass}`} aria-label="Mídia da cena">
+      <section
+        className={`scene-media scene-media--placeholder${pubClass}${peekClass}`}
+        aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
+      >
         <p className="scene-media__placeholder-text">
           {isPublic
             ? "Conteúdo em preparação."
@@ -258,7 +266,10 @@ export function SceneMediaRenderer({
 
   if (mediaState === "media_bound" && mediaKind && mediaKind !== "image" && mediaKind !== "video") {
     return (
-      <section className={`scene-media scene-media--placeholder${pubClass}`} aria-label="Mídia da cena">
+      <section
+        className={`scene-media scene-media--placeholder${pubClass}${peekClass}`}
+        aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
+      >
         <p className="scene-media__placeholder-text">
           {isPublic
             ? "Este formato de mídia não é suportado nesta versão do player."
@@ -271,7 +282,10 @@ export function SceneMediaRenderer({
   if (mediaState === "media_bound" && mediaKind === "image" && assetSrc) {
     const pb = mediaPlaybackId;
     return (
-      <section className={`scene-media scene-media--playback${pubClass}`} aria-label="Mídia da cena">
+      <section
+        className={`scene-media scene-media--playback${pubClass}${peekClass}`}
+        aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
+      >
         <img
           src={assetSrc}
           alt={mediaRequirement?.label ?? scene.name}
@@ -288,13 +302,16 @@ export function SceneMediaRenderer({
   if (mediaState === "media_bound" && mediaKind === "video" && assetSrc) {
     const pb = mediaPlaybackId;
     return (
-      <section className={`scene-media scene-media--playback${pubClass}`} aria-label="Mídia da cena">
+      <section
+        className={`scene-media scene-media--playback${pubClass}${peekClass}`}
+        aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
+      >
         <video
           className={isPublic ? "scene-media__video scene-media__video--public" : "scene-media__video"}
           src={assetSrc}
-          controls
+          controls={!isPeek}
           muted
-          autoPlay
+          autoPlay={!isPeek}
           playsInline
           preload="metadata"
           onLoadedData={() => onMediaStarted("video", assetSrc, pb)}
@@ -306,7 +323,10 @@ export function SceneMediaRenderer({
 
   if (mediaState === "media_bound" && (mediaKind === "image" || mediaKind === "video") && !assetSrc) {
     return (
-      <section className={`scene-media scene-media--placeholder${pubClass}`} aria-label="Mídia da cena">
+      <section
+        className={`scene-media scene-media--placeholder${pubClass}${peekClass}`}
+        aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
+      >
         <p className="scene-media__placeholder-text">
           {isPublic ? "Carregando conteúdo..." : "Preparando mídia…"}
         </p>
@@ -315,7 +335,10 @@ export function SceneMediaRenderer({
   }
 
   return (
-    <section className={`scene-media scene-media--placeholder${pubClass}`} aria-label="Mídia da cena">
+    <section
+      className={`scene-media scene-media--placeholder${pubClass}${peekClass}`}
+      aria-label={isPeek ? "Pré-visualização da próxima cena" : "Mídia da cena"}
+    >
       <p className="scene-media__placeholder-text">
         {isPublic ? "Conteúdo indisponível." : describeSceneMediaDerivedStatePt(mediaState)}
       </p>

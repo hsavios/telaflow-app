@@ -138,6 +138,8 @@ export function ExecutingRuntimeView({ fileExistsCache }: Props) {
           workspaceRoot={workspaceRoot}
           bindings={bindings}
           mediaRequirement={mediaRequirement}
+          packData={packData}
+          fileExistsCache={fileExistsCache}
           onPlaybackLog={(entry) => acoes.anexarLogExecucao(entry)}
         />
       </div>

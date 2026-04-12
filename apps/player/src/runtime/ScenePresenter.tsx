@@ -2,21 +2,12 @@
   DrawConfigContract,
   MediaRequirementContract,
   SceneContract,
-  SceneType,
 } from "@telaflow/shared-contracts";
 import type { ExecutionLogLevel } from "../execution/executionLog.js";
 import { DrawScenePanel } from "./DrawScenePanel.js";
 import { SceneMediaRenderer } from "./SceneMediaRenderer.js";
 import type { SceneMediaDerivedState } from "./sceneMediaResolution.js";
-
-const TYPE_LABELS: Record<SceneType, string> = {
-  opening: "Abertura",
-  institutional: "Institucional",
-  sponsor: "Patrocinador",
-  draw: "Sorteio",
-  break: "Intervalo",
-  closing: "Encerramento",
-};
+import { SCENE_TYPE_LABELS_PT } from "./sceneRuntimeUi.js";
 
 type PlaybackLogPayload = {
   level: ExecutionLogLevel;
@@ -51,44 +42,47 @@ export function ScenePresenter({
   mediaPlaybackId,
   onPlaybackLog,
 }: Props) {
-  const typeLabel = TYPE_LABELS[scene.type] ?? scene.type;
+  const typeLabel = SCENE_TYPE_LABELS_PT[scene.type] ?? scene.type;
 
   return (
-    <div className="scene-presenter" role="region" aria-label="Cena atual (MVP visual)">
+    <div className="scene-presenter scene-presenter--premium" role="region" aria-label="Palco — cena atual">
       <header className="scene-presenter__header">
         <span className="scene-presenter__badge">{typeLabel}</span>
         <span className="scene-presenter__step">
-          Cena {sceneOrdinal} / {sceneTotal}
+          Cena {sceneOrdinal} de {sceneTotal}
         </span>
       </header>
       <h2 className="scene-presenter__title">{scene.name}</h2>
       <p className="scene-presenter__type-meta">
-        Tipo contratual: <code>{scene.type}</code> · Ordem <strong>{scene.sort_order}</strong>
+        Tipo: <strong>{typeLabel}</strong> · Ordem no roteiro: <strong>{scene.sort_order}</strong>
       </p>
-      <dl className="scene-presenter__facts">
-        <div>
-          <dt>scene_id</dt>
-          <dd>
-            <code>{scene.scene_id}</code>
-          </dd>
-        </div>
-        {scene.media_id ? (
+      <details className="scene-presenter__tech">
+        <summary>Detalhes técnicos (opcional)</summary>
+        <dl className="scene-presenter__facts">
           <div>
-            <dt>media_id</dt>
+            <dt>Identificador da cena</dt>
             <dd>
-              <code>{scene.media_id}</code>
+              <code>{scene.scene_id}</code>
             </dd>
           </div>
-        ) : null}
-        {scene.draw_config_id ? (
-          <div>
-            <dt>draw_config_id</dt>
-            <dd>
-              <code>{scene.draw_config_id}</code>
-            </dd>
-          </div>
-        ) : null}
-      </dl>
+          {scene.media_id ? (
+            <div>
+              <dt>Mídia (ID no pack)</dt>
+              <dd>
+                <code>{scene.media_id}</code>
+              </dd>
+            </div>
+          ) : null}
+          {scene.draw_config_id ? (
+            <div>
+              <dt>Sorteio (ID no pack)</dt>
+              <dd>
+                <code>{scene.draw_config_id}</code>
+              </dd>
+            </div>
+          ) : null}
+        </dl>
+      </details>
       {scene.type === "draw" && (
         <DrawScenePanel scene={scene} drawConfig={drawConfig} onPlaybackLog={onPlaybackLog} />
       )}
