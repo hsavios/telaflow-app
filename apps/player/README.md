@@ -25,28 +25,42 @@ Runtime local (**Tauri 2 + React + Vite**), alinhado a `docs/specs/ARCHITECTURE_
 
 - Botão **Executar checagens**: motor em TypeScript (`runPreflightMvp`) com itens **bloqueante** / **aviso** / **ok** (grupos G1–G5 parciais, alinhados a `PRE_FLIGHT_FEATURE_SPEC.md` §6 em espírito).
 - Cobre: pack carregado, licença, workspace, bindings e presença de ficheiros, referências mínimas no roteiro (cenas ativas).
-- Painel com contagens e lista; **reexecutar** após mudar workspace ou vínculos.
+- **Efeito na FSM:** com **≥1 bloqueante** → estado **`preflight_failed`**; com **zero bloqueantes** → **`ready`** (`kindAfterPreflight` em `src/runtime/operationalState.ts`).
+- Painel com contagens e lista; **reexecutar** a partir de `pack_loaded`, `preflight_failed` ou `ready` (bloqueado durante `executing`).
 
-## FSM operacional e gate `ready`
+## FSM operacional (estados de topo)
 
-- Fases: `binding_pending` → (pre-flight) → `ready` ou `preflight_failed`; botão **Iniciar roteiro (MVP)** só a partir de `ready` → `executing`.
-- Ver `src/runtime/operationalState.ts` e estado em `src/pack/playerPackState.ts`.
+Conforme `PLAYER_RUNTIME_FEATURE_SPEC` / `ARCHITECTURE_SPEC` (subconjunto MVP):
 
-## Navegação de cenas (MVP)
+| Estado | Significado |
+|--------|-------------|
+| **`idle`** | Sem sessão ativa. |
+| **`blocked`** | Pack inválido, licença inválida ou erro fatal de I/O. |
+| **`pack_loaded`** | Pack + licença OK; workspace/bindings a configurar; pre-flight ainda não passou ou foi invalidado. |
+| **`preflight_failed`** | Último pre-flight com bloqueantes (detalhe em `lastPreflight`). |
+| **`ready`** | Último pre-flight **sem** bloqueantes — **gate** para iniciar roteiro. |
+| **`executing`** | Navegação mínima do roteiro (sem playback nem sorteio visual). |
 
-- Em `executing`: `SceneRuntimeNav` — anterior / seguinte na ordem exportada, sem playback.
+Fluxo típico: `idle` → (abrir pack) → `pack_loaded` → (pre-flight) → `preflight_failed` **ou** `ready` → (**Iniciar roteiro**) → `executing` → (**Concluir execução**) → `ready`. Alterar workspace/bindings repõe `pack_loaded`.
+
+Implementação: `src/pack/playerPackState.ts` + `src/App.tsx`.
+
+## Scene Runtime (MVP)
+
+- Fonte: `event.json` via `packData.event.scenes` — só cenas **`enabled`**, ordenadas por `sort_order` e `scene_id`.
+- Lista numerada do roteiro; **cena atual** com `scene_id`, `name`, `type`, `sort_order`, `media_id`, `draw_config_id` (ou `—` se vazio).
+- **Cena anterior / seguinte** — sem playback de mídia nem sorteio visual.
+- Código: `src/runtime/sceneNavigator.tsx`.
 
 ## Registo de execução (MVP)
 
-- `appendExecutionLog` — eventos em memória (carregar pack, workspace, bindings, pre-flight, entrada em `executing`, mudança de índice de cena). UI: `ExecutionLogPanel`.
-
-## Estados de UI globais
-
-- **`idle`**, **`pack_loaded`** (licença válida no momento do carregamento), **`blocked`** (falha de pack ou licença).
+- O registo **inicia** ao entrar em **`executing`**: eventos **`execution_started`**, **`scene_activated`** (inclui índice 0 ao iniciar e cada mudança), **`execution_finished`** (botão **Concluir execução**, descarregar sessão ou alteração de workspace/bindings durante execução).
+- **Persistência:** comando Tauri `append_execution_jsonl` — ficheiro **`.telaflow/execution-log.jsonl`** sob a raiz do **workspace** se existir; caso contrário sob a **pasta do pack** (append JSON por linha).
+- Memória de sessão: `executionLog` + UI `ExecutionLogPanel` (visível em `executing`).
 
 ## Fora de escopo
 
-- Execução de cenas, playback de mídia, assinatura criptográfica da licença, cliente da Cloud em runtime.
+- Playback de mídia, sorteio visual no palco, assinatura criptográfica da licença, cliente da Cloud em runtime, execução visual final do telão.
 
 ## Desenvolvimento
 

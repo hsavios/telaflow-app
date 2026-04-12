@@ -223,6 +223,31 @@
   margin-top: 0.75rem;
 }
 
+.player-scene-list-wrap h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.player-scene-list {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
+}
+
+.player-scene-list-item {
+  margin-bottom: 0.25rem;
+}
+
+.player-scene-list-item.is-current {
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+.player-scene-list-meta {
+  color: #555;
+  font-size: 0.85rem;
+}
+
 .player-exec-log-list {
   list-style: none;
   padding: 0;
@@ -277,6 +302,14 @@
 
   .player-license-ok {
     color: #6ee7b7;
+  }
+
+  .player-scene-list-item.is-current {
+    color: #93c5fd;
+  }
+
+  .player-scene-list-meta {
+    color: #bbb;
   }
 }
 

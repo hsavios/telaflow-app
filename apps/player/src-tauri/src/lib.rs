@@ -11,6 +11,7 @@ pub fn run() {
             workspace_bindings::file_exists_under_workspace,
             workspace_bindings::load_media_bindings_file,
             workspace_bindings::save_media_bindings_file,
+            workspace_bindings::append_execution_jsonl,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

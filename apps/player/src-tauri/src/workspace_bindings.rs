@@ -5,6 +5,7 @@ use std::fs;
 use std::path::{Component, Path, PathBuf};
 
 const BINDINGS_REL: &str = ".telaflow/media-bindings.json";
+const EXEC_JSONL_REL: &str = ".telaflow/execution-log.jsonl";
 
 fn bindings_path(workspace: &Path) -> PathBuf {
     workspace.join(BINDINGS_REL)
@@ -103,5 +104,36 @@ pub fn save_media_bindings_file(workspace_path: String, content: String) -> Resu
         })?;
     }
     fs::write(&p, content).map_err(|e| format!("falha ao gravar {}: {e}", p.display()))?;
+    Ok(())
+}
+
+/// Anexa uma linha (JSON) ao ficheiro `.telaflow/execution-log.jsonl` sob `base_path`.
+#[tauri::command]
+pub fn append_execution_jsonl(base_path: String, line: String) -> Result<(), String> {
+    let root = PathBuf::from(base_path.trim());
+    if !root.is_dir() {
+        return Err("base_path não é um diretório".to_string());
+    }
+    let p = root.join(EXEC_JSONL_REL);
+    if let Some(parent) = p.parent() {
+        fs::create_dir_all(parent).map_err(|e| {
+            format!(
+                "falha ao criar diretório {}: {e}",
+                parent.display()
+            )
+        })?;
+    }
+    use std::io::Write;
+    let mut f = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&p)
+        .map_err(|e| format!("falha ao abrir {}: {e}", p.display()))?;
+    let mut l = line;
+    if !l.ends_with('\n') {
+        l.push('\n');
+    }
+    f.write_all(l.as_bytes())
+        .map_err(|e| format!("falha ao escrever {}: {e}", p.display()))?;
     Ok(())
 }
