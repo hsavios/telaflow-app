@@ -136,6 +136,13 @@ export default function App() {
     });
   }, []);
 
+  const onSceneIndexChange = useCallback((next: number) => {
+    setEstado((s) => {
+      if (s.kind !== "pack_loaded" || s.operationalPhase !== "executing") return s;
+      return { ...s, sceneIndex: next };
+    });
+  }, []);
+
   return (
     <main className="player-shell">
       <header className="player-header">
@@ -178,6 +185,7 @@ export default function App() {
             lastPreflight={estado.lastPreflight}
             onPreflightComplete={onPreflightComplete}
             onStartExecution={onStartExecution}
+            onSceneIndexChange={onSceneIndexChange}
           />
         )}
         {estado.kind === "idle" && !carregando && (
