@@ -5,7 +5,7 @@
   SceneType,
 } from "@telaflow/shared-contracts";
 import type { ExecutionLogLevel } from "../execution/executionLog.js";
-import { SceneDrawEngine } from "./SceneDrawEngine.js";
+import { DrawScenePanel } from "./DrawScenePanel.js";
 import { SceneMediaRenderer } from "./SceneMediaRenderer.js";
 import type { SceneMediaDerivedState } from "./sceneMediaResolution.js";
 
@@ -87,7 +87,7 @@ export function ScenePresenter({
         ) : null}
       </dl>
       {scene.type === "draw" && (
-        <SceneDrawEngine scene={scene} drawConfig={drawConfig} onPlaybackLog={onPlaybackLog} />
+        <DrawScenePanel scene={scene} drawConfig={drawConfig} onPlaybackLog={onPlaybackLog} />
       )}
       <SceneMediaRenderer
         scene={scene}
