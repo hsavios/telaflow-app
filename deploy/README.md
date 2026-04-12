@@ -28,4 +28,4 @@ Para rebuild sem commit novo (igual à landing): o workflow chama com `--force`.
 
 ## Python (opcional neste workflow)
 
-O `npm run verify` atual **não** executa `pytest` da `cloud-api`. Para incluir testes Python na VPS depois, estenda `app-sync.sh` (ex.: `cd apps/cloud-api && pip install -e ".[dev]" && pytest`).
+O `npm run verify` atual **não** executa `pytest` da `cloud-api`. Na raiz do monorepo existe `npm run test:cloud-api` (gera schemas + instala deps + `pytest tests/`). Para CI na VPS, pode estender `app-sync.sh` com esse comando ou com `cd apps/cloud-api && pip install -e ".[dev]" && pytest`.
