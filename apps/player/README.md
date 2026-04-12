@@ -27,6 +27,19 @@ Runtime local (**Tauri 2 + React + Vite**), alinhado a `docs/specs/ARCHITECTURE_
 - Cobre: pack carregado, licença, workspace, bindings e presença de ficheiros, referências mínimas no roteiro (cenas ativas).
 - Painel com contagens e lista; **reexecutar** após mudar workspace ou vínculos.
 
+## FSM operacional e gate `ready`
+
+- Fases: `binding_pending` → (pre-flight) → `ready` ou `preflight_failed`; botão **Iniciar roteiro (MVP)** só a partir de `ready` → `executing`.
+- Ver `src/runtime/operationalState.ts` e estado em `src/pack/playerPackState.ts`.
+
+## Navegação de cenas (MVP)
+
+- Em `executing`: `SceneRuntimeNav` — anterior / seguinte na ordem exportada, sem playback.
+
+## Registo de execução (MVP)
+
+- `appendExecutionLog` — eventos em memória (carregar pack, workspace, bindings, pre-flight, entrada em `executing`, mudança de índice de cena). UI: `ExecutionLogPanel`.
+
 ## Estados de UI globais
 
 - **`idle`**, **`pack_loaded`** (licença válida no momento do carregamento), **`blocked`** (falha de pack ou licença).

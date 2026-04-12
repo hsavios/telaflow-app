@@ -223,6 +223,44 @@
   margin-top: 0.75rem;
 }
 
+.player-exec-log-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.player-exec-log-item {
+  padding: 0.35rem 0.5rem;
+  margin-bottom: 0.25rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.player-exec-log-item--info {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.player-exec-log-item--warn {
+  background: rgba(245, 158, 11, 0.18);
+}
+
+.player-exec-log-item--error {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.player-exec-log-time {
+  font-family: ui-monospace, monospace;
+  font-size: 0.78rem;
+  color: #555;
+}
+
+.player-exec-log-code {
+  margin: 0 0.25rem;
+}
+
 @media (prefers-color-scheme: dark) {
   .player-section {
     border-top-color: rgba(255, 255, 255, 0.12);

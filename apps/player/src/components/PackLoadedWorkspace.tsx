@@ -8,6 +8,8 @@ import {
   MediaBindingsFileSchema,
   serializeBindingsFile,
 } from "../media/mediaBindingsFile.js";
+import { ExecutionLogPanel } from "../execution/ExecutionLogPanel.js";
+import type { ExecutionLogEntry } from "../execution/executionLog.js";
 import { runPreflightMvp } from "../preflight/runPreflight.js";
 import type { PreflightResult } from "../preflight/types.js";
 import type { OperationalPhase } from "../runtime/operationalState.js";
@@ -38,6 +40,7 @@ type Props = {
   bindings: Record<string, string>;
   operationalPhase: OperationalPhase;
   sceneIndex: number;
+  executionLog: ExecutionLogEntry[];
   onWorkspaceChange: (root: string | null, bindings: Record<string, string>) => void;
   onBindingsChange: (next: Record<string, string>) => void;
   lastPreflight: PreflightResult | null;
@@ -53,6 +56,7 @@ export function PackLoadedWorkspace({
   bindings,
   operationalPhase,
   sceneIndex,
+  executionLog,
   onWorkspaceChange,
   onBindingsChange,
   lastPreflight,
@@ -367,6 +371,11 @@ export function PackLoadedWorkspace({
           />
         </section>
       )}
+
+      <section className="player-section">
+        <h3>Registo de execução (MVP)</h3>
+        <ExecutionLogPanel entries={executionLog} />
+      </section>
     </div>
   );
 }
