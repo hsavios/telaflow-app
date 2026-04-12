@@ -29,7 +29,7 @@ export function PreviewDrawSimple({ drawConfig }: Props) {
   const [spinning, setSpinning] = useState(false);
   const tickRef = useRef(0);
 
-  /** DOM timers are numeric; Node typings merge in `Timeout` — keep browser handle as `number`. */
+  /** DOM timers são numéricos; tipos Node usam `Timeout` — manter handle como `number`. */
   const intervalRef = useRef<number | null>(null);
 
   const simular = useCallback(() => {
@@ -63,33 +63,40 @@ export function PreviewDrawSimple({ drawConfig }: Props) {
     };
   }, []);
 
+  const numberClass = [
+    "preview-draw__number",
+    spinning ? "preview-draw__number--spin" : "",
+    display == null && !spinning ? "preview-draw__number--dash" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className="preview-draw">
-      {headline ? <p className="preview-draw__headline">{headline}</p> : null}
-      {audience ? <p className="preview-draw__audience">{audience}</p> : null}
-      <div className="preview-draw__card">
-        <p className="preview-draw__result-label">{resultLabel}</p>
-        <p
-          className={`preview-draw__number ${spinning ? "preview-draw__number--spin" : ""}`}
-          aria-live="polite"
-        >
-          {display != null ? display : "—"}
-        </p>
-        <p className="preview-draw__range">
-          Intervalo simulado: {min} – {max}
-        </p>
-        <button
-          type="button"
-          className="preview-draw__btn"
-          disabled={spinning}
-          onClick={simular}
-        >
-          {spinning ? "A sortear…" : "Simular um sorteio"}
-        </button>
-        <p className="preview-draw__fine">
-          Apenas animação local no browser — não altera dados na Cloud nem reproduz o motor
-          completo do Player.
-        </p>
+    <div className="preview-draw preview-draw--telao">
+      <div className="preview-draw-shell">
+        {headline ? <p className="preview-draw__headline">{headline}</p> : null}
+        {audience ? <p className="preview-draw__audience">{audience}</p> : null}
+        <div className="preview-draw__card">
+          <p className="preview-draw__result-label">{resultLabel}</p>
+          <p className={numberClass} aria-live="polite">
+            {display != null ? display : "—"}
+          </p>
+          <p className="preview-draw__range">
+            Intervalo: {min} – {max}
+          </p>
+          <button
+            type="button"
+            className="preview-draw__btn"
+            disabled={spinning}
+            onClick={simular}
+          >
+            {spinning ? "Sorteando…" : "Simular um sorteio"}
+          </button>
+          <p className="preview-draw__fine">
+            Animação só neste navegador — não grava na Cloud nem reproduz o motor completo do
+            Player.
+          </p>
+        </div>
       </div>
     </div>
   );

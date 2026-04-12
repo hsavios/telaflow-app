@@ -17,6 +17,8 @@ def _limpar_memoria() -> None:
     memory._scenes_by_event.clear()
     memory._draw_configs_by_event.clear()
     memory._media_requirements_by_event.clear()
+    # Evento demo completo (mesmo gate que produção após lifespan).
+    memory.seed_showcase_event_if_absent()
     yield
 
 

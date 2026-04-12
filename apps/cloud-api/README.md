@@ -4,6 +4,7 @@ FastAPI service — Fase 1 skeleton (`PHASE_1_EXECUTION_SPEC.md`). Requer Python
 
 - `GET /health` — liveness; resposta JSON: `{"status":"ok"}`
 - `GET /events` — lista eventos em memória; resposta `{"events":[...]}`
+- Ao subir a API, é criado (se ainda não existir) o evento de demonstração **`evt_telaflow_demo_v1`** — roteiro Abertura → Institucional → Patrocínio → Sorteio → Encerramento, **pronto para export**, para fluxo Preview → Export → Player.
 - `GET /events/{event_id}` — detalhe do evento ou `404`
 - `POST /events` — cria evento em **memória** (stub; `409` se `event_id` repetido)
 - `GET /events/{event_id}/scenes` — lista scenes do evento (ordenadas por `sort_order`) ou `404` se o evento não existir

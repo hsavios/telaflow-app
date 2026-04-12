@@ -375,3 +375,90 @@ def _compute_export_readiness(event_id: str) -> dict:
         "draw_config_count": len(_draw_configs_list(event_id)),
         "media_requirement_count": len(_media_req_list(event_id)),
     }
+
+
+# Roteiro demo: Abertura → Institucional → Patrocínio → Sorteio → Encerramento (export pronto).
+SHOWCASE_EVENT_ID = "evt_telaflow_demo_v1"
+
+
+def seed_showcase_event_if_absent() -> None:
+    """
+    Garante um evento completo para demonstração (Preview → Export → Player).
+    Idempotente: não altera se o evento já existir.
+    """
+    if SHOWCASE_EVENT_ID in _events_store:
+        return
+
+    from telaflow_cloud_api.domain import Event, MediaRequirement, Scene
+    from telaflow_cloud_api.domain.draw_config import DrawConfig, NumberRange
+    from telaflow_cloud_api.domain.draw_public_copy import DrawPublicCopy
+
+    eid = SHOWCASE_EVENT_ID
+    org_id = "org_telaflow_d1"
+
+    _events_store[eid] = Event(
+        event_id=eid,
+        organization_id=org_id,
+        name="Showcase TelaFlow — roteiro demo (Abertura ao encerramento)",
+    ).model_dump()
+
+    draw_row = DrawConfig(
+        draw_config_id="dcf_demo_sorteio",
+        event_id=eid,
+        name="Sorteio principal",
+        max_winners=1,
+        notes="Demonstração — intervalo numérico padrão.",
+        enabled=True,
+        draw_type="number_range",
+        number_range=NumberRange(min=1, max=1000),
+        public_copy=DrawPublicCopy(
+            headline="Momento do sorteio",
+            audience_instructions="Boa sorte a todos os participantes.",
+            result_label="Número sorteado",
+        ),
+    ).model_dump()
+    _draw_configs_by_event[eid] = [draw_row]
+
+    media_specs: list[tuple[str, str, str, str]] = [
+        ("med_demo_abert", "Abertura (vídeo no Player)", "video"),
+        ("med_demo_inst", "Institucional (imagem)", "image"),
+        ("med_demo_patroc", "Patrocínio (imagem)", "image"),
+        ("med_demo_encerr", "Encerramento (vídeo)", "video"),
+    ]
+    media_rows: list[dict] = []
+    for mid, label, mtype in media_specs:
+        media_rows.append(
+            MediaRequirement(
+                media_id=mid,
+                event_id=eid,
+                label=label,
+                media_type=mtype,  # type: ignore[arg-type]
+                required=False,
+                scene_id=None,
+                allowed_extensions_hint=None,
+            ).model_dump()
+        )
+    _media_requirements_by_event[eid] = media_rows
+
+    scenes_payload: list[tuple[int, str, str, str | None, str | None]] = [
+        (0, "scn_demo_abert", "opening", "Abertura", "med_demo_abert", None),
+        (1, "scn_demo_inst", "institutional", "Institucional", "med_demo_inst", None),
+        (2, "scn_demo_pat", "sponsor", "Patrocínio", "med_demo_patroc", None),
+        (3, "scn_demo_sort", "draw", "Sorteio principal", None, "dcf_demo_sorteio"),
+        (4, "scn_demo_fim", "closing", "Encerramento", "med_demo_encerr", None),
+    ]
+    bucket: list[dict] = []
+    for sort_order, sid, st, name, mid, did in scenes_payload:
+        bucket.append(
+            Scene(
+                scene_id=sid,
+                event_id=eid,
+                sort_order=sort_order,
+                type=st,  # type: ignore[arg-type]
+                name=name,
+                enabled=True,
+                media_id=mid,
+                draw_config_id=did,
+            ).model_dump()
+        )
+    _scenes_by_event[eid] = bucket

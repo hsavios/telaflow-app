@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppFooter } from "@/components/AppFooter";
 import { AppHeader } from "@/components/AppHeader";
 import { DrawConfigsWorkspace } from "@/components/events/DrawConfigsWorkspace";
@@ -12,14 +12,18 @@ import { ScenesWorkspace } from "@/components/events/ScenesWorkspace";
 import {
   fetchDrawConfigs,
   fetchEvent,
+  fetchExportReadiness,
   fetchMediaRequirements,
   fetchScenes,
   getCloudApiBase,
+  runPackExport,
   type CloudDrawConfig,
   type CloudEvent,
   type CloudMediaRequirement,
   type CloudScene,
+  type ExportReadinessBody,
 } from "@/lib/cloud-api";
+import { recordPackExport } from "@/lib/export-activity";
 import { rememberLastOpenedEvent } from "@/lib/cloud-prefs";
 import { EventRuntimePreviewModal } from "@/components/preview/EventRuntimePreviewModal";
 import { orderedPreviewScenes } from "@/components/preview/runtimePreviewModel";
@@ -73,6 +77,12 @@ export default function EventDetailPage() {
   const [scenesError, setScenesError] = useState<string | null>(null);
   const [aba, setAba] = useState<EditorAba>("scenes");
   const [previewOpen, setPreviewOpen] = useState(false);
+  /** URLs blob/https por `media_id` — só no browser; usado na pré-visualização do palco. */
+  const [previewMediaSrcById, setPreviewMediaSrcById] = useState<
+    Record<string, string>
+  >({});
+  const previewMediaSrcRef = useRef(previewMediaSrcById);
+  previewMediaSrcRef.current = previewMediaSrcById;
 
   const apiConfigured = getCloudApiBase() !== null;
 
@@ -80,6 +90,70 @@ export default function EventDetailPage() {
     () => orderedPreviewScenes(scenes).length > 0,
     [scenes],
   );
+
+  const registerPreviewMediaFile = useCallback((mediaId: string, file: File) => {
+    const url = URL.createObjectURL(file);
+    setPreviewMediaSrcById((prev) => {
+      const old = prev[mediaId];
+      if (old?.startsWith("blob:")) URL.revokeObjectURL(old);
+      return { ...prev, [mediaId]: url };
+    });
+  }, []);
+
+  const clearPreviewMediaFile = useCallback((mediaId: string) => {
+    setPreviewMediaSrcById((prev) => {
+      const cur = prev[mediaId];
+      if (cur?.startsWith("blob:")) URL.revokeObjectURL(cur);
+      const rest = { ...prev };
+      delete rest[mediaId];
+      return rest;
+    });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      Object.values(previewMediaSrcRef.current).forEach((u) => {
+        if (u.startsWith("blob:")) URL.revokeObjectURL(u);
+      });
+    };
+  }, []);
+
+  const [previewReadiness, setPreviewReadiness] = useState<ExportReadinessBody | null>(
+    null,
+  );
+  const [previewReadinessLoading, setPreviewReadinessLoading] = useState(false);
+  const [previewReadinessError, setPreviewReadinessError] = useState<string | null>(
+    null,
+  );
+  const [previewExporting, setPreviewExporting] = useState(false);
+  const [previewExportBanner, setPreviewExportBanner] = useState<{
+    tone: "ok" | "err";
+    text: string;
+  } | null>(null);
+
+  const loadPreviewReadiness = useCallback(async () => {
+    if (!eventId || !getCloudApiBase()) return;
+    setPreviewReadinessLoading(true);
+    setPreviewReadinessError(null);
+    try {
+      const r = await fetchExportReadiness(eventId);
+      setPreviewReadiness(r);
+    } catch {
+      setPreviewReadiness(null);
+      setPreviewReadinessError("Não foi possível carregar a prontidão para export.");
+    } finally {
+      setPreviewReadinessLoading(false);
+    }
+  }, [eventId]);
+
+  useEffect(() => {
+    if (!previewOpen || !apiConfigured || !eventId) return;
+    void loadPreviewReadiness();
+  }, [previewOpen, apiConfigured, eventId, loadPreviewReadiness]);
+
+  useEffect(() => {
+    if (!previewOpen) setPreviewExportBanner(null);
+  }, [previewOpen]);
 
   const reloadScenes = useCallback(async () => {
     if (!eventId || !getCloudApiBase()) return;
@@ -108,6 +182,40 @@ export default function EventDetailPage() {
       reloadMediaRequirements(),
     ]);
   }, [eventId, reloadDrawConfigs, reloadMediaRequirements, reloadScenes]);
+
+  const handleExportFromPreview = useCallback(async () => {
+    if (!eventId || !getCloudApiBase() || !event) return;
+    setPreviewExporting(true);
+    setPreviewExportBanner(null);
+    try {
+      const out = await runPackExport(eventId);
+      recordPackExport({
+        exportId: out.export_id,
+        eventId,
+        eventName: event.name,
+      });
+      setPreviewExportBanner({
+        tone: "ok",
+        text: `Pack gerado: ${out.export_id} — pasta: ${out.export_directory}`,
+      });
+      await reloadEditorBundles();
+      await loadPreviewReadiness();
+    } catch (e) {
+      if (e instanceof Error && e.message === "export_not_ready") {
+        setPreviewExportBanner({
+          tone: "err",
+          text: "Ainda há bloqueios — atualize a prontidão e ajuste o roteiro antes de exportar.",
+        });
+      } else {
+        setPreviewExportBanner({
+          tone: "err",
+          text: "Não foi possível exportar. Tente de novo.",
+        });
+      }
+    } finally {
+      setPreviewExporting(false);
+    }
+  }, [eventId, event, reloadEditorBundles, loadPreviewReadiness]);
 
   const loadAll = useCallback(async () => {
     if (!eventId) {
@@ -271,6 +379,16 @@ export default function EventDetailPage() {
               scenes={scenes}
               drawConfigs={drawConfigs}
               mediaRequirements={mediaRequirements}
+              previewMediaSrcById={previewMediaSrcById}
+              onPickLocalMediaFile={registerPreviewMediaFile}
+              onClearLocalMediaFile={clearPreviewMediaFile}
+              exportReadiness={previewReadiness}
+              exportReadinessLoading={previewReadinessLoading}
+              exportReadinessError={previewReadinessError}
+              onRefreshExportReadiness={() => void loadPreviewReadiness()}
+              onExportToPlayer={() => void handleExportFromPreview()}
+              exportToPlayerRunning={previewExporting}
+              exportToPlayerBanner={previewExportBanner}
             />
 
             <nav

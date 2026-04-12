@@ -215,6 +215,8 @@ export type CloudMediaRequirement = {
   required: boolean;
   scene_id: string | null;
   allowed_extensions_hint: string | null;
+  /** URL pública opcional (futuro) para pré-visualização na Cloud. */
+  preview_url?: string | null;
 };
 
 export type ExportReadinessBlocking = {

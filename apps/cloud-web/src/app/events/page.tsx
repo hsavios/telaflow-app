@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { AppFooter } from "@/components/AppFooter";
 import { AppHeader } from "@/components/AppHeader";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/lib/cloud-api";
 import { PROVISIONAL_ORGANIZATION_ID } from "@/lib/default-organization";
 import { generateEventId } from "@/lib/event-id";
+import { SHOWCASE_EVENT_ID } from "@/lib/showcase-event";
 
 type LoadState = "idle" | "loading" | "ok" | "error";
 
@@ -142,6 +143,11 @@ export default function EventsPage() {
 
   const empty = loadState === "ok" && events.length === 0;
 
+  const hasShowcaseEvent = useMemo(
+    () => events.some((e) => e.event_id === SHOWCASE_EVENT_ID),
+    [events],
+  );
+
   return (
     <div className="min-h-screen text-tf-muted">
       <AppHeader />
@@ -157,6 +163,23 @@ export default function EventsPage() {
           >
             {successMsg}
           </p>
+        ) : null}
+
+        {loadState === "ok" && hasShowcaseEvent ? (
+          <div className="mb-8 rounded-tf-lg border border-violet-500/35 bg-gradient-to-br from-violet-950/50 via-slate-900/60 to-slate-950/80 px-4 py-4 sm:px-5">
+            <p className="text-sm font-bold text-violet-100">Showcase — fluxo completo</p>
+            <p className="mt-1 max-w-2xl text-xs leading-relaxed text-tf-muted">
+              A Cloud API inclui o evento de demonstração com roteiro Abertura, Institucional,
+              Patrocínio, Sorteio e Encerramento. Use para simular na web, exportar o pack e
+              executar no TelaFlow Player.
+            </p>
+            <Link
+              href={`/events/${encodeURIComponent(SHOWCASE_EVENT_ID)}`}
+              className="mt-3 inline-flex rounded-tf bg-violet-600 px-4 py-2 text-sm font-bold text-white shadow-md shadow-violet-950/40 transition-opacity hover:opacity-95"
+            >
+              Abrir evento demo
+            </Link>
+          </div>
         ) : null}
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from telaflow_cloud_api import memory
 from telaflow_cloud_api.routers import (
     draw_configs_router,
     events_router,
@@ -15,10 +17,19 @@ from telaflow_cloud_api.routers import (
     scenes_router,
 )
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Semeia evento de demonstração (idempotente) para fluxo Preview → Export → Player."""
+    memory.seed_showcase_event_if_absent()
+    yield
+
+
 app = FastAPI(
     title="TelaFlow Cloud API",
     version="0.1.0",
     description="API da TelaFlow Cloud — fase inicial: governança e integração, sem persistência completa.",
+    lifespan=lifespan,
 )
 
 _cors_raw = os.environ.get(
