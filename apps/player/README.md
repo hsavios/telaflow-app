@@ -68,15 +68,15 @@ Implementação: `src/pack/playerPackState.ts` + `src/App.tsx`.
 
 ## Draw Engine (MVP)
 
-- Contrato **`DrawConfig`** em `@telaflow/shared-contracts`: `draw_type` (MVP: **`number_range`**), `number_range` opcional `{ min, max }`. Se `number_range` ausente no pack, o Player usa intervalo por omissão **1…1000** (`drawNumberRange.ts`).
-- **`SceneDrawEngine`** (`src/runtime/SceneDrawEngine.tsx`), só em cenas **`draw`** com `draw_config_id`: resumo (nome, modo, intervalo, `max_winners`), **Iniciar sorteio** → valor aleatório inclusivo → **Confirmar resultado**.
-- Sem animações, sem painel público separado, sem Cloud.
+- Contrato **`DrawConfig`** em `@telaflow/shared-contracts`: `draw_type` (MVP: **`number_range`**), `number_range` opcional `{ min, max }`. Se `number_range` estiver ausente no pack, o Player usa intervalo padrão **1…1000** (`drawNumberRange.ts`).
+- **`DrawScenePanel`** (`src/runtime/DrawScenePanel.tsx`), só em cenas **`draw`** em **`executing`**: resolve `draw_config_id` em `draw-configs.json` do pack; só **`draw_type === number_range`**. Estados internos: `idle` → `ready` / `error`; `ready` → **Iniciar sorteio** → `drawing` (breve atraso) → `result_generated` (número em destaque + **Confirmar resultado**) → `result_confirmed`. Resumo na UI: nome, `draw_config_id`, tipo, intervalo (**start_number** / **end_number** mapeados a `number_range.min` / `number_range.max` no contrato).
+- Sem animação de sorteio elaborada, sem múltiplos vencedores, sem exclusão persistente de números, sem Cloud em runtime.
 
 ## Logging de playback e sorteio
 
 - **`media_started`**: após `onLoad` (imagem) ou `onLoadedData` (vídeo), uma vez por URL carregada.
 - **`media_failed`**: vínculo/ficheiro em falta, resolução de path, tipo não suportado, manifest em falta, ou erro de decode/elemento (`onError`).
-- **`draw_started`**, **`draw_result_generated`**, **`draw_result_confirmed`**: ciclo do sorteio `number_range` no motor MVP.
+- **`draw_started`**, **`draw_result_generated`**, **`draw_result_confirmed`**, **`draw_failed`**: ciclo do sorteio `number_range` no motor MVP (falhas de configuração ou execução).
 
 ## Resolução de mídia da cena atual
 
@@ -93,7 +93,7 @@ Textos para operador: `describeSceneMediaDerivedStatePt`.
 
 ## Registo de execução (MVP)
 
-- O registo **inicia** ao entrar em **`executing`**: eventos **`execution_started`**, **`scene_activated`**, **`execution_finished`**, **`media_started`** / **`media_failed`**, e **`draw_started`** / **`draw_result_generated`** / **`draw_result_confirmed`** quando aplicável.
+- O registo **inicia** ao entrar em **`executing`**: eventos **`execution_started`**, **`scene_activated`**, **`execution_finished`**, **`media_started`** / **`media_failed`**, e **`draw_started`** / **`draw_result_generated`** / **`draw_result_confirmed`** / **`draw_failed`** quando aplicável.
 - **Persistência:** comando Tauri `append_execution_jsonl` — ficheiro **`.telaflow/execution-log.jsonl`** sob a raiz do **workspace** se existir; caso contrário sob a **pasta do pack** (append JSON por linha).
 - Memória de sessão: `executionLog` + UI `ExecutionLogPanel` (visível em `executing`).
 
