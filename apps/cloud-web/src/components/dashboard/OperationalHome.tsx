@@ -121,6 +121,10 @@ export function OperationalHome() {
   const [exportBanner, setExportBanner] = useState<{
     tone: "ok" | "err";
     text: string;
+    action?: {
+      label: string;
+      url: string;
+    };
   } | null>(null);
 
   const loadDashboard = useCallback(async () => {
@@ -232,27 +236,16 @@ export function OperationalHome() {
         text: `Pack gerado: ${ev.name} · ${out.export_id}${zipPart}`,
       });
 
-      // Iniciar download automático do ZIP se solicitado
+      // Mostrar botão de download para ZIP se solicitado
       if (archiveZip) {
-        setTimeout(() => {
-          // Usar rota API local para evitar CORS
-          const downloadUrl = `/api/exports/${out.export_id}/zip`;
-          console.log('Download URL:', downloadUrl);
-
-          // Criar link de download
-          const link = document.createElement('a');
-          link.href = downloadUrl;
-          link.download = `${ev.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.zip`;
-          link.style.display = 'none';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-
-          setExportBanner({
-            tone: "ok",
-            text: `ZIP de "${ev.name}" baixado com sucesso!`,
-          });
-        }, 1500);
+        setExportBanner({
+          tone: "ok",
+          text: `ZIP de "${ev.name}" pronto! Clique para baixar.`,
+          action: {
+            label: "Baixar ZIP",
+            url: `/api/exports/${out.export_id}/zip`
+          }
+        });
       } else {
         // Mostrar estado pós-exportação para pasta
         setTimeout(() => {
@@ -340,15 +333,25 @@ export function OperationalHome() {
         </div>
 
         {exportBanner ? (
-          <p
-            className={`mt-3 rounded-tf border px-3 py-2 text-xs sm:text-sm ${exportBanner.tone === "ok"
-              ? "border-tf-teal/30 bg-tf-teal-soft/25 text-tf-fg"
-              : "border-red-500/25 bg-red-950/25 text-red-100/90"
+          <div
+            className={`mt-3 rounded-tf border px-4 py-3 text-sm ${exportBanner.tone === "ok"
+              ? "border-tf-teal/30 bg-tf-teal-soft/25 text-tf-teal"
+              : "border-red-500/30 bg-red-950/25 text-red-100/90"
               }`}
             role="status"
           >
-            {exportBanner.text}
-          </p>
+            <p className="font-medium">{exportBanner.text}</p>
+            {exportBanner.action && (
+              <a
+                href={exportBanner.action.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center rounded-tf bg-white/20 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/30 transition-colors"
+              >
+                {exportBanner.action.label}
+              </a>
+            )}
+          </div>
         ) : null}
 
         {loadState === "loading" ? (
