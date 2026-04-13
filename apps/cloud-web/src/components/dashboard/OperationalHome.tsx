@@ -231,13 +231,32 @@ export function OperationalHome() {
         tone: "ok",
         text: `Pack gerado: ${ev.name} · ${out.export_id}${zipPart}`,
       });
-      // Mostrar estado pós-exportação
-      setTimeout(() => {
-        setExportBanner({
-          tone: "ok",
-          text: `Pacote "${ev.name}" pronto para abrir no Player`,
-        });
-      }, 1000);
+
+      // Iniciar download automático do ZIP se solicitado
+      if (archiveZip && out.zip_path) {
+        setTimeout(() => {
+          const downloadUrl = `/exports/${out.export_id}.zip`;
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.download = `${ev.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.zip`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          setExportBanner({
+            tone: "ok",
+            text: `ZIP de "${ev.name}" baixado com sucesso!`,
+          });
+        }, 1500);
+      } else {
+        // Mostrar estado pós-exportação para pasta
+        setTimeout(() => {
+          setExportBanner({
+            tone: "ok",
+            text: `Pacote "${ev.name}" pronto para abrir no Player`,
+          });
+        }, 1000);
+      }
       try {
         const readiness = await fetchExportReadiness(ev.event_id);
         setRows((prev) =>
