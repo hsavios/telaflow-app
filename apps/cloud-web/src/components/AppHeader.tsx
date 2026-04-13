@@ -26,7 +26,6 @@ export function AppHeader() {
     router.refresh();
   }, [router]);
 
-  const onHome = pathname === "/";
   const onEvents =
     pathname === "/events" || pathname?.startsWith("/events/");
   const onLogin = pathname === "/login";
