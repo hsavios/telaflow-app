@@ -73,12 +73,6 @@ export function LoginForm() {
         <h1 className="font-display text-2xl font-semibold tracking-tight text-tf-fg sm:text-3xl">
           Entrar
         </h1>
-        <p className="mt-2 text-sm leading-relaxed text-tf-subtle">
-          Use as credenciais do operador da Cloud API (conta criada na primeira inicialização
-          quando <span className="font-mono text-xs text-tf-muted">TELAFLOW_JWT_SECRET</span>{" "}
-          está definido).
-        </p>
-
         <form
           onSubmit={(ev) => void onSubmit(ev)}
           className="mt-8 space-y-5 rounded-tf-lg border border-tf-border bg-tf-mid/40 p-5 sm:p-6"
