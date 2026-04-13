@@ -235,18 +235,22 @@ export function OperationalHome() {
       // Iniciar download automático do ZIP se solicitado
       if (archiveZip && out.zip_path) {
         setTimeout(() => {
-          const downloadUrl = `/exports/${out.export_id}.zip`;
-          const link = document.createElement('a');
-          link.href = downloadUrl;
-          link.download = `${ev.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.zip`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
+          const apiBase = getCloudApiBase();
+          if (apiBase) {
+            const downloadUrl = `${apiBase}/exports/${out.export_id}.zip`;
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = `${ev.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.zip`;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
 
-          setExportBanner({
-            tone: "ok",
-            text: `ZIP de "${ev.name}" baixado com sucesso!`,
-          });
+            setExportBanner({
+              tone: "ok",
+              text: `ZIP de "${ev.name}" baixado com sucesso!`,
+            });
+          }
         }, 1500);
       } else {
         // Mostrar estado pós-exportação para pasta
