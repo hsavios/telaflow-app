@@ -247,57 +247,57 @@ export function OperationalHome() {
           }
         });
       } else if (archiveZip) {
-        // ZIP solicitado mas não disponível ainda
+        // ZIP solicitado - verificar se arquivo existe
         console.log('ZIP solicitado, resposta:', out);
         setExportBanner({
           tone: "ok",
-          text: `Exportação "${ev.name}" concluída. Verificando ZIP...`,
+          text: `Exportação "${ev.name}" concluída. Verificando arquivo...`,
         });
 
-        // Polling para verificar quando ZIP fica disponível
-        let attempts = 0;
-        const maxAttempts = 10;
-        const checkZip = async () => {
-          attempts++;
-          try {
-            // Tentar buscar o status da exportação novamente
-            const response = await runPackExport(ev.event_id, { archiveZip: true });
-            console.log(`Tentativa ${attempts}:`, response);
+        // Verificar diretamente se o arquivo existe
+        const checkZipFile = async () => {
+          const apiBase = getCloudApiBase();
+          if (!apiBase) return;
 
-            if (response.zip_path) {
+          const zipUrl = `${apiBase}/exports/${out.export_id}.zip`;
+          console.log('Verificando arquivo em:', zipUrl);
+
+          try {
+            const response = await fetch(zipUrl, { method: 'HEAD' });
+            console.log('Status do arquivo:', response.status);
+
+            if (response.ok) {
+              // Arquivo existe - mostrar botão de download
               setExportBanner({
                 tone: "ok",
                 text: `ZIP de "${ev.name}" pronto! Clique para baixar.`,
                 action: {
                   label: "Baixar ZIP",
-                  url: `/api/exports/${response.export_id}/zip`
+                  url: zipUrl // URL direta da API
                 }
               });
-              return;
-            }
-
-            if (attempts < maxAttempts) {
-              setExportBanner({
-                tone: "ok",
-                text: `Gerando ZIP de "${ev.name}"... (${attempts}/${maxAttempts})`,
-              });
-              setTimeout(checkZip, 2000);
             } else {
+              // Arquivo não existe
               setExportBanner({
                 tone: "ok",
-                text: `ZIP de "${ev.name}" demorando. Tente exportar novamente.`,
+                text: `ZIP de "${ev.name}" não encontrado. Verifique manualmente em /exports/${out.export_id}`,
               });
             }
           } catch (error) {
-            console.error('Erro ao verificar ZIP:', error);
+            console.error('Erro ao verificar arquivo:', error);
             setExportBanner({
               tone: "ok",
-              text: `ZIP de "${ev.name}" encontrado manualmente em /exports/${out.export_id}`,
+              text: `ZIP de "${ev.name}" disponível em /exports/${out.export_id}.zip`,
+              action: {
+                label: "Tentar baixar",
+                url: zipUrl
+              }
             });
           }
         };
 
-        setTimeout(checkZip, 2000);
+        // Verificar após 3 segundos (tempo para gerar o arquivo)
+        setTimeout(checkZipFile, 3000);
       } else {
         // Mostrar estado pós-exportação para pasta
         setTimeout(() => {
