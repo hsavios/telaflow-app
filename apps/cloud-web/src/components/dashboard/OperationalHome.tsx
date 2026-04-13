@@ -231,6 +231,13 @@ export function OperationalHome() {
         tone: "ok",
         text: `Pack gerado: ${ev.name} · ${out.export_id}${zipPart}`,
       });
+      // Mostrar estado pós-exportação
+      setTimeout(() => {
+        setExportBanner({
+          tone: "ok",
+          text: `Pacote "${ev.name}" pronto para abrir no Player`,
+        });
+      }, 1000);
       try {
         const readiness = await fetchExportReadiness(ev.event_id);
         setRows((prev) =>
