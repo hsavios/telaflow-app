@@ -310,11 +310,10 @@ export function OperationalHome() {
 
         {exportBanner ? (
           <p
-            className={`mt-3 rounded-tf border px-3 py-2 text-xs sm:text-sm ${
-              exportBanner.tone === "ok"
-                ? "border-tf-teal/30 bg-tf-teal-soft/25 text-tf-fg"
-                : "border-red-500/25 bg-red-950/25 text-red-100/90"
-            }`}
+            className={`mt-3 rounded-tf border px-3 py-2 text-xs sm:text-sm ${exportBanner.tone === "ok"
+              ? "border-tf-teal/30 bg-tf-teal-soft/25 text-tf-fg"
+              : "border-red-500/25 bg-red-950/25 text-red-100/90"
+              }`}
             role="status"
           >
             {exportBanner.text}
@@ -382,132 +381,131 @@ export function OperationalHome() {
                     Deslize a tabela horizontalmente para ver todas as colunas.
                   </p>
                   <div className="tf-scroll-touch mt-2 overflow-x-auto rounded-tf-lg border border-tf-border shadow-[0_0_0_1px_rgba(248,250,252,0.02)_inset]">
-                  <table className="w-full min-w-[34rem] text-left text-sm sm:min-w-[40rem] lg:min-w-[48rem]">
-                    <thead className="border-b border-tf-border bg-tf-mid/90 text-[11px] font-medium uppercase tracking-wide text-tf-subtle">
-                      <tr>
-                        <th className="px-3 py-2.5">Nome</th>
-                        <th className="px-3 py-2.5 tabular-nums">Cenas</th>
-                        <th className="px-3 py-2.5 tabular-nums">Sorteios</th>
-                        <th className="px-3 py-2.5 tabular-nums">Mídias</th>
-                        <th className="px-3 py-2.5">Pronto para exportar</th>
-                        <th className="px-3 py-2.5">Último pack</th>
-                        <th className="px-3 py-2.5 text-right">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-tf-border bg-tf-mid/15">
-                      {rows.map(({ event: ev, readiness: r, readinessError }) => {
-                        const st = statusOperacional(r);
-                        const last = lastExportForEvent(ev.event_id);
-                        const podeExportar = Boolean(r?.ready);
-                        const isFoco = ev.event_id === focoEventId;
-                        return (
-                          <tr
-                            key={ev.event_id}
-                            onClick={() => setFocoFromRow(ev.event_id)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
-                                setFocoFromRow(ev.event_id);
-                              }
-                            }}
-                            tabIndex={0}
-                            className={`cursor-pointer outline-none transition-colors hover:bg-tf-mid/40 focus-visible:bg-tf-mid/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-tf-accent/40 ${
-                              isFoco ? "bg-tf-accent-soft/15" : ""
-                            }`}
-                            aria-selected={isFoco}
-                          >
-                            <td className="max-w-[13rem] px-3 py-2.5">
-                              <span className="font-medium text-tf-fg">
-                                {ev.name}
-                              </span>
-                              {readinessError ? (
-                                <span className="mt-0.5 block text-[11px] text-amber-200/85">
-                                  Status indisponível
+                    <table className="w-full min-w-[34rem] text-left text-sm sm:min-w-[40rem] lg:min-w-[48rem]">
+                      <thead className="border-b border-tf-border bg-tf-mid/90 text-[11px] font-medium uppercase tracking-wide text-tf-subtle">
+                        <tr>
+                          <th className="px-3 py-2.5">Nome</th>
+                          <th className="px-3 py-2.5 tabular-nums">Cenas</th>
+                          <th className="px-3 py-2.5 tabular-nums">Sorteios</th>
+                          <th className="px-3 py-2.5 tabular-nums">Mídias</th>
+                          <th className="px-3 py-2.5">Pronto para exportar</th>
+                          <th className="px-3 py-2.5">Última exportação</th>
+                          <th className="px-3 py-2.5 text-right">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-tf-border bg-tf-mid/15">
+                        {rows.map(({ event: ev, readiness: r, readinessError }) => {
+                          const st = statusOperacional(r);
+                          const last = lastExportForEvent(ev.event_id);
+                          const podeExportar = Boolean(r?.ready);
+                          const isFoco = ev.event_id === focoEventId;
+                          return (
+                            <tr
+                              key={ev.event_id}
+                              onClick={() => setFocoFromRow(ev.event_id)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  setFocoFromRow(ev.event_id);
+                                }
+                              }}
+                              tabIndex={0}
+                              className={`cursor-pointer outline-none transition-colors hover:bg-tf-mid/40 focus-visible:bg-tf-mid/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-tf-accent/40 ${isFoco ? "bg-tf-accent-soft/15" : ""
+                                }`}
+                              aria-selected={isFoco}
+                            >
+                              <td className="max-w-[13rem] px-3 py-2.5">
+                                <span className="font-medium text-tf-fg">
+                                  {ev.name}
                                 </span>
-                              ) : null}
-                            </td>
-                            <td className="px-3 py-2.5 tabular-nums text-tf-muted">
-                              {r?.scene_count ?? "—"}
-                            </td>
-                            <td className="px-3 py-2.5 tabular-nums text-tf-muted">
-                              {r?.draw_config_count ?? "—"}
-                            </td>
-                            <td className="px-3 py-2.5 tabular-nums text-tf-muted">
-                              {r?.media_requirement_count ?? "—"}
-                            </td>
-                            <td className="px-3 py-2.5">
-                              <span
-                                className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusToneClass[st.tone]}`}
+                                {readinessError ? (
+                                  <span className="mt-0.5 block text-[11px] text-amber-200/85">
+                                    Status indisponível
+                                  </span>
+                                ) : null}
+                              </td>
+                              <td className="px-3 py-2.5 tabular-nums text-tf-muted">
+                                {r?.scene_count ?? "—"}
+                              </td>
+                              <td className="px-3 py-2.5 tabular-nums text-tf-muted">
+                                {r?.draw_config_count ?? "—"}
+                              </td>
+                              <td className="px-3 py-2.5 tabular-nums text-tf-muted">
+                                {r?.media_requirement_count ?? "—"}
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <span
+                                  className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusToneClass[st.tone]}`}
+                                >
+                                  {st.text}
+                                </span>
+                              </td>
+                              <td
+                                className="px-3 py-2.5 text-tf-muted"
+                                onClick={(e) => e.stopPropagation()}
                               >
-                                {st.text}
-                              </span>
-                            </td>
-                            <td
-                              className="px-3 py-2.5 text-tf-muted"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {last ? (
-                                <span className="text-[11px] leading-snug">
-                                  {formatWhen(last.at)}
-                                </span>
-                              ) : (
-                                <span className="text-tf-faint">—</span>
-                              )}
-                            </td>
-                            <td
-                              className="px-3 py-2.5 text-right"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <div className="flex flex-wrap justify-end gap-2">
-                                <Link
-                                  href={`/events/${encodeURIComponent(ev.event_id)}`}
-                                  onClick={() =>
-                                    rememberLastOpenedEvent(ev.event_id)
-                                  }
-                                  className="text-xs font-medium text-tf-accent sm:text-sm"
-                                >
-                                  Abrir
-                                </Link>
-                                <button
-                                  type="button"
-                                  disabled={
-                                    !podeExportar ||
-                                    exportingId === ev.event_id ||
-                                    readinessError
-                                  }
-                                  onClick={() => void onExport(ev, false)}
-                                  className="text-xs font-medium text-tf-fg underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:text-tf-faint disabled:no-underline sm:text-sm"
-                                  title={
-                                    podeExportar
-                                      ? "Gerar pack no servidor"
-                                      : "Resolva os bloqueios para exportar o pack"
-                                  }
-                                >
-                                  {exportingId === ev.event_id
-                                    ? "Exportando…"
-                                    : "Exportar pack"}
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={
-                                    !podeExportar ||
-                                    exportingId === ev.event_id ||
-                                    readinessError
-                                  }
-                                  onClick={() => void onExport(ev, true)}
-                                  className="text-xs font-medium text-tf-accent underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:text-tf-faint disabled:no-underline sm:text-sm"
-                                  title="Gera também ficheiro .zip junto ao export"
-                                >
-                                  ZIP
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                                {last ? (
+                                  <span className="text-[11px] leading-snug">
+                                    {formatWhen(last.at)}
+                                  </span>
+                                ) : (
+                                  <span className="text-tf-faint">—</span>
+                                )}
+                              </td>
+                              <td
+                                className="px-3 py-2.5 text-right"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div className="flex flex-wrap justify-end gap-2">
+                                  <Link
+                                    href={`/events/${encodeURIComponent(ev.event_id)}`}
+                                    onClick={() =>
+                                      rememberLastOpenedEvent(ev.event_id)
+                                    }
+                                    className="text-xs font-medium text-tf-accent sm:text-sm"
+                                  >
+                                    Abrir
+                                  </Link>
+                                  <button
+                                    type="button"
+                                    disabled={
+                                      !podeExportar ||
+                                      exportingId === ev.event_id ||
+                                      readinessError
+                                    }
+                                    onClick={() => void onExport(ev, false)}
+                                    className="text-xs font-medium text-tf-fg underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:text-tf-faint disabled:no-underline sm:text-sm"
+                                    title={
+                                      podeExportar
+                                        ? "Gerar pack no servidor"
+                                        : "Resolva os bloqueios para exportar o pack"
+                                    }
+                                  >
+                                    {exportingId === ev.event_id
+                                      ? "Exportando…"
+                                      : "Exportar para Player"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={
+                                      !podeExportar ||
+                                      exportingId === ev.event_id ||
+                                      readinessError
+                                    }
+                                    onClick={() => void onExport(ev, true)}
+                                    className="text-xs font-medium text-tf-accent underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:text-tf-faint disabled:no-underline sm:text-sm"
+                                    title="Gera também ficheiro .zip junto ao export"
+                                  >
+                                    ZIP
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </>
               )}
             </div>
@@ -579,7 +577,7 @@ export function OperationalHome() {
                       <p className="mt-3 text-xs text-tf-muted">—</p>
                     )}
                     <div className="mt-3 text-xs text-tf-subtle">
-                      <span className="text-tf-faint">Último pack: </span>
+                      <span className="text-tf-faint">Última exportação: </span>
                       {(() => {
                         const last = lastExportForEvent(focoRow.event.event_id);
                         return last ? (
@@ -618,7 +616,7 @@ export function OperationalHome() {
                       >
                         {exportingId === focoRow.event.event_id
                           ? "Exportando…"
-                          : "Exportar pack"}
+                          : "Exportar para Player"}
                       </button>
                       <button
                         type="button"
