@@ -236,8 +236,8 @@ export function OperationalHome() {
         text: `Pack gerado: ${ev.name} · ${out.export_id}${zipPart}`,
       });
 
-      // Mostrar botão de download para ZIP se solicitado
-      if (archiveZip) {
+      // Mostrar botão de download para ZIP se disponível
+      if (archiveZip && out.zip_path) {
         setExportBanner({
           tone: "ok",
           text: `ZIP de "${ev.name}" pronto! Clique para baixar.`,
@@ -246,6 +246,26 @@ export function OperationalHome() {
             url: `/api/exports/${out.export_id}/zip`
           }
         });
+      } else if (archiveZip) {
+        // ZIP solicitado mas não disponível ainda
+        setExportBanner({
+          tone: "ok",
+          text: `Exportação "${ev.name}" concluída. ZIP sendo gerado...`,
+        });
+        // Tentar novamente após alguns segundos
+        setTimeout(async () => {
+          try {
+            const readiness = await fetchExportReadiness(ev.event_id);
+            if (readiness.ready) {
+              setExportBanner({
+                tone: "ok",
+                text: `ZIP de "${ev.name}" disponível! Atualize a página.`,
+              });
+            }
+          } catch {
+            /* mantém estado anterior */
+          }
+        }, 3000);
       } else {
         // Mostrar estado pós-exportação para pasta
         setTimeout(() => {
