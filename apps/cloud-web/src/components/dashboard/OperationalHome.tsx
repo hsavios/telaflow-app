@@ -233,10 +233,11 @@ export function OperationalHome() {
       });
 
       // Iniciar download automático do ZIP se solicitado
-      if (archiveZip && out.zip_path) {
+      if (archiveZip) {
         setTimeout(() => {
           // Usar rota API local para evitar CORS
           const downloadUrl = `/api/exports/${out.export_id}/zip`;
+          console.log('Download URL:', downloadUrl);
 
           // Criar link de download
           const link = document.createElement('a');
