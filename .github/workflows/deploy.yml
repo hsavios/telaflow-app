@@ -95,7 +95,7 @@ jobs:
 
       - name: Deploy na VPS
         run: |
-          ssh -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="${HOME}/.ssh/known_hosts" \
+          ssh -p ${{ secrets.SSH_PORT || 22 }} -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="${HOME}/.ssh/known_hosts" \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
             export GHCR_USERNAME='hsavios' && \
             export GHCR_TOKEN='${{ secrets.GHCR_TOKEN }}' && \
