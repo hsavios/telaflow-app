@@ -19,11 +19,11 @@ type StatusMidia = "nao_vinculado" | "vinculado" | "ausente";
 function legendaStatusMidia(st: StatusMidia): string {
   switch (st) {
     case "nao_vinculado":
-      return "Sem vínculo";
+      return "Precisa de arquivo";
     case "vinculado":
-      return "Arquivo ok";
+      return "Arquivo encontrado";
     case "ausente":
-      return "Arquivo ausente";
+      return "Arquivo faltando";
   }
 }
 
@@ -101,7 +101,7 @@ export function PackLoadedWorkspace() {
       const sel = await open({
         directory: true,
         multiple: false,
-        title: "Selecionar pasta de workspace (mídia local)",
+        title: "Escolher pasta de arquivos",
       });
       if (sel === null || Array.isArray(sel)) return;
       const raw = await invoke<string | null>("load_media_bindings_file", {
@@ -286,7 +286,7 @@ export function PackLoadedWorkspace() {
             title={cmdIniciarExecucao.permitido ? undefined : cmdIniciarExecucao.motivo}
             onClick={() => void comandos.iniciar_execucao()}
           >
-            Iniciar evento
+            Começar evento
           </button>
         )}
       </section>
@@ -313,53 +313,53 @@ export function PackLoadedWorkspace() {
       <section className="player-section">
         <h3>3 · Vínculos de mídia</h3>
         <div className="player-table-scroll">
-        <table className="player-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Rótulo</th>
-              <th>Obrigatório</th>
-              <th>Caminho</th>
-              <th>Estado</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {linhasMidia.map(({ req, st }) => (
-              <tr key={req.media_id}>
-                <td>
-                  <code>{req.media_id}</code>
-                </td>
-                <td>{req.label}</td>
-                <td>{req.required ? "sim" : "não"}</td>
-                <td>
-                  <code>{bindings[req.media_id] ?? "—"}</code>
-                </td>
-                <td>
-                  <span className={`player-badge player-badge--${st}`} title={st}>
-                    {legendaStatusMidia(st)}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    disabled={!workspaceRoot || binderBusy}
-                    onClick={() => void vincularArquivo(req.media_id)}
-                  >
-                    Escolher arquivo…
-                  </button>{" "}
-                  <button
-                    type="button"
-                    disabled={!workspaceRoot || binderBusy || !bindings[req.media_id]}
-                    onClick={() => void limparVinculo(req.media_id)}
-                  >
-                    Limpar
-                  </button>
-                </td>
+          <table className="player-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Rótulo</th>
+                <th>Obrigatório</th>
+                <th>Caminho</th>
+                <th>Estado</th>
+                <th>Ações</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {linhasMidia.map(({ req, st }) => (
+                <tr key={req.media_id}>
+                  <td>
+                    <code>{req.media_id}</code>
+                  </td>
+                  <td>{req.label}</td>
+                  <td>{req.required ? "sim" : "não"}</td>
+                  <td>
+                    <code>{bindings[req.media_id] ?? "—"}</code>
+                  </td>
+                  <td>
+                    <span className={`player-badge player-badge--${st}`} title={st}>
+                      {legendaStatusMidia(st)}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      disabled={!workspaceRoot || binderBusy}
+                      onClick={() => void vincularArquivo(req.media_id)}
+                    >
+                      Escolher arquivo…
+                    </button>{" "}
+                    <button
+                      type="button"
+                      disabled={!workspaceRoot || binderBusy || !bindings[req.media_id]}
+                      onClick={() => void limparVinculo(req.media_id)}
+                    >
+                      Limpar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
@@ -374,7 +374,7 @@ export function PackLoadedWorkspace() {
           disabled={preflightBusy || !podeCorrerPreflight}
           onClick={() => void executarPreflight()}
         >
-          {preflightBusy ? "Validando…" : "Executar checagens"}
+          {preflightBusy ? "Verificando…" : "Verificar arquivos"}
         </button>
         {lastPreflight && (
           <div className="player-preflight-report">

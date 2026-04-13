@@ -89,14 +89,13 @@ function AppShell() {
       <header className="player-header">
         <h1>TelaFlow Player</h1>
         <p className="player-tagline">
-          Abra o pack exportado na Cloud, vincule os arquivos de mídia e conduza o evento: painel do
-          operador e telão para o público — execução offline, pensada para o dia do show.
+          Abra seu evento, vincule os arquivos e apresente: painel do operador e telão para o público.
         </p>
       </header>
 
       <section className="player-actions">
         <button type="button" disabled={carregando} onClick={abrirPastaPack}>
-          {carregando ? "Abrindo…" : "Abrir pasta do pack"}
+          {carregando ? "Abrindo…" : "Abrir evento"}
         </button>
         {appState.kind !== "idle" && (
           <button type="button" disabled={carregando} onClick={descarregar}>
