@@ -235,30 +235,22 @@ export function OperationalHome() {
       // Iniciar download automático do ZIP se solicitado
       if (archiveZip && out.zip_path) {
         setTimeout(() => {
-          const apiBase = getCloudApiBase();
-          if (apiBase) {
-            const downloadUrl = `${apiBase}/exports/${out.export_id}.zip`;
-            // Abrir em nova janela/aba para download
-            const downloadWindow = window.open(downloadUrl, '_blank');
+          // Usar rota API local para evitar CORS
+          const downloadUrl = `/api/exports/${out.export_id}/zip`;
 
-            // Verificar se o popup foi bloqueado
-            if (!downloadWindow || downloadWindow.closed || typeof downloadWindow.closed === 'undefined') {
-              // Fallback: criar link com target="_blank"
-              const link = document.createElement('a');
-              link.href = downloadUrl;
-              link.target = '_blank';
-              link.rel = 'noopener noreferrer';
-              link.style.display = 'none';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }
+          // Criar link de download
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.download = `${ev.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.zip`;
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
 
-            setExportBanner({
-              tone: "ok",
-              text: `ZIP de "${ev.name}" iniciando download...`,
-            });
-          }
+          setExportBanner({
+            tone: "ok",
+            text: `ZIP de "${ev.name}" baixado com sucesso!`,
+          });
         }, 1500);
       } else {
         // Mostrar estado pós-exportação para pasta
