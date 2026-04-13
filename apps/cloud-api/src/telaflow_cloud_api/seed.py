@@ -122,7 +122,7 @@ def seed_bootstrap_operator_if_absent(session: Session) -> None:
         )
         return
     if not password:
-        password = "TelaflowDev!2026"
+        password = "admin123"
         _LOG.warning(
             "Usando senha bootstrap de desenvolvimento. Defina TELAFLOW_BOOTSTRAP_ADMIN_PASSWORD "
             "antes de expor a API.",

@@ -7,7 +7,7 @@ def test_login_returns_token_when_jwt_configured(monkeypatch, cliente):
     monkeypatch.setenv("TELAFLOW_JWT_SECRET", "unit-test-jwt-secret-key-32bytes!")
     r = cliente.post(
         "/auth/login",
-        json={"email": "admin@telaflow.local", "password": "TelaflowDev!2026"},
+        json={"email": "admin@telaflow.local", "password": "admin123"},
     )
     assert r.status_code == 200, r.text
     data = r.json()
@@ -26,7 +26,7 @@ def test_events_ok_with_bearer_after_login(monkeypatch, cliente):
     monkeypatch.setenv("TELAFLOW_JWT_SECRET", "unit-test-jwt-secret-key-32bytes!")
     login = cliente.post(
         "/auth/login",
-        json={"email": "admin@telaflow.local", "password": "TelaflowDev!2026"},
+        json={"email": "admin@telaflow.local", "password": "admin123"},
     )
     assert login.status_code == 200
     token = login.json()["access_token"]

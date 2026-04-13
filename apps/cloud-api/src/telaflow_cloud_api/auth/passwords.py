@@ -8,6 +8,8 @@ _pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def hash_password(plain: str) -> str:
+    if len(plain.encode("utf-8")) > 72:
+        raise ValueError("Password exceeds bcrypt 72-byte limit")
     return _pwd.hash(plain)
 
 
