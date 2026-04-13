@@ -248,24 +248,56 @@ export function OperationalHome() {
         });
       } else if (archiveZip) {
         // ZIP solicitado mas não disponível ainda
+        console.log('ZIP solicitado, resposta:', out);
         setExportBanner({
           tone: "ok",
-          text: `Exportação "${ev.name}" concluída. ZIP sendo gerado...`,
+          text: `Exportação "${ev.name}" concluída. Verificando ZIP...`,
         });
-        // Tentar novamente após alguns segundos
-        setTimeout(async () => {
+
+        // Polling para verificar quando ZIP fica disponível
+        let attempts = 0;
+        const maxAttempts = 10;
+        const checkZip = async () => {
+          attempts++;
           try {
-            const readiness = await fetchExportReadiness(ev.event_id);
-            if (readiness.ready) {
+            // Tentar buscar o status da exportação novamente
+            const response = await runPackExport(ev.event_id, { archiveZip: true });
+            console.log(`Tentativa ${attempts}:`, response);
+
+            if (response.zip_path) {
               setExportBanner({
                 tone: "ok",
-                text: `ZIP de "${ev.name}" disponível! Atualize a página.`,
+                text: `ZIP de "${ev.name}" pronto! Clique para baixar.`,
+                action: {
+                  label: "Baixar ZIP",
+                  url: `/api/exports/${response.export_id}/zip`
+                }
+              });
+              return;
+            }
+
+            if (attempts < maxAttempts) {
+              setExportBanner({
+                tone: "ok",
+                text: `Gerando ZIP de "${ev.name}"... (${attempts}/${maxAttempts})`,
+              });
+              setTimeout(checkZip, 2000);
+            } else {
+              setExportBanner({
+                tone: "ok",
+                text: `ZIP de "${ev.name}" demorando. Tente exportar novamente.`,
               });
             }
-          } catch {
-            /* mantém estado anterior */
+          } catch (error) {
+            console.error('Erro ao verificar ZIP:', error);
+            setExportBanner({
+              tone: "ok",
+              text: `ZIP de "${ev.name}" encontrado manualmente em /exports/${out.export_id}`,
+            });
           }
-        }, 3000);
+        };
+
+        setTimeout(checkZip, 2000);
       } else {
         // Mostrar estado pós-exportação para pasta
         setTimeout(() => {
